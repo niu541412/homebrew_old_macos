@@ -156,7 +156,9 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 
 * **Issue:** Missing header in CommonCrypto.
 * **Solution:** Add header in system file `/usr/include/CommonCrypto/CommonRandom.h`.
+
   `#import <CommonCrypto/CommonCrypto.h>`
+  
   Then compile with llvm
   `brew install difftastic --cc=llvm_clang`
   Note that, maybe need to set "MACOSX_DEPLOYMENT_TARGET", i.e. `export MACOSX_DEPLOYMENT_TARGET=10.13`, not checked.
