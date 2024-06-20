@@ -41,10 +41,12 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
   ```
 - **Reference:** [Stack Overflow: How to install llvm@13 on macOS High Sierra](https://stackoverflow.com/questions/69906053/how-to-install-llvm13-with-homerew-on-macos-high-sierra-10-13-6-got-built-tar)
 - **Issue2:** Undefined symbols "std::__1::__libcpp_verbose_abort(char const*, ...)" or something like this
-- **Solution:** Use the previous LLVM as the brew C/C++ compiler. For building LLVM versions beyond 18, use LLVM 16. Since brew's "-cc=llvm_clang" option only supports the latest LLVM, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. Then
+- **Solution:** Recommand to use the previous LLVM as the brew C/C++ compiler, but for building LLVM versions beyond 18, use LLVM 16. Since brew's "-cc=llvm_clang" option only supports the latest LLVM, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. Then
+  
   `brew install llvm --debug --cc=llvm_clang`
-  .After installation, revert the symlink to the . Note that if you compile the latest LLVM, this symlink will be overriddenautomatically.
-- **Reference:** [Stack Overflow: How to install llvm@13 on macOS High Sierra](https://stackoverflow.com/questions/69906053/how-to-install-llvm13-with-homerew-on-macos-high-sierra-10-13-6-got-built-tar)
+  
+  . After installation, revert the symlink to the original. Of course that if you compile the latest LLVM, this symlink will be overridden automatically.
+
 
 ### gcc
 
@@ -56,7 +58,7 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 
 - **Issue:** Undefined symbols: "__ZN12rewriter_tplI17elim_term_ite_cfgEC2ER11ast_managerbRS0_"
 - **Solution:** Install the head version. `brew install z3 --HEAD `
-- **Reference:** [https://github.com/Z3Prover/z3/issues/6869]()
+- **Reference:** [https://github.com/Z3Prover/z3/issues/6869](#6869)
 
 ### gsl (>=2.8)
 
@@ -148,7 +150,7 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
   If you encounter an error named "test_cmp_http", enter the shell and execute:
   `make test TESTS='-test_cmp_http'`
   If additional errors occur, append them similarly to -test_cmp_http.
-* **Reference:** [OpenSSL Issue on GitHub](https://github.com/openssl/openssl/issues/22467)
+* **Reference:** [OpenSSL Issue on GitHub](https://github.com/openssl/openssl/issues/22467#issuecomment-1779402143)
 
 ### difftastic
 
