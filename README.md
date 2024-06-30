@@ -164,6 +164,11 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
   Note that, maybe need to set "MACOSX_DEPLOYMENT_TARGET", i.e. `export MACOSX_DEPLOYMENT_TARGET=10.13`, not checked.
 * **Reference:** [Rust-lang Issue on GitHub](https://github.com/rust-lang/cc-rs/issues/1001#issuecomment-2033448649)
 
+### oxygen
+
+* **Solution:** Use a higher version of GCC for compilation.
+  `brew install oxygen --cc=gcc-14`
+
 ### jpeg_xl
 
 * **Solution:** Use a higher version of GCC for compilation.
