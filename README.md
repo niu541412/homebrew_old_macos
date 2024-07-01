@@ -1,4 +1,4 @@
-# homebrew_old_macos
+# homebrew_old_macOS
 
 [TOC]
 
@@ -83,6 +83,17 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 
 * **Issue:** Python dependency. Recent rust will use "python" to build libaray. However, in deprecated macOS, "python" is python2.
 * **Solution:** Change PATH in debug mode or modify the `configure` file.
+
+### carthage
+
+* **Issue:**  `swift-build-tool -f .build/release.yaml` shows error:
+```log
+/private/tmp/carthage/Source/XCDBLD/XcodeVersion.swift:18:2: error: missing return in a function expected to return 'Int?
+```
+* **Solution:** let this function provide a return value, i.e., add **return** before line 18: `version.components(separatedBy: ".").first.flatMap(Int.init)` of "XcodeVersion.swift".
+
+
+
 
 ### ghostscript
 
