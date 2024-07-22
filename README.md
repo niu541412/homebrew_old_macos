@@ -165,15 +165,14 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 
 ### difftastic
 
-* **Issue:** Missing header in CommonCrypto.
-* **Solution:** Add header in system file `/usr/include/CommonCrypto/CommonRandom.h`.
+* **Issue:** unknown type name 'CCCryptorStatus'.
+* **Solution:** Add header in system file `/usr/include/CommonCrypto/CommonRandom.h`. I think this issue maybe fixed by author later.
 
-  `#import <CommonCrypto/CommonCrypto.h>`
+  `#include <CommonCrypto/CommonCryptoError.h>`
   
-  Then compile with llvm
-  `brew install difftastic --cc=llvm_clang`
-  Note that, maybe need to set "MACOSX_DEPLOYMENT_TARGET", i.e. `export MACOSX_DEPLOYMENT_TARGET=10.13`, not checked.
-* **Reference:** [Rust-lang Issue on GitHub](https://github.com/rust-lang/cc-rs/issues/1001#issuecomment-2033448649)
+  ~~Then compile with llvm
+  `brew install difftastic --cc=llvm_clang`~~
+* **Reference:** [can not build mimalloc](https://github.com/microsoft/mimalloc/issues/549)
 
 ### doxygen
 
