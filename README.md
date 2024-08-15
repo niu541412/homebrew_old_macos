@@ -197,7 +197,7 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
   install TARGETS given no LIBRARY DESTINATION for module target
   "pixbufloader-heif".
 ```
-* **Solution:** do not pre-install pkg-config package, or uninstall it then reinstall it again.
+* **Solution:** do not pre-install pgdk-pixbuf package, or uninstall it then reinstall it again.
 
 ~~brew install in debug mode `brew install pkg_config --debug`, then choose to the shell and run cmake with specific flags.~~
   ~~shell
