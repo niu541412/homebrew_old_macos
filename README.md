@@ -152,15 +152,16 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
   libncurse_new=${HOMEBREW_PREFIX}$(echo $libncurse_path|sed s/@@HOMEBREW_PREFIX@@//g)
   sudo install_name_tool -change $libncurse_path $libncurse_new /path/to/ncdu 
   ```
+* **Tip:** `gdu` provide similar function to `ncdu` which is written in Go.
 
 ### openssl@3
 
 * **Issue:** Possible test failures.
 * **Solution:** Use debug mode and manually run tests.
-  `brew install openssl@3 --debug`
+  Run `brew install openssl@3 --debug`
   If you encounter an error named "test_cmp_http", enter the shell and execute:
   `make test TESTS='-test_cmp_http'`
-  If additional errors occur, append them similarly to -test_cmp_http.
+  If additional errors occur, append them similarly to `-test_cmp_http`.
 * **Reference:** [OpenSSL Issue on GitHub](https://github.com/openssl/openssl/issues/22467#issuecomment-1779402143)
 
 ### difftastic
