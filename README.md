@@ -106,7 +106,7 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 * **Solution:** Needs GCC or LLVM for compilation.
   `brew install numpy --cc=llvm_clang`
 
-### zig（<=0.9.1_2, higher version not support）
+### zig (<=0.9.1_2, higher version not support)
 
 * **Issue:** Compatibility issue.
 * **Solution:** Modify `os_version_check.zig`.
@@ -180,10 +180,10 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 * **Solution:** Use a higher version of GCC for compilation.
   `brew install doxygen --cc=gcc-14`
 
-### jpeg_xl
+### jpeg-xl
 
 * **Solution:** Use a higher version of GCC for compilation.
-  `brew install jpeg_xl --cc=gcc-14`
+  `brew install jpeg-xl --cc=gcc-14`
 
 ### shared-mime-info
 
