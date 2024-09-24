@@ -92,8 +92,10 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 ```
 * **Solution:** let this function provide a return value, i.e., add **return** before line 18: `version.components(separatedBy: ".").first.flatMap(Int.init)` of "XcodeVersion.swift".
 
+### btop
 
-
+* **Issue:**  linking errors, Undefined symbols for architecture x86_64:
+* **Solution:** Using GCC to build it. However the fomula [.rb file](https://github.com/Homebrew/homebrew-core/blob/master/Formula/b/btop.rb) is mandatroy to use llvm, so need to modify it and install from local. `depends_on "llvm"...` => `depends_on "gcc"...`; `ENV.llvm_clang if OS.mac?...` => `ENV.cxx if OS.mac?...`
 
 ### ghostscript
 
