@@ -81,8 +81,10 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 
 ### rust
 
-* **Issue:** Python dependency. Recent rust will use "python" to build libaray. However, in deprecated macOS, "python" is python2.
+* **Issue1:** Python dependency. Recent rust will use "python" to build libaray. However, in deprecated macOS, "python" is python2.
 * **Solution:** Change PATH in debug mode or modify the `configure` file.
+* **Issue2:** /usr/local/Cellar/llvm/19.1.2/include/llvm/CodeGen/MachineFunction.h:440:39: error: call to unavailable function 'get': introduced in macOS 10.14
+* **Solution:** use LLVM 17, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. llvm is mandatory to compile in rust formula.
 
 ### carthage
 
@@ -159,7 +161,7 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
   libncurse_new=${HOMEBREW_PREFIX}$(echo $libncurse_path|sed s/@@HOMEBREW_PREFIX@@//g)
   sudo install_name_tool -change $libncurse_path $libncurse_new /path/to/ncdu 
   ```
-* **Tip:** `gdu` provide similar function to `ncdu` which is written in Go.
+* **Tip:** [`gdu`](https://github.com/dundee/gdu) which is written in go provides similar function to `ncdu`.
 
 ### openssl@3
 
@@ -189,13 +191,17 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 
 ### jpeg-xl
 
-* **Solution:** Use a higher version of GCC for compilation.
-  `brew install jpeg-xl --cc=gcc-14`
+* **Solution:** Use a specific version (maybe <14) of GCC for compilation.
+  `brew install jpeg-xl --cc=gcc-13`
 
 ### shared-mime-info
 
 * **Solution:** Use a higher version of GCC for compilation.
   `brew install shared-mime-info --cc=gcc-14`
+
+### openexr
+* **Solution:** Use a higher version of GCC for compilation.
+  `brew install openexr --cc=gcc-14`
 
 ### libheif
 
