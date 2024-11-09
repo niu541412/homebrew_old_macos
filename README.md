@@ -86,6 +86,10 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 * **Issue2:** /usr/local/Cellar/llvm/19.1.2/include/llvm/CodeGen/MachineFunction.h:440:39: error: call to unavailable function 'get': introduced in macOS 10.14
 * **Solution:** use LLVM 17, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. llvm is mandatory to compile in rust formula.
 
+### icu4c@76
+* **Issue:** `configure:9742: error: Python failed to run`, icu4c uses "python" to build it. However, in deprecated macOS, "python" is python2.
+* **Solution:** Add `depends_on "python"` into the local rb file.
+
 ### carthage
 
 * **Issue:**  `swift-build-tool -f .build/release.yaml` shows error:
@@ -114,6 +118,11 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 
 * **Solution:** Needs GCC or LLVM for compilation.
   `brew install numpy --cc=llvm_clang`
+
+### lftp
+
+* **Solution:** Needs GCC (or LLVM) for compilation.
+  `brew install lftp --cc=gcc-xx`
 
 ### zig (<=0.9.1_2, higher version not support)
 
@@ -203,17 +212,25 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 * **Solution:** Use a higher version of GCC for compilation.
   `brew install openexr --cc=gcc-14`
 
-### libheif
+### gdk-pixbuf
+* **Issue:** `Dependency lookup for libtiff-4 with method 'pkgconfig' failed: Could not generate cflags for libtiff-4:
+Package libdeflate was not found in the pkg-config search path.`
+* **Solution:** Add `depends_on "libdeflate"` into  gdk-pixbuf.rb file, or add the the pkgconfig path of libdeflate into the environment variable `PKG_CONFIG_PATH`.
 
-* **Issue:** pkg_config not found package.
+### libheif
+* **Issue1:** `/tmp/libheif-20241109-81439-f0emb6/libheif-1.19.2/libheif/bitstream.cc:26:10: fatal error: 'bit' file not found`. "bit" is a standard library header since C++20 (gcc>=9 or llvm>=11).
+* **Solution1:** Use GCC or LLVM for compilation.
+  `brew install libheif --cc=gcc-xx`
+
+* **Issue2:** pkg_config not found package.
 ```
 CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
   install TARGETS given no LIBRARY DESTINATION for module target
   "pixbufloader-heif".
 ```
-* **Solution:** do not pre-install pgdk-pixbuf package, or uninstall it then reinstall it again.
+* **Solution2:** do not pre-install gdk-pixbuf package, or uninstall it then reinstall it again.
 
-~~brew install in debug mode `brew install pkg_config --debug`, then choose to the shell and run cmake with specific flags.~~
+~~brew install in debug mode `brew install libheif --debug`, then choose to the shell and run cmake with specific flags.~~
   ~~shell
   #first error
   cmake -S . -B build -DWITH_RAV1E=OFF -DWITH_DAV1D=OFF -DWITH_SvtEnc=OFF -DCMAKE_INSTALL_RPATH=@loader_path/../lib -DCMAKE_INSTALL_PREFIX=/usr/local/Cellar/libheif/1.17.6_1 -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_VERBOSE_MAKEFILE=ON -DFETCHCONTENT_FULLY_DISCONNECTED=ON -Wno-dev -DBUILD_TESTING=OFF -DWITH_GDK_PIXBUF=OFF
