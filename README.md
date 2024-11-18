@@ -105,8 +105,8 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 
 ### tesseract
 
-~~ * **Issue:** `error: cannot convert 'vUInt16/vUInt32/vSInt16/vSInt32' to '__m128i'` with gcc compiler or `src/api/baseapi.cpp:67:10: fatal error: 'filesystem' file not found` with llvm compiler.
-* **Solution:** ~~
+* **Issue:** fatal error: `filesystem` file not found
+* **Solution:** For the src file using header `filesystem`, e.g. baseapi.cpp, ccutil.cpp, use the code in 5.4.0 version. Remove training options during `make` and `make install` steps.
 
 ### ghostscript
 
@@ -197,6 +197,10 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 
 * **Solution:** Use a higher version of GCC for compilation.
   `brew install doxygen --cc=gcc-14`
+
+### wget
+* **Issue:** `configure: error: --with-ssl=openssl was given, but SSL is not available.`
+* **Solution:** libssl.dylib provided by macOS don't have `_OPENSSL_init_ssl` symbol. Set LDFLAGS include /usr/local/lib to use the libssl provided by homebrew.
 
 ### jpeg-xl
 
