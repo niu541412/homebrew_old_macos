@@ -80,11 +80,14 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
   ```
 
 ### rust
+- ~~<= 1.82.0~~
+~~* **Issue1:** Python dependency. Recent rust will use "python" to build libaray. However, in deprecated macOS, "python" is python2.~~
+~~* **Solution:** Change PATH in debug mode or modify the `configure` file.~~
+~~* **Issue2:** /usr/local/Cellar/llvm/19.1.2/include/llvm/CodeGen/MachineFunction.h:440:39: error: call to unavailable function 'get': introduced in macOS 10.14~~
+~~* **Solution:** use LLVM 17, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. llvm is mandatory to compile in rust formula.~~
 
-* **Issue1:** Python dependency. Recent rust will use "python" to build libaray. However, in deprecated macOS, "python" is python2.
-* **Solution:** Change PATH in debug mode or modify the `configure` file.
-* **Issue2:** /usr/local/Cellar/llvm/19.1.2/include/llvm/CodeGen/MachineFunction.h:440:39: error: call to unavailable function 'get': introduced in macOS 10.14
-* **Solution:** use LLVM 17, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. llvm is mandatory to compile in rust formula.
+- \>1.83.0 
+  - **Solution:** use LLVM 18, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. llvm is mandatory to compile in rust formula.
 
 ### icu4c@76
 * **Issue:** `configure:9742: error: Python failed to run`, icu4c uses "python" to build it. However, in deprecated macOS, "python" is python2.
