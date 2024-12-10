@@ -47,7 +47,7 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
   
   . After installation, revert the symlink to the original. Of course that if you compile the latest LLVM, this symlink will be overridden automatically.
 > [!NOTE]
-> I have Python > 3.13, which may conflict with llvm@16 during the build process. You can temporarily uninstall llvm@16 forcefully and reinstall it later.
+> Python > 3.13 may conflict with llvm@16 during the build process. You can temporarily uninstall python forcefully and reinstall it later.
 
 ### gcc
 
