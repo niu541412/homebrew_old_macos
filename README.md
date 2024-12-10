@@ -10,12 +10,12 @@ Below is a list of packages that can still be installed using the `brew` command
 
 Because Homebrew will not recieve pull request for unsupport macOS version, I only leave these tips here.
 
-## General Tips
-
-1. **Use Older Compilers:** Sometimes, modern compilers are not compatible with older macOS versions. Consider using older versions of GCC or Clang.
-2. **Patching:** Some formulae might require patching to work correctly on older macOS versions. Check the formula's issues or pull requests for patches or create your own if needed.
-3. **Dependencies:** Ensure all dependencies are correctly installed. Sometimes, manual installation of dependencies is required.
-4. **Environment Variables:** Setting environment variables like `SDKROOT`, `MACOSX_DEPLOYMENT_TARGET`, and `CFLAGS` can help in building some formulae.
+> [!TIP] 
+> General Tips
+>1. **Use Older Compilers:** Sometimes, modern compilers are not compatible with older macOS versions. Consider using older versions of GCC or Clang.
+>2. **Patching:** Some formulae might require patching to work correctly on older macOS versions. Check the formula's issues or pull requests for patches or create your own if needed.
+>3. **Dependencies:** Ensure all dependencies are correctly installed. Sometimes, manual installation of dependencies is required.
+>4. **Environment Variables:** Setting environment variables like `SDKROOT`, `MACOSX_DEPLOYMENT_TARGET`, and `CFLAGS` can help in building some formulae.
 
 ## Formulae with solution
 
@@ -46,13 +46,14 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
   `brew install llvm --debug --cc=llvm_clang`
   
   . After installation, revert the symlink to the original. Of course that if you compile the latest LLVM, this symlink will be overridden automatically.
-
+> [!NOTE]
+> I have Python > 3.13, which may conflict with llvm@16 during the build process. You can temporarily uninstall llvm@16 forcefully and reinstall it later.
 
 ### gcc
 
 - **Issue:** Any buiding errors
 - **Solution:** Use a specific version of GCC for compilation.
-  `brew install llvm --debug --cc=gcc-14`
+  `brew install gcc --debug --cc=gcc-14`
 
 ### z3
 
@@ -127,7 +128,9 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 * **Solution:** Needs GCC (or LLVM) for compilation.
   `brew install lftp --cc=gcc-xx`
 
-### zig (<=0.9.1_2, higher version not support)
+### zig 
+> [!WARNING]  
+> (<=0.9.1_2, higher version not support)
 
 * **Issue:** Compatibility issue.
 * **Solution:** Modify `os_version_check.zig`.
@@ -176,7 +179,8 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
   libncurse_new=${HOMEBREW_PREFIX}$(echo $libncurse_path|sed s/@@HOMEBREW_PREFIX@@//g)
   sudo install_name_tool -change $libncurse_path $libncurse_new $ncdu_executable
   ```
-* **Tip:** [`gdu`](https://github.com/dundee/gdu) which is written in go provides similar function to `ncdu`.
+> [!NOTE]
+> [`gdu`](https://github.com/dundee/gdu) which is written in go provides similar function to `ncdu`.
 
 ### openssl@3
 
