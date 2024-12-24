@@ -1,7 +1,5 @@
 # homebrew_old_macOS
 
-[TOC]
-
 ## Tips for Building Formulae on Deprecated macOS
 
 If you have a deprecated model, such as the Mac Pro 5,1 as mine, the last supported macOS version is 10.13 High Sierra. While the latest [Homebrew](https://brew.sh/) can still run on this system version, pre-built bottles are not provided. Therefore, Homebrew will try to build every formula from source following the [Formula code](https://github.com/Homebrew/homebrew-core/tree/master/Formula). Due to the API limitations of this deprecated macOS, some packages cannot be installed directly with `brew install formula`.
@@ -11,11 +9,10 @@ Below is a list of packages that can still be installed using the `brew` command
 Because Homebrew will not recieve pull request for unsupport macOS version, I only leave these tips here.
 
 > [!TIP] 
-> General Tips
->1. **Use Older Compilers:** Sometimes, modern compilers are not compatible with older macOS versions. Consider using older versions of GCC or Clang.
->2. **Patching:** Some formulae might require patching to work correctly on older macOS versions. Check the formula's issues or pull requests for patches or create your own if needed.
->3. **Dependencies:** Ensure all dependencies are correctly installed. Sometimes, manual installation of dependencies is required.
->4. **Environment Variables:** Setting environment variables like `SDKROOT`, `MACOSX_DEPLOYMENT_TARGET`, and `CFLAGS` can help in building some formulae.
+> 1. **Use Older Compilers:** Sometimes, modern compilers are not compatible with older macOS versions. Consider using older versions of GCC or Clang.
+> 2. **Patching:** Some formulae might require patching to work correctly on older macOS versions. Check the formula's issues or pull requests for patches or create your own if needed.
+> 3. **Dependencies:** Ensure all dependencies are correctly installed. Sometimes, manual installation of dependencies is required.
+> 4. **Environment Variables:** Setting environment variables like `SDKROOT`, `MACOSX_DEPLOYMENT_TARGET`, and `CFLAGS` can help in building some formulae.
 
 ## Formulae with solution
 
@@ -26,7 +23,7 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 
   ```diff
   --- HostInfoMacOSX.mm
-  +++ HostInfoMacOSX.mm-new
+  +++ HostInfoMacOSX.mm
   @@ -53,6 +53,11 @@
   #define CPU_TYPE_ARM64 (CPU_TYPE_ARM | CPU_ARCH_ABI64)
   #endif
