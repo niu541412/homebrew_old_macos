@@ -52,6 +52,17 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 - **Solution:** Use a specific version of GCC for compilation.
   `brew install gcc --debug --cc=gcc-14`
 
+### ruby
+
+- **Issue:** 
+```log
+ld: 8 duplicate symbols for architecture x86_64
+```
+- **Solution:** Use a specific version of GCC for compilation.
+  `brew install ruby --debug --cc=gcc-14`
+- **Issuse2:** `Errno::ENOENT: No such file or directory @ apply2files...`
+- **Solution:** Replace tar follow this [link](https://github.com/koekeishiya/yabai/issues/1208#issuecomment-1171165126).
+
 ### z3
 
 - **Issue:** Undefined symbols: "__ZN12rewriter_tplI17elim_term_ite_cfgEC2ER11ast_managerbRS0_"
