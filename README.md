@@ -16,7 +16,7 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 
 ## Formulae with solution
 
-### llvm
+### [llvm](https://formulae.brew.sh/formula/llvm)
 
 - **Issue1:** error: use of undeclared identifier 'CPU_SUBTYPE_ARM64E'
 - **Solution:** Modify `/private/tmp/llvm-balabala.../llvm-project-version.src/lldb/source/Host/macosx/objcxx/HostInfoMacOSX.mm` by this patch:
@@ -46,13 +46,13 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 > [!NOTE]
 > Python > 3.13 may conflict with llvm@16 during the build process. You can temporarily uninstall python forcefully and reinstall it later.
 
-### gcc
+### [gcc](https://formulae.brew.sh/formula/gcc)
 
 - **Issue:** Any buiding errors
 - **Solution:** Use a specific version of GCC for compilation.
   `brew install gcc --debug --cc=gcc-14`
 
-### ruby
+### [ruby](https://formulae.brew.sh/formula/ruby)
 
 - **Issue:** 
 ```log
@@ -63,13 +63,13 @@ ld: 8 duplicate symbols for architecture x86_64
 - **Issuse2:** `Errno::ENOENT: No such file or directory @ apply2files...`
 - **Solution:** Replace tar follow this [link](https://github.com/koekeishiya/yabai/issues/1208#issuecomment-1171165126).
 
-### z3
+### [z3](https://formulae.brew.sh/formula/z3)
 
 - **Issue:** Undefined symbols: "__ZN12rewriter_tplI17elim_term_ite_cfgEC2ER11ast_managerbRS0_"
 - **Solution:** Install the head version. `brew install z3 --HEAD `
 - **Reference:** [https://github.com/Z3Prover/z3/issues/6869](#6869)
 
-### gsl (>=2.8)
+### [gsl (>=2.8)](https://formulae.brew.sh/formula/gsl (>=2.8))
 
 * **Issue:** ld parameter issue.
 * **Solution:** Patch `configure` script.
@@ -88,7 +88,7 @@ ld: 8 duplicate symbols for architecture x86_64
          esac
   ```
 
-### rust
+### [rust](https://formulae.brew.sh/formula/rust)
 - ~~<= 1.82.0~~
 ~~* **Issue1:** Python dependency. Recent rust will use "python" to build libaray. However, in deprecated macOS, "python" is python2.~~
 ~~* **Solution:** Change PATH in debug mode or modify the `configure` file.~~
@@ -97,12 +97,28 @@ ld: 8 duplicate symbols for architecture x86_64
 
 - \>1.83.0 
   - **Solution:** use LLVM 18, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. llvm is mandatory to compile in rust formula.
+- \>1.84.0 
+  - **Issue:** `call to unavailable member function 'value': introduced in macOS 10.14`
+  - **Solution:** patch `rustc-balabala-src/compiler/rustc_llvm/llvm-wrapper/RustWrapper.cpp` with
+  ```diff
+  --- RustWrapper.cpp	2025-01-15 20:39:28
+  +++ RustWrapper.cpp	2025-01-15 20:39:53
+  @@ -1310,7 +1310,7 @@ LLVMRustDILocationCloneWithBaseDiscriminator(LLVMMetad
+                                                unsigned BD) {
+    DILocation *Loc = unwrapDIPtr<DILocation>(Location);
+    auto NewLoc = Loc->cloneWithBaseDiscriminator(BD);
+  -  return wrap(NewLoc.has_value() ? NewLoc.value() : nullptr);
+  +  return wrap(NewLoc.has_value() ? *NewLoc : nullptr);
+  }
+  
+  extern "C" uint64_t LLVMRustDIBuilderCreateOpDeref() {
+  ```
 
-### icu4c@76
+### [icu4c@76](https://formulae.brew.sh/formula/icu4c@76)
 * **Issue:** `configure:9742: error: Python failed to run`, icu4c uses "python" to build it. However, in deprecated macOS, "python" is python2.
 * **Solution:** Add `depends_on "python"` into the local rb file.
 
-### carthage
+### [carthage](https://formulae.brew.sh/formula/carthage)
 
 * **Issue:**  `swift-build-tool -f .build/release.yaml` shows error:
 ```log
@@ -110,33 +126,33 @@ ld: 8 duplicate symbols for architecture x86_64
 ```
 * **Solution:** let this function provide a return value, i.e., add **return** before line 18: `version.components(separatedBy: ".").first.flatMap(Int.init)` of "XcodeVersion.swift".
 
-### btop
+### [btop](https://formulae.brew.sh/formula/btop)
 
 * **Issue:**  linking errors, Undefined symbols for architecture x86_64:
 * **Solution:** Using GCC to build it. However the fomula [.rb file](https://github.com/Homebrew/homebrew-core/blob/master/Formula/b/btop.rb) is mandatory to use llvm, so need to modify it and install from local. `depends_on "llvm"...` => `depends_on "gcc"...`; `ENV.llvm_clang if OS.mac?...` => `ENV.cxx if OS.mac?...`
 
-### tesseract
+### [tesseract](https://formulae.brew.sh/formula/tesseract)
 
 * **Issue:** fatal error: `filesystem` file not found
 * **Solution:** For the src file using header `filesystem`, e.g. baseapi.cpp, ccutil.cpp, use the code in 5.4.0 version. Remove training options during `make` and `make install` steps.
 
-### ghostscript
+### [ghostscript](https://formulae.brew.sh/formula/ghostscript)
 
 * **Issue:**  Can't build with llvm or recent gcc.
 * **Solution:** Use GCC compile with specific version.
   `brew install ghostscript --cc=gcc-xx `
 
-### numpy
+### [numpy](https://formulae.brew.sh/formula/numpy)
 
 * **Solution:** Needs GCC or LLVM for compilation.
   `brew install numpy --cc=llvm_clang`
 
-### lftp
+### [lftp](https://formulae.brew.sh/formula/lftp)
 
 * **Solution:** Needs GCC (or LLVM) for compilation.
   `brew install lftp --cc=gcc-xx`
 
-### zig 
+### [zig ](https://formulae.brew.sh/formula/zig )
 > [!WARNING]  
 > (<=0.9.1_2, higher version not support)
 
@@ -167,7 +183,7 @@ ld: 8 duplicate symbols for architecture x86_64
 
 - **Reference** [https://github.com/ziglang/zig/issues/10318](#10318), [https://github.com/ziglang/zig/pull/11684](#11684)
 
-### ncdu (>2)
+### [ncdu (>2)](https://formulae.brew.sh/formula/ncdu (>2))
 
 * **Issue:** depends on a recent zig.
 * **Solution:** Download the bottle for monterey and modify the link path.
@@ -190,7 +206,7 @@ ld: 8 duplicate symbols for architecture x86_64
 > [!NOTE]
 > [`gdu`](https://github.com/dundee/gdu) which is written in go provides similar function to `ncdu`.
 
-### openssl@3
+### [openssl@3](https://formulae.brew.sh/formula/openssl@3)
 
 * **Issue:** Possible test failures.
 * **Solution:** Use debug mode and manually run tests.
@@ -200,7 +216,7 @@ ld: 8 duplicate symbols for architecture x86_64
   If additional errors occur, append them similarly to `-test_cmp_http`.
 * **Reference:** [OpenSSL Issue on GitHub](https://github.com/openssl/openssl/issues/22467#issuecomment-1779402143)
 
-### difftastic
+### [difftastic](https://formulae.brew.sh/formula/difftastic)
 
 * **Issue:** unknown type name 'CCCryptorStatus'.
 * **Solution:** Add header in system file `/usr/include/CommonCrypto/CommonRandom.h`. I think this issue maybe fixed by author later.
@@ -211,35 +227,35 @@ ld: 8 duplicate symbols for architecture x86_64
   `brew install difftastic --cc=llvm_clang`~~
 * **Reference:** [can not build mimalloc](https://github.com/microsoft/mimalloc/issues/549)
 
-### doxygen
+### [doxygen](https://formulae.brew.sh/formula/doxygen)
 
 * **Solution:** Use a higher version of GCC for compilation.
   `brew install doxygen --cc=gcc-14`
 
-### wget
+### [wget](https://formulae.brew.sh/formula/wget)
 * **Issue:** `configure: error: --with-ssl=openssl was given, but SSL is not available.`
 * **Solution:** libssl.dylib provided by macOS don't have `_OPENSSL_init_ssl` symbol. Set LDFLAGS include /usr/local/lib to use the libssl provided by homebrew.
 
-### jpeg-xl
+### [jpeg-xl](https://formulae.brew.sh/formula/jpeg-xl)
 
 * **Solution:** Use a specific version (maybe <14) of GCC for compilation.
   `brew install jpeg-xl --cc=gcc-13`
 
-### shared-mime-info
+### [shared-mime-info](https://formulae.brew.sh/formula/shared-mime-info)
 
 * **Solution:** Use a higher version of GCC for compilation.
   `brew install shared-mime-info --cc=gcc-14`
 
-### openexr
+### [openexr](https://formulae.brew.sh/formula/openexr)
 * **Solution:** Use a higher version of GCC for compilation.
   `brew install openexr --cc=gcc-14`
 
-### gdk-pixbuf
+### [gdk-pixbuf](https://formulae.brew.sh/formula/gdk-pixbuf)
 * **Issue:** `Dependency lookup for libtiff-4 with method 'pkgconfig' failed: Could not generate cflags for libtiff-4:
 Package libdeflate was not found in the pkg-config search path.`
 * **Solution:** Add `depends_on "libdeflate"` into  gdk-pixbuf.rb file, or add the the pkgconfig path of libdeflate into the environment variable `PKG_CONFIG_PATH`.
 
-### libheif
+### [libheif](https://formulae.brew.sh/formula/libheif)
 * **Issue1:** `/tmp/libheif-20241109-81439-f0emb6/libheif-1.19.2/libheif/bitstream.cc:26:10: fatal error: 'bit' file not found`. "bit" is a standard library header since C++20 (gcc>=9 or llvm>=11).
 * **Solution1:** Use GCC or LLVM for compilation.
   `brew install libheif --cc=gcc-xx`
