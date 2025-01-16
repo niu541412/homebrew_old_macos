@@ -151,7 +151,7 @@ ld: 8 duplicate symbols for architecture x86_64
 
 * **Solution:** Needs GCC (or LLVM) for compilation. `brew install lftp --cc=gcc-xx`
 
-### [zig ](https://formulae.brew.sh/formula/zig )
+### [zig](https://formulae.brew.sh/formula/zig)
 > [!WARNING]  
 > (<=0.9.1_2, higher version not support)
 
@@ -268,3 +268,38 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
   cmake -S . -B build -DWITH_RAV1E=OFF -DWITH_DAV1D=OFF -DWITH_SvtEnc=OFF -DCMAKE_INSTALL_RPATH=@loader_path/../lib -DCMAKE_INSTALL_PREFIX=/usr/local/Cellar/libheif/1.17.6_1 -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_VERBOSE_MAKEFILE=ON -DFETCHCONTENT_FULLY_DISCONNECTED=ON -Wno-dev -DBUILD_TESTING=OFF -DWITH_GDK_PIXBUF=OFF
   #second error
   cmake -S . -B static -DWITH_RAV1E=OFF -DWITH_DAV1D=OFF -DWITH_SvtEnc=OFF -DCMAKE_INSTALL_RPATH=@loader_path/../lib -DCMAKE_INSTALL_PREFIX=/usr/local/Cellar/libheif/1.17.6_1 -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_VERBOSE_MAKEFILE=ON -DFETCHCONTENT_FULLY_DISCONNECTED=ON -Wno-dev -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=OFF -DWITH_GDK_PIXBUF=OFF~~
+
+
+
+### [sdl2](https://formulae.brew.sh/formula/sdl2)
+* **Issue:** `error: use of undeclared identifier 'kAudioChannelLayoutTag_WAVE_6_1' 'kAudioChannelLayoutTag_WAVE_7_1'`
+* **Solution:** Modify `/private/tmp/sdl2-balabala.../src/audio/coreaudio/SDL_coreaudio.m` by this patch:
+
+  ```diff
+  --- SDL_coreaudio.m     2025-01-17 00:24:16.000000000 +0800
+  +++ SDL_coreaudio.m     2025-01-17 00:20:11.000000000 +0800
+  @@ -23,6 +23,14 @@
+  #ifdef SDL_AUDIO_DRIVER_COREAUDIO
+  
+  /* !!! FIXME: clean out some of the macro salsa in here. */
+  +#ifndef kAudioChannelLayoutTag_WAVE_6_1
+  +#define kAudioChannelLayoutTag_WAVE_6_1 ((188U << 16) | 7)                     ///< 7 channels, L R C LFE Cs Ls Rs
+  +#endif
+  +
+  +#ifndef kAudioChannelLayoutTag_WAVE_7_1
+  +#define kAudioChannelLayoutTag_WAVE_7_1 ((188U << 16) | 8)                   ///< 8 channels, L R C LFE Rls Rrs Ls Rs
+  +#endif
+  +
+  
+  #include "SDL_audio.h"
+  #include "SDL_hints.h"
+  ```
+
+### [zimg](https://formulae.brew.sh/formula/zimg), [snappy](https://formulae.brew.sh/formula/snappy)
+
+- **Issue:** Undefined symbols ...
+- **Solution:** Use LLVM 16. Since brew's "-cc=llvm_clang" option only supports the latest LLVM, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. Then
+  
+  `brew install fomula --cc=llvm_clang`
+  
+  . After installation, revert the symlink to the original. Of course that if you compile the latest LLVM, this symlink will be overridden automatically.
