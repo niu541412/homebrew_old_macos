@@ -49,8 +49,7 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 ### [gcc](https://formulae.brew.sh/formula/gcc)
 
 - **Issue:** Any buiding errors
-- **Solution:** Use a specific version of GCC for compilation.
-  `brew install gcc --debug --cc=gcc-14`
+- **Solution:** Use a specific version of GCC for compilation. `brew install gcc --debug --cc=gcc-14`
 
 ### [ruby](https://formulae.brew.sh/formula/ruby)
 
@@ -58,8 +57,7 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 ```log
 ld: 8 duplicate symbols for architecture x86_64
 ```
-- **Solution:** Use a specific version of GCC for compilation.
-  `brew install ruby --debug --cc=gcc-14`
+- **Solution:** Use a specific version of GCC for compilation. `brew install ruby --debug --cc=gcc-14`
 - **Issuse2:** `Errno::ENOENT: No such file or directory @ apply2files...`
 - **Solution:** Replace tar follow this [link](https://github.com/koekeishiya/yabai/issues/1208#issuecomment-1171165126).
 
@@ -113,6 +111,10 @@ ld: 8 duplicate symbols for architecture x86_64
   
   extern "C" uint64_t LLVMRustDIBuilderCreateOpDeref() {
   ```
+### [ghc](https://formulae.brew.sh/formula/ghc)
+* **Issue:** `error: instruction requires: AVX-512 ISA`.
+* **Solution:** Use LLVM compile with specific version. `brew install ghc --cc=llvm_clang`
+
 
 ### [icu4c@76](https://formulae.brew.sh/formula/icu4c@76)
 * **Issue:** `configure:9742: error: Python failed to run`, icu4c uses "python" to build it. However, in deprecated macOS, "python" is python2.
@@ -139,18 +141,15 @@ ld: 8 duplicate symbols for architecture x86_64
 ### [ghostscript](https://formulae.brew.sh/formula/ghostscript)
 
 * **Issue:**  Can't build with llvm or recent gcc.
-* **Solution:** Use GCC compile with specific version.
-  `brew install ghostscript --cc=gcc-xx `
+* **Solution:** Use GCC compile with specific version. `brew install ghostscript --cc=gcc-xx `
 
 ### [numpy](https://formulae.brew.sh/formula/numpy)
 
-* **Solution:** Needs GCC or LLVM for compilation.
-  `brew install numpy --cc=llvm_clang`
+* **Solution:** Needs GCC or LLVM for compilation. `brew install numpy --cc=llvm_clang`
 
 ### [lftp](https://formulae.brew.sh/formula/lftp)
 
-* **Solution:** Needs GCC (or LLVM) for compilation.
-  `brew install lftp --cc=gcc-xx`
+* **Solution:** Needs GCC (or LLVM) for compilation. `brew install lftp --cc=gcc-xx`
 
 ### [zig ](https://formulae.brew.sh/formula/zig )
 > [!WARNING]  
@@ -229,8 +228,7 @@ ld: 8 duplicate symbols for architecture x86_64
 
 ### [doxygen](https://formulae.brew.sh/formula/doxygen)
 
-* **Solution:** Use a higher version of GCC for compilation.
-  `brew install doxygen --cc=gcc-14`
+* **Solution:** Use a higher version of GCC for compilation. `brew install doxygen --cc=gcc-14`
 
 ### [wget](https://formulae.brew.sh/formula/wget)
 * **Issue:** `configure: error: --with-ssl=openssl was given, but SSL is not available.`
@@ -238,17 +236,14 @@ ld: 8 duplicate symbols for architecture x86_64
 
 ### [jpeg-xl](https://formulae.brew.sh/formula/jpeg-xl)
 
-* **Solution:** Use a specific version (maybe <14) of GCC for compilation.
-  `brew install jpeg-xl --cc=gcc-13`
+* **Solution:** Use a specific version (maybe <14) of GCC for compilation. `brew install jpeg-xl --cc=gcc-13`
 
 ### [shared-mime-info](https://formulae.brew.sh/formula/shared-mime-info)
 
-* **Solution:** Use a higher version of GCC for compilation.
-  `brew install shared-mime-info --cc=gcc-14`
+* **Solution:** Use a higher version of GCC for compilation. `brew install shared-mime-info --cc=gcc-14`
 
 ### [openexr](https://formulae.brew.sh/formula/openexr)
-* **Solution:** Use a higher version of GCC for compilation.
-  `brew install openexr --cc=gcc-14`
+* **Solution:** Use a higher version of GCC for compilation. `brew install openexr --cc=gcc-14`
 
 ### [gdk-pixbuf](https://formulae.brew.sh/formula/gdk-pixbuf)
 * **Issue:** `Dependency lookup for libtiff-4 with method 'pkgconfig' failed: Could not generate cflags for libtiff-4:
@@ -257,8 +252,7 @@ Package libdeflate was not found in the pkg-config search path.`
 
 ### [libheif](https://formulae.brew.sh/formula/libheif)
 * **Issue1:** `/tmp/libheif-20241109-81439-f0emb6/libheif-1.19.2/libheif/bitstream.cc:26:10: fatal error: 'bit' file not found`. "bit" is a standard library header since C++20 (gcc>=9 or llvm>=11).
-* **Solution1:** Use GCC or LLVM for compilation.
-  `brew install libheif --cc=gcc-xx`
+* **Solution1:** Use GCC or LLVM for compilation. `brew install libheif --cc=gcc-xx`
 
 * **Issue2:** pkg_config not found package.
 ```
