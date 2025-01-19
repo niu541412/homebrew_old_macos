@@ -108,6 +108,28 @@ ld: 8 duplicate symbols for architecture x86_64
   
   extern "C" uint64_t llvmRustDIBuilderCreateOpDeref() {
   ```
+
+### [openjdk@17](https://formulae.brew.sh/formula/openjdk@17)
+- **Issue:** `cuse of undeclared identifier 'NSBundleExecutableArchitectureARM64'`
+- **Solution:**patch `jdk17u-jdk-17.balabala-ga/src/java.desktop/macosx/native/libawt_lwawt/awt/CGraphicsDevice.m CGraphicsDevice.m.diff` with
+  ```diff
+  --- CGraphicsDevice.m   2025-01-19 19:53:36.000000000 +0800
+  +++ CGraphicsDevice.m   2025-01-19 19:55:30.000000000 +0800
+  @@ -28,6 +28,10 @@
+  #include "GeomUtilities.h"
+  #include "JNIUtilities.h"
+  
+  +#ifndef NSBundleExecutableArchitectureARM64
+  +#define NSBundleExecutableArchitectureARM64 0x0100000c
+  +#endif
+  +
+  /**
+    * Some default values for invalid CoreGraphics display ID.
+    */
+  ```
+  And use llvm 16 to compile `brew install openjdk@17 --cc=llvm_clang`. 
+
+
 ### [ghc](https://formulae.brew.sh/formula/ghc)
 * **Issue:** `error: instruction requires: AVX-512 ISA`.
 * **Solution:** Use llvm compile with specific version. `brew install ghc --cc=llvm_clang`
@@ -134,7 +156,7 @@ ld: 8 duplicate symbols for architecture x86_64
 
 ### [ghostscript](https://formulae.brew.sh/formula/ghostscript)
 * **Issue:**  Can't build with llvm or recent gcc.
-* **Solution:** Use gcc compile with specific version. `brew install ghostscript --cc=gcc-xx `
+* **Solution:** Use gcc compile with specific version. `brew install ghostscript --cc=gcc-xx`
 
 ### [numpy](https://formulae.brew.sh/formula/numpy), [lftp](https://formulae.brew.sh/formula/lftp)
 * **Solution:** Needs gcc or llvm for compilation. `brew install fomula --cc=llvm_clang` or `brew install fomula --cc=gcc-xx`
