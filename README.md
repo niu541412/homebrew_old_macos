@@ -8,7 +8,8 @@ Below is a list of packages that can still be installed using the `brew` command
 
 Because Homebrew will not recieve pull request for unsupport macOS version, I only leave these tips here.
 
-> [!TIP] 
+> [!TIP]
+>
 > 1. **Use Older Compilers:** Sometimes, modern compilers are not compatible with older macOS versions. Consider using older versions of gcc or Clang.
 > 2. **Patching:** Some formulae might require patching to work correctly on older macOS versions. Check the formula's issues or pull requests for patches or create your own if needed.
 > 3. **Dependencies:** Ensure all dependencies are correctly installed. Sometimes, manual installation of dependencies is required.
@@ -39,32 +40,38 @@ Because Homebrew will not recieve pull request for unsupport macOS version, I on
 - **Reference:** [Stack Overflow: How to install llvm@13 on macOS High Sierra](https://stackoverflow.com/questions/69906053/how-to-install-llvm13-with-homerew-on-macos-high-sierra-10-13-6-got-built-tar)
 - **Issue2:** Undefined symbols "std::__1::__libcpp_verbose_abort(char const*, ...)" or something like this
 - **Solution:** Recommand to use the previous llvm as the brew C/C++ compiler, but for building llvm versions beyond 18, use llvm 16. Since brew's "-cc=llvm_clang" option only supports the latest llvm, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. Then
-  
+
   `brew install llvm --debug --cc=llvm_clang`
-  
+
   . After installation, revert the symlink to the original. Of course that if you compile the latest llvm, this symlink will be overridden automatically.
+
 > [!NOTE]
 > Python > 3.13 may conflict with llvm@16 during the build process. You can temporarily uninstall python forcefully and reinstall it later.
 
 ### [gcc](https://formulae.brew.sh/formula/gcc)
+
 - **Issue:** Any buiding errors
 - **Solution:** Use a specific version of gcc for compilation. `brew install gcc --debug --cc=gcc-14`
 
 ### [ruby](https://formulae.brew.sh/formula/ruby)
-- **Issue:** 
+
+- **Issue:**
+
 ```log
 ld: 8 duplicate symbols for architecture x86_64
 ```
+
 - **Solution:** Use a specific version of gcc for compilation. `brew install ruby --debug --cc=gcc-14`
 - **Issuse2:** `Errno::ENOENT: No such file or directory @ apply2files...`
 - **Solution:** Replace tar as following this [link](https://github.com/koekeishiya/yabai/issues/1208#issuecomment-1171165126).
 
 ### [z3](https://formulae.brew.sh/formula/z3)
+
 - **Issue:** Undefined symbols: "__ZN12rewriter_tplI17elim_term_ite_cfgEC2ER11ast_managerbRS0_"
 - **Solution:** Install the head version. `brew install z3 --HEAD `
 - **Reference:** [https://github.com/Z3Prover/z3/issues/6869](#6869)
 
-### [gsl (>=2.8)](https://formulae.brew.sh/formula/gsl (>=2.8))
+### [gsl (&gt;=2.8)](https://formulae.brew.sh/formula/gsl "&gt;=2.8")
 
 * **Issue:** ld parameter issue.
 * **Solution:** Patch `configure` script.
@@ -84,17 +91,20 @@ ld: 8 duplicate symbols for architecture x86_64
   ```
 
 ### [rust](https://formulae.brew.sh/formula/rust)
-- ~~<= 1.82.0~~
-~~* **Issue1:** Python dependency. Recent rust will use "python" to build libaray. However, in deprecated macOS, "python" is python2.~~
-~~* **Solution:** Change PATH in debug mode or modify the `configure` file.~~
-~~* **Issue2:** /usr/local/Cellar/llvm/19.1.2/include/llvm/CodeGen/MachineFunction.h:440:39: error: call to unavailable function 'get': introduced in macOS 10.14~~
-~~* **Solution:** use llvm 17, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. llvm is mandatory to compile in rust formula.~~
 
-- \>1.83.0 
+- ~~<= 1.82.0~~
+  ~~* **Issue1:** Python dependency. Recent rust will use "python" to build libaray. However, in deprecated macOS, "python" is python2.~~
+  ~~* **Solution:** Change PATH in debug mode or modify the `configure` file.~~
+  ~~* **Issue2:** /usr/local/Cellar/llvm/19.1.2/include/llvm/CodeGen/MachineFunction.h:440:39: error: call to unavailable function 'get': introduced in macOS 10.14~~
+  ~~* **Solution:** use llvm 17, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. llvm is mandatory to compile in rust formula.~~
+- \>1.83.0
+
   - **Solution:** use llvm 18, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. llvm is mandatory to compile in rust formula.
-- \>1.84.0 
+- \>1.84.0
+
   - **Issue:** `call to unavailable member function 'value': introduced in macOS 10.14`
   - **Solution:** patch `rustc-balabala-src/compiler/rustc_llvm/llvm-wrapper/RustWrapper.cpp` with
+
   ```diff
   --- RustWrapper.cpp	2025-01-15 20:39:28
   +++ RustWrapper.cpp	2025-01-15 20:39:53
@@ -105,11 +115,15 @@ ld: 8 duplicate symbols for architecture x86_64
   -  return wrap(NewLoc.has_value() ? NewLoc.value() : nullptr);
   +  return wrap(NewLoc.has_value() ? *NewLoc : nullptr);
   }
-  
+
   extern "C" uint64_t llvmRustDIBuilderCreateOpDeref() {
   ```
+> [!NOTE]
+> Maybe also need llvm 18 and need to run `make` or `build/bootstrap/debug/bootstrap build --stage 2 -v` manually (not sure) in the shell after building fails with the brew command.
+
 
 ### [openjdk@17](https://formulae.brew.sh/formula/openjdk@17)
+
 - **Issue:** `cuse of undeclared identifier 'NSBundleExecutableArchitectureARM64'`
 - **Solution:**patch `jdk17u-jdk-17.balabala-ga/src/java.desktop/macosx/native/libawt_lwawt/awt/CGraphicsDevice.m CGraphicsDevice.m.diff` with
   ```diff
@@ -118,7 +132,7 @@ ld: 8 duplicate symbols for architecture x86_64
   @@ -28,6 +28,10 @@
   #include "GeomUtilities.h"
   #include "JNIUtilities.h"
-  
+
   +#ifndef NSBundleExecutableArchitectureARM64
   +#define NSBundleExecutableArchitectureARM64 0x0100000c
   +#endif
@@ -127,45 +141,55 @@ ld: 8 duplicate symbols for architecture x86_64
     * Some default values for invalid CoreGraphics display ID.
     */
   ```
-  And use llvm 16 to compile `brew install openjdk@17 --cc=llvm_clang`. 
 
+  And use llvm 16 to compile `brew install openjdk@17 --cc=llvm_clang`.
 
 ### [ghc](https://formulae.brew.sh/formula/ghc)
+
 * **Issue:** `error: instruction requires: AVX-512 ISA`.
 * **Solution:** Use llvm compile with specific version. `brew install ghc --cc=llvm_clang`
 
-
 ### [icu4c@76](https://formulae.brew.sh/formula/icu4c@76)
+
 * **Issue:** `configure:9742: error: Python failed to run`, icu4c uses "python" to build it. However, in deprecated macOS, "python" is python2.
 * **Solution:** Add `depends_on "python"` into the local rb file.
 
 ### [carthage](https://formulae.brew.sh/formula/carthage)
+
 * **Issue:**  `swift-build-tool -f .build/release.yaml` shows error:
+
 ```log
 /private/tmp/carthage/Source/XCDBLD/XcodeVersion.swift:18:2: error: missing return in a function expected to return 'Int?
 ```
+
 * **Solution:** let this function provide a return value, i.e., add **return** before line 18: `version.components(separatedBy: ".").first.flatMap(Int.init)` of "XcodeVersion.swift".
 
 ### [btop](https://formulae.brew.sh/formula/btop)
+
 * **Issue:** linking errors, Undefined symbols for architecture x86_64:
 * **Solution:** Use gcc to build it. However the fomula [.rb file](https://github.com/Homebrew/homebrew-core/blob/master/Formula/b/btop.rb) is mandatory to use llvm, so need to modify it and install from local. `depends_on "llvm"...` => `depends_on "gcc"...`; `ENV.llvm_clang if OS.mac?...` => `ENV.cxx if OS.mac?...`
 
 ### [tesseract](https://formulae.brew.sh/formula/tesseract)
+
 * **Issue:** fatal error: `filesystem` file not found
 * **Solution:** For the src file using header `filesystem`, e.g. baseapi.cpp, ccutil.cpp, use the code in 5.4.0 version. Remove training options during `make` and `make install` steps.
 
 ### [ghostscript](https://formulae.brew.sh/formula/ghostscript)
+
 * **Issue:**  Can't build with llvm or recent gcc.
 * **Solution:** Use gcc compile with specific version. `brew install ghostscript --cc=gcc-xx`
 
 ### [numpy](https://formulae.brew.sh/formula/numpy), [lftp](https://formulae.brew.sh/formula/lftp)
+
 * **Solution:** Needs gcc or llvm for compilation. `brew install fomula --cc=llvm_clang` or `brew install fomula --cc=gcc-xx`
 
 ### [coreutils](https://formulae.brew.sh/formula/coreutils)
+
 * **Solution:** Use llvm. `brew install coreutils --cc=llvm_clang`
 
 ### [zig](https://formulae.brew.sh/formula/zig)
-> [!WARNING]  
+
+> [!WARNING]
 > (<=0.9.1_2, higher version not support)
 
 * **Issue:** Compatibility issue.
@@ -195,7 +219,8 @@ ld: 8 duplicate symbols for architecture x86_64
 
 - **Reference** [https://github.com/ziglang/zig/issues/10318](#10318), [https://github.com/ziglang/zig/pull/11684](#11684)
 
-### [ncdu (>2)](https://formulae.brew.sh/formula/ncdu (>2))
+### [ncdu (&gt;2)](https://formulae.brew.sh/formula/ncdu "&gt;2")
+
 * **Issue:** depends on a recent zig.
 * **Solution:** Download the bottle for monterey and modify the link path.
 
@@ -214,10 +239,12 @@ ld: 8 duplicate symbols for architecture x86_64
   libncurse_new=${HOMEBREW_PREFIX}$(echo $libncurse_path|sed s/@@HOMEBREW_PREFIX@@//g)
   sudo install_name_tool -change $libncurse_path $libncurse_new $ncdu_executable
   ```
+
 > [!NOTE]
 > [`gdu`](https://github.com/dundee/gdu) which is written in go provides similar function to `ncdu`.
 
 ### [openssl@3](https://formulae.brew.sh/formula/openssl@3)
+
 * **Issue:** Possible test failures.
 * **Solution:** Use debug mode and manually run tests.
   Run `brew install openssl@3 --debug`
@@ -227,46 +254,54 @@ ld: 8 duplicate symbols for architecture x86_64
 * **Reference:** [OpenSSL Issue on GitHub](https://github.com/openssl/openssl/issues/22467#issuecomment-1779402143)
 
 ### [difftastic](https://formulae.brew.sh/formula/difftastic)
+
 * **Issue:** unknown type name 'CCCryptorStatus'.
 * **Solution:** Add header in system file `/usr/include/CommonCrypto/CommonRandom.h`. I think this issue maybe fixed by author later.
 
   `#include <CommonCrypto/CommonCryptoError.h>`
-  
+
   ~~Then compile with llvm
   `brew install difftastic --cc=llvm_clang`~~
 * **Reference:** [can not build mimalloc](https://github.com/microsoft/mimalloc/issues/549)
 
 ### [doxygen](https://formulae.brew.sh/formula/doxygen)
+
 * **Solution:** Use a higher version of gcc for compilation. `brew install doxygen --cc=gcc-14`
 
 ### [wget](https://formulae.brew.sh/formula/wget)
+
 * **Issue:** `configure: error: --with-ssl=openssl was given, but SSL is not available.`
 * **Solution:** libssl.dylib provided by macOS don't have `_OPENSSL_init_ssl` symbol. Set LDFLAGS include /usr/local/lib to use the libssl provided by homebrew.
 
 ### [jpeg-xl](https://formulae.brew.sh/formula/jpeg-xl)
+
 * **Solution:** Use a specific version (maybe <14) of gcc for compilation. `brew install jpeg-xl --cc=gcc-13`
 
 ### [shared-mime-info](https://formulae.brew.sh/formula/shared-mime-info)
+
 * **Solution:** Use a higher version of gcc for compilation. `brew install shared-mime-info --cc=gcc-14`
 
 ### [openexr](https://formulae.brew.sh/formula/openexr)
+
 * **Solution:** Use a higher version of gcc for compilation. `brew install openexr --cc=gcc-14`
 
 ### [gdk-pixbuf](https://formulae.brew.sh/formula/gdk-pixbuf)
-* **Issue:** `Dependency lookup for libtiff-4 with method 'pkgconfig' failed: Could not generate cflags for libtiff-4:
-Package libdeflate was not found in the pkg-config search path.`
+
+* **Issue:** `Dependency lookup for libtiff-4 with method 'pkgconfig' failed: Could not generate cflags for libtiff-4: Package libdeflate was not found in the pkg-config search path.`
 * **Solution:** Add `depends_on "libdeflate"` into  gdk-pixbuf.rb file, or add the the pkgconfig path of libdeflate into the environment variable `PKG_CONFIG_PATH`.
 
 ### [libheif](https://formulae.brew.sh/formula/libheif)
+
 * **Issue1:** `/tmp/libheif-20241109-81439-f0emb6/libheif-1.19.2/libheif/bitstream.cc:26:10: fatal error: 'bit' file not found`. "bit" is a standard library header since C++20 (gcc>=9 or llvm>=11).
 * **Solution1:** Use gcc or llvm for compilation. `brew install libheif --cc=gcc-xx`
-
 * **Issue2:** pkg_config not found package.
+
 ```
 CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
   install TARGETS given no LIBRARY DESTINATION for module target
   "pixbufloader-heif".
 ```
+
 * **Solution2:** do not pre-install gdk-pixbuf package, or uninstall it then reinstall it again.
 
 ~~brew install in debug mode `brew install libheif --debug`, then choose to the shell and run cmake with specific flags.~~
@@ -276,9 +311,59 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
   #second error
   cmake -S . -B static -DWITH_RAV1E=OFF -DWITH_DAV1D=OFF -DWITH_SvtEnc=OFF -DCMAKE_INSTALL_RPATH=@loader_path/../lib -DCMAKE_INSTALL_PREFIX=/usr/local/Cellar/libheif/1.17.6_1 -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_VERBOSE_MAKEFILE=ON -DFETCHCONTENT_FULLY_DISCONNECTED=ON -Wno-dev -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=OFF -DWITH_GDK_PIXBUF=OFF~~
 
+### [abseil](https://formulae.brew.sh/formula/abseil)
 
+- **Issue:** `call to unavailable member function 'value': introduced in macOS 10.14`
+- **Solution1:** Use llvm 16. Since brew's "-cc=llvm_clang" option only supports the latest llvm, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. Then
+
+  `brew install abseil --cc=llvm_clang`
+
+  . After installation, revert the symlink to the original. Of course that if you compile the latest llvm, this symlink will be overridden automatically.
+
+- ~~**Solution2:** patch `absl/status/internal/status_internal.cc` with~~
+```diff
+  --- status_internal.cc	2024-08-02 02:05:11.000000000 +0800
+  +++ status_internal.cc	2025-01-21 15:04:44.000000000 +0800
+  @@ -70,7 +70,7 @@ absl::optional<absl::Cord> StatusRep::Ge
+      absl::string_view type_url) const {
+    absl::optional<size_t> index =
+        status_internal::FindPayloadIndexByUrl(payloads_.get(), type_url);
+  -  if (index.has_value()) return (*payloads_)[index.value()].payload;
+  +  if (index.has_value()) return (*payloads_)[*index].payload;
+  
+    return absl::nullopt;
+  }
+  @@ -83,7 +83,7 @@ void StatusRep::SetPayload(absl::string_
+    absl::optional<size_t> index =
+        status_internal::FindPayloadIndexByUrl(payloads_.get(), type_url);
+    if (index.has_value()) {
+  -    (*payloads_)[index.value()].payload = std::move(payload);
+  +    (*payloads_)[*index].payload = std::move(payload);
+      return;
+    }
+  
+  @@ -94,7 +94,7 @@ StatusRep::EraseResult StatusRep::EraseP
+    absl::optional<size_t> index =
+        status_internal::FindPayloadIndexByUrl(payloads_.get(), type_url);
+    if (!index.has_value()) return {false, Status::PointerToRep(this)};
+  -  payloads_->erase(payloads_->begin() + index.value());
+  +  payloads_->erase(payloads_->begin() + *index);
+    if (payloads_->empty() && message_.empty()) {
+      // Special case: If this can be represented inlined, it MUST be inlined
+      // (== depends on this behavior).
+```
+
+### [protobuf](https://formulae.brew.sh/formula/protobuf)
+
+- **Issue:** `call to unavailable member function 'value': introduced in macOS 10.14`
+- **Solution1:** Use llvm 16. Since brew's "-cc=llvm_clang" option only supports the latest llvm, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. Then
+
+  `brew install protobuf --cc=llvm_clang`
+
+  . After installation, revert the symlink to the original. Of course that if you compile the latest llvm, this symlink will be overridden automatically.
 
 ### [sdl2](https://formulae.brew.sh/formula/sdl2)
+
 * **Issue:** `error: use of undeclared identifier 'kAudioChannelLayoutTag_WAVE_6_1' 'kAudioChannelLayoutTag_WAVE_7_1'`
 * **Solution:** Modify `/private/tmp/sdl2-balabala.../src/audio/coreaudio/SDL_coreaudio.m` by this patch:
 
@@ -287,7 +372,7 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
   +++ SDL_coreaudio.m     2025-01-17 00:20:11.000000000 +0800
   @@ -23,6 +23,14 @@
   #ifdef SDL_AUDIO_DRIVER_COREAUDIO
-  
+
   /* !!! FIXME: clean out some of the macro salsa in here. */
   +#ifndef kAudioChannelLayoutTag_WAVE_6_1
   +#define kAudioChannelLayoutTag_WAVE_6_1 ((188U << 16) | 7)                     ///< 7 channels, L R C LFE Cs Ls Rs
@@ -297,7 +382,7 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
   +#define kAudioChannelLayoutTag_WAVE_7_1 ((188U << 16) | 8)                   ///< 8 channels, L R C LFE Rls Rrs Ls Rs
   +#endif
   +
-  
+
   #include "SDL_audio.h"
   #include "SDL_hints.h"
   ```
@@ -306,7 +391,34 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
 
 - **Issue:** Undefined symbols ...
 - **Solution:** Use llvm 16. Since brew's "-cc=llvm_clang" option only supports the latest llvm, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. Then
-  
+
   `brew install fomula --cc=llvm_clang`
-  
+
   . After installation, revert the symlink to the original. Of course that if you compile the latest llvm, this symlink will be overridden automatically.
+
+
+### [folly](https://formulae.brew.sh/formula/folly)
+
+Use llvm 16/17 to build it.
+
+- **Issue1:** `    AsyncSocket::failRead(__func__, ex);
+                 ^~~~~~~~
+fatal error: too many errors emitted, stopping now [-ferror-limit=]`
+- **Solution:** Add `folly-balabala/folly/io/async/fdsock/AsyncFdSocket.h` with these macros:
+```c++
+#ifdef __APPLE__
+#include <AvailabilityMacros.h>
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 110000
+#ifdef __DARWIN_ALIGN32
+#undef __DARWIN_ALIGN32
+#define __DARWIN_ALIGN32(p) ((__darwin_size_t)((__darwin_size_t)(p) + __DARWIN_ALIGNBYTES32) &~ __DARWIN_ALIGNBYTES32)
+#endif
+#endif
+#endif
+```
+- **Issue2:**  Linker error
+- **Solution:** Add llvm `libc++.dylib` path to the end of the link script 
+`folly-balabala/build/shared/CMakeFiles/folly.dir/link.txt`, i.e. 
+`/usr/local/opt/llvm/lib/c++/libc++.dylib` or `/usr/local/opt/llvm@16/lib/c++/libc++.dylib`
+
+
