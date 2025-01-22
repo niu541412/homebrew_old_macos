@@ -145,29 +145,23 @@ ld: 8 duplicate symbols for architecture x86_64
   And use llvm 16 to compile `brew install openjdk@17 --cc=llvm_clang`.
 
 ### [ghc](https://formulae.brew.sh/formula/ghc)
-
 * **Issue:** `error: instruction requires: AVX-512 ISA`.
 * **Solution:** Use llvm compile with specific version. `brew install ghc --cc=llvm_clang`
 
 ### [icu4c@76](https://formulae.brew.sh/formula/icu4c@76)
-
 * **Issue:** `configure:9742: error: Python failed to run`, icu4c uses "python" to build it. However, in deprecated macOS, "python" is python2.
 * **Solution:** Add `depends_on "python"` into the local rb file.
 
 ### [carthage](https://formulae.brew.sh/formula/carthage)
-
 * **Issue:**  `swift-build-tool -f .build/release.yaml` shows error:
-
 ```log
 /private/tmp/carthage/Source/XCDBLD/XcodeVersion.swift:18:2: error: missing return in a function expected to return 'Int?
 ```
-
 * **Solution:** let this function provide a return value, i.e., add **return** before line 18: `version.components(separatedBy: ".").first.flatMap(Int.init)` of "XcodeVersion.swift".
 
 ### [btop](https://formulae.brew.sh/formula/btop)
-
 * **Issue:** linking errors, Undefined symbols for architecture x86_64:
-* **Solution:** Use gcc to build it. However the fomula [.rb file](https://github.com/Homebrew/homebrew-core/blob/master/Formula/b/btop.rb) is mandatory to use llvm, so need to modify it and install from local. `depends_on "llvm"...` => `depends_on "gcc"...`; `ENV.llvm_clang if OS.mac?...` => `ENV.cxx if OS.mac?...`
+* **Solution:** Use gcc to build it. However the formula [.rb file](https://github.com/Homebrew/homebrew-core/blob/master/Formula/b/btop.rb) is mandatory to use llvm, so need to modify it and install from local. `depends_on "llvm"...` => `depends_on "gcc"...`; `ENV.llvm_clang if OS.mac?...` => `ENV.cxx if OS.mac?...`
 
 ### [tesseract](https://formulae.brew.sh/formula/tesseract)
 
@@ -181,10 +175,9 @@ ld: 8 duplicate symbols for architecture x86_64
 
 ### [numpy](https://formulae.brew.sh/formula/numpy), [lftp](https://formulae.brew.sh/formula/lftp)
 
-* **Solution:** Needs gcc or llvm for compilation. `brew install fomula --cc=llvm_clang` or `brew install fomula --cc=gcc-xx`
+* **Solution:** Needs gcc or llvm for compilation. `brew install formula --cc=llvm_clang` or `brew install formula --cc=gcc-xx`
 
 ### [coreutils](https://formulae.brew.sh/formula/coreutils)
-
 * **Solution:** Use llvm. `brew install coreutils --cc=llvm_clang`
 
 ### [zig](https://formulae.brew.sh/formula/zig)
@@ -244,7 +237,6 @@ ld: 8 duplicate symbols for architecture x86_64
 > [`gdu`](https://github.com/dundee/gdu) which is written in go provides similar function to `ncdu`.
 
 ### [openssl@3](https://formulae.brew.sh/formula/openssl@3)
-
 * **Issue:** Possible test failures.
 * **Solution:** Use debug mode and manually run tests.
   Run `brew install openssl@3 --debug`
@@ -254,7 +246,6 @@ ld: 8 duplicate symbols for architecture x86_64
 * **Reference:** [OpenSSL Issue on GitHub](https://github.com/openssl/openssl/issues/22467#issuecomment-1779402143)
 
 ### [difftastic](https://formulae.brew.sh/formula/difftastic)
-
 * **Issue:** unknown type name 'CCCryptorStatus'.
 * **Solution:** Add header in system file `/usr/include/CommonCrypto/CommonRandom.h`. I think this issue maybe fixed by author later.
 
@@ -265,28 +256,22 @@ ld: 8 duplicate symbols for architecture x86_64
 * **Reference:** [can not build mimalloc](https://github.com/microsoft/mimalloc/issues/549)
 
 ### [doxygen](https://formulae.brew.sh/formula/doxygen)
-
 * **Solution:** Use a higher version of gcc for compilation. `brew install doxygen --cc=gcc-14`
 
 ### [wget](https://formulae.brew.sh/formula/wget)
-
 * **Issue:** `configure: error: --with-ssl=openssl was given, but SSL is not available.`
 * **Solution:** libssl.dylib provided by macOS don't have `_OPENSSL_init_ssl` symbol. Set LDFLAGS include /usr/local/lib to use the libssl provided by homebrew.
 
 ### [jpeg-xl](https://formulae.brew.sh/formula/jpeg-xl)
-
 * **Solution:** Use a specific version (maybe <14) of gcc for compilation. `brew install jpeg-xl --cc=gcc-13`
 
 ### [shared-mime-info](https://formulae.brew.sh/formula/shared-mime-info)
-
 * **Solution:** Use a higher version of gcc for compilation. `brew install shared-mime-info --cc=gcc-14`
 
 ### [openexr](https://formulae.brew.sh/formula/openexr)
-
 * **Solution:** Use a higher version of gcc for compilation. `brew install openexr --cc=gcc-14`
 
 ### [gdk-pixbuf](https://formulae.brew.sh/formula/gdk-pixbuf)
-
 * **Issue:** `Dependency lookup for libtiff-4 with method 'pkgconfig' failed: Could not generate cflags for libtiff-4: Package libdeflate was not found in the pkg-config search path.`
 * **Solution:** Add `depends_on "libdeflate"` into  gdk-pixbuf.rb file, or add the the pkgconfig path of libdeflate into the environment variable `PKG_CONFIG_PATH`.
 
@@ -303,7 +288,6 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
 ```
 
 * **Solution2:** do not pre-install gdk-pixbuf package, or uninstall it then reinstall it again.
-
 ~~brew install in debug mode `brew install libheif --debug`, then choose to the shell and run cmake with specific flags.~~
   ~~shell
   #first error
@@ -311,59 +295,13 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
   #second error
   cmake -S . -B static -DWITH_RAV1E=OFF -DWITH_DAV1D=OFF -DWITH_SvtEnc=OFF -DCMAKE_INSTALL_RPATH=@loader_path/../lib -DCMAKE_INSTALL_PREFIX=/usr/local/Cellar/libheif/1.17.6_1 -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_VERBOSE_MAKEFILE=ON -DFETCHCONTENT_FULLY_DISCONNECTED=ON -Wno-dev -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=OFF -DWITH_GDK_PIXBUF=OFF~~
 
-### [abseil](https://formulae.brew.sh/formula/abseil)
-
-- **Issue:** `call to unavailable member function 'value': introduced in macOS 10.14`
-- **Solution1:** Use llvm 16. Since brew's "-cc=llvm_clang" option only supports the latest llvm, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. Then
-
-  `brew install abseil --cc=llvm_clang`
-
-  . After installation, revert the symlink to the original. Of course that if you compile the latest llvm, this symlink will be overridden automatically.
-
-- ~~**Solution2:** patch `absl/status/internal/status_internal.cc` with~~
-```diff
-  --- status_internal.cc	2024-08-02 02:05:11.000000000 +0800
-  +++ status_internal.cc	2025-01-21 15:04:44.000000000 +0800
-  @@ -70,7 +70,7 @@ absl::optional<absl::Cord> StatusRep::Ge
-      absl::string_view type_url) const {
-    absl::optional<size_t> index =
-        status_internal::FindPayloadIndexByUrl(payloads_.get(), type_url);
-  -  if (index.has_value()) return (*payloads_)[index.value()].payload;
-  +  if (index.has_value()) return (*payloads_)[*index].payload;
-  
-    return absl::nullopt;
-  }
-  @@ -83,7 +83,7 @@ void StatusRep::SetPayload(absl::string_
-    absl::optional<size_t> index =
-        status_internal::FindPayloadIndexByUrl(payloads_.get(), type_url);
-    if (index.has_value()) {
-  -    (*payloads_)[index.value()].payload = std::move(payload);
-  +    (*payloads_)[*index].payload = std::move(payload);
-      return;
-    }
-  
-  @@ -94,7 +94,7 @@ StatusRep::EraseResult StatusRep::EraseP
-    absl::optional<size_t> index =
-        status_internal::FindPayloadIndexByUrl(payloads_.get(), type_url);
-    if (!index.has_value()) return {false, Status::PointerToRep(this)};
-  -  payloads_->erase(payloads_->begin() + index.value());
-  +  payloads_->erase(payloads_->begin() + *index);
-    if (payloads_->empty() && message_.empty()) {
-      // Special case: If this can be represented inlined, it MUST be inlined
-      // (== depends on this behavior).
-```
-
-### [protobuf](https://formulae.brew.sh/formula/protobuf)
-
-- **Issue:** `call to unavailable member function 'value': introduced in macOS 10.14`
-- **Solution1:** Use llvm 16. Since brew's "-cc=llvm_clang" option only supports the latest llvm, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. Then
-
-  `brew install protobuf --cc=llvm_clang`
-
-  . After installation, revert the symlink to the original. Of course that if you compile the latest llvm, this symlink will be overridden automatically.
+### [abseil](https://formulae.brew.sh/formula/abseil), [protobuf](https://formulae.brew.sh/formula/protobuf)
+- **Issue:** Linking error.
+- **Solution1:** Use llvm `brew install formula --cc=llvm_clang`.
+Add `-DCMAKE_SHARED_LINKER_FLAGS=/usr/local/opt/llvm/lib/c++/libc++.dylib` to the cmake command
+`cmake -S . -B balabala...` to avoid the linking error.
 
 ### [sdl2](https://formulae.brew.sh/formula/sdl2)
-
 * **Issue:** `error: use of undeclared identifier 'kAudioChannelLayoutTag_WAVE_6_1' 'kAudioChannelLayoutTag_WAVE_7_1'`
 * **Solution:** Modify `/private/tmp/sdl2-balabala.../src/audio/coreaudio/SDL_coreaudio.m` by this patch:
 
@@ -387,20 +325,13 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
   #include "SDL_hints.h"
   ```
 
-### [zimg](https://formulae.brew.sh/formula/zimg), [snappy](https://formulae.brew.sh/formula/snappy), [freerdp](https://formulae.brew.sh/formula/freerdp)
-
-- **Issue:** Undefined symbols ...
-- **Solution:** Use llvm 16. Since brew's "-cc=llvm_clang" option only supports the latest llvm, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. Then
-
-  `brew install fomula --cc=llvm_clang`
-
-  . After installation, revert the symlink to the original. Of course that if you compile the latest llvm, this symlink will be overridden automatically.
-
+### [snappy](https://formulae.brew.sh/formula/snappy)
+- **Issue:** Linking error.
+- **Solution:** Use llvm `brew install formula --cc=llvm_clang`.
+Add `-DCMAKE_SHARED_LINKER_FLAGS=/usr/local/opt/llvm/lib/c++/libc++.dylib` to the cmake command
+`cmake -S . -B build/shared balabala...` to avoid the linking error.
 
 ### [folly](https://formulae.brew.sh/formula/folly)
-
-Use llvm 16/17 to build it.
-
 - **Issue1:** `    AsyncSocket::failRead(__func__, ex);
                  ^~~~~~~~
 fatal error: too many errors emitted, stopping now [-ferror-limit=]`
@@ -416,9 +347,28 @@ fatal error: too many errors emitted, stopping now [-ferror-limit=]`
 #endif
 #endif
 ```
+- **Reference:** [Installation with homebrew fails (Mac) #2031](https://github.com/facebook/folly/issues/2031#issuecomment-1752127213)
+
 - **Issue2:**  Linker error
-- **Solution:** Add llvm `libc++.dylib` path to the end of the link script 
-`folly-balabala/build/shared/CMakeFiles/folly.dir/link.txt`, i.e. 
-`/usr/local/opt/llvm/lib/c++/libc++.dylib` or `/usr/local/opt/llvm@16/lib/c++/libc++.dylib`
+- **Solution:** Use llvm `brew install folly --cc=llvm_clang`.
+  + Add `-DCMAKE_SHARED_LINKER_FLAGS=/usr/local/opt/llvm/lib/c++/libc++.dylib` to the cmake command
+`cmake -S . -B build/shared balabala...` to avoid the linking error.
+  + Add `-DCMAKE_EXE_LINKER_FLAGS=/usr/local/opt/llvm/lib/c++/libc++.dylib` to the cmake command
+`cmake -S . -B build/static balabala...` to avoid the linking error.
 
 
+### [poppler](https://formulae.brew.sh/formula/poppler)
+- **Issue2:**  Linker error
+- **Solution:** Use llvm `brew install poppler --cc=llvm_clang`.
+  + Add `-DCMAKE_SHARED_LINKER_FLAGS=/usr/local/opt/llvm/lib/c++/libc++.dylib` and `-DCMAKE_EXE_LINKER_FLAGS=/usr/local/opt/llvm/lib/c++/libc++.dylib` to the cmake command `cmake -S . -B build/shared balabala...` to avoid the linking error.
+  + Add `-DCMAKE_EXE_LINKER_FLAGS=/usr/local/opt/llvm/lib/c++/libc++.dylib` to the cmake command `cmake -S . -B build/static balabala...` to avoid the linking error.
+
+
+### ~~[freerdp](https://formulae.brew.sh/formula/freerdp)~~
+
+- **Issue:** Undefined symbols ...
+- **Solution:** Use llvm 16. Since brew's "-cc=llvm_clang" option only supports the latest llvm, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. Then
+
+  `brew install formula --cc=llvm_clang`
+
+  . After installation, revert the symlink to the original. Of course that if you compile the latest llvm, this symlink will be overridden automatically.
