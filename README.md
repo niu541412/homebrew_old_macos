@@ -295,10 +295,10 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
   #second error
   cmake -S . -B static -DWITH_RAV1E=OFF -DWITH_DAV1D=OFF -DWITH_SvtEnc=OFF -DCMAKE_INSTALL_RPATH=@loader_path/../lib -DCMAKE_INSTALL_PREFIX=/usr/local/Cellar/libheif/1.17.6_1 -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_VERBOSE_MAKEFILE=ON -DFETCHCONTENT_FULLY_DISCONNECTED=ON -Wno-dev -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=OFF -DWITH_GDK_PIXBUF=OFF~~
 
-### [abseil](https://formulae.brew.sh/formula/abseil), [protobuf](https://formulae.brew.sh/formula/protobuf)
+### [snappy](https://formulae.brew.sh/formula/snappy), [abseil](https://formulae.brew.sh/formula/abseil), [protobuf](https://formulae.brew.sh/formula/protobuf)
 - **Issue:** Linking error.
 - **Solution1:** Use llvm `brew install formula --cc=llvm_clang`.
-Add `-DCMAKE_SHARED_LINKER_FLAGS=/usr/local/opt/llvm/lib/c++/libc++.dylib` to the cmake command
+Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command
 `cmake -S . -B balabala...` to avoid the linking error.
 
 ### [sdl2](https://formulae.brew.sh/formula/sdl2)
@@ -325,12 +325,6 @@ Add `-DCMAKE_SHARED_LINKER_FLAGS=/usr/local/opt/llvm/lib/c++/libc++.dylib` to th
   #include "SDL_hints.h"
   ```
 
-### [snappy](https://formulae.brew.sh/formula/snappy)
-- **Issue:** Linking error.
-- **Solution:** Use llvm `brew install formula --cc=llvm_clang`.
-Add `-DCMAKE_SHARED_LINKER_FLAGS=/usr/local/opt/llvm/lib/c++/libc++.dylib` to the cmake command
-`cmake -S . -B build/shared balabala...` to avoid the linking error.
-
 ### [folly](https://formulae.brew.sh/formula/folly)
 - **Issue1:** `    AsyncSocket::failRead(__func__, ex);
                  ^~~~~~~~
@@ -351,24 +345,20 @@ fatal error: too many errors emitted, stopping now [-ferror-limit=]`
 
 - **Issue2:**  Linker error
 - **Solution:** Use llvm `brew install folly --cc=llvm_clang`.
-  + Add `-DCMAKE_SHARED_LINKER_FLAGS=/usr/local/opt/llvm/lib/c++/libc++.dylib` to the cmake command
+  + Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command
 `cmake -S . -B build/shared balabala...` to avoid the linking error.
-  + Add `-DCMAKE_EXE_LINKER_FLAGS=/usr/local/opt/llvm/lib/c++/libc++.dylib` to the cmake command
+  + Add `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command
 `cmake -S . -B build/static balabala...` to avoid the linking error.
 
 
 ### [poppler](https://formulae.brew.sh/formula/poppler)
 - **Issue2:**  Linker error
 - **Solution:** Use llvm `brew install poppler --cc=llvm_clang`.
-  + Add `-DCMAKE_SHARED_LINKER_FLAGS=/usr/local/opt/llvm/lib/c++/libc++.dylib` and `-DCMAKE_EXE_LINKER_FLAGS=/usr/local/opt/llvm/lib/c++/libc++.dylib` to the cmake command `cmake -S . -B build/shared balabala...` to avoid the linking error.
-  + Add `-DCMAKE_EXE_LINKER_FLAGS=/usr/local/opt/llvm/lib/c++/libc++.dylib` to the cmake command `cmake -S . -B build/static balabala...` to avoid the linking error.
+  + Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command `cmake -S . -B build/shared balabala...` to avoid the linking error.
+  + Add `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command `cmake -S . -B build/static balabala...` to avoid the linking error.
 
 
-### ~~[freerdp](https://formulae.brew.sh/formula/freerdp)~~
-
-- **Issue:** Undefined symbols ...
-- **Solution:** Use llvm 16. Since brew's "-cc=llvm_clang" option only supports the latest llvm, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. Then
-
-  `brew install formula --cc=llvm_clang`
-
-  . After installation, revert the symlink to the original. Of course that if you compile the latest llvm, this symlink will be overridden automatically.
+### [freerdp](https://formulae.brew.sh/formula/freerdp)
+- **Issue2:**  Linker error
+- **Solution:** Use llvm `brew install freerdp --cc=llvm_clang`.
+  + Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command `cmake -S . -B build/shared balabala...` to avoid the linking error.
