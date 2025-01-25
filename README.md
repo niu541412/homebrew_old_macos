@@ -125,7 +125,7 @@ ld: 8 duplicate symbols for architecture x86_64
 ### [openjdk@17](https://formulae.brew.sh/formula/openjdk@17)
 
 - **Issue:** `cuse of undeclared identifier 'NSBundleExecutableArchitectureARM64'`
-- **Solution:**patch `jdk17u-jdk-17.balabala-ga/src/java.desktop/macosx/native/libawt_lwawt/awt/CGraphicsDevice.m CGraphicsDevice.m.diff` with
+- **Solution:**patch `jdk17u-jdk-17.balabala-ga/src/java.desktop/macosx/native/libawt_lwawt/awt/CGraphicsDevice.m` with
   ```diff
   --- CGraphicsDevice.m   2025-01-19 19:53:36.000000000 +0800
   +++ CGraphicsDevice.m   2025-01-19 19:55:30.000000000 +0800
