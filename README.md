@@ -142,7 +142,7 @@ ld: 8 duplicate symbols for architecture x86_64
     */
   ```
 
-  And use llvm 16 to compile `brew install openjdk@17 --cc=llvm_clang`.
+  And use llvm 16 to compile `brew install openjdk@17 --cc=llvm_clang`. It seems it's to due to llvm (>=17) use the dynamic library cache of macOS which is not compatible with the old version. See 2nd Kernel issue of [Release Note](https://developer.apple.com/documentation/macos-release-notes/macos-big-sur-11_0_1-release-notes#Kernel).
 
 ### [ghc](https://formulae.brew.sh/formula/ghc)
 * **Issue:** `error: instruction requires: AVX-512 ISA`.
