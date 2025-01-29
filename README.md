@@ -161,7 +161,9 @@ ld: 8 duplicate symbols for architecture x86_64
 
 ### [btop](https://formulae.brew.sh/formula/btop)
 * **Issue:** linking errors, Undefined symbols for architecture x86_64:
-* **Solution:** Use gcc to build it. However the formula [.rb file](https://github.com/Homebrew/homebrew-core/blob/master/Formula/b/btop.rb) is mandatory to use llvm, so need to modify it and install from local. `depends_on "llvm"...` => `depends_on "gcc"...`; `ENV.llvm_clang if OS.mac?...` => `ENV.cxx if OS.mac?...`
+* **Solution1:** Use llvm. Add `ENV.append "LDFLAGS", "-L#{Formula["llvm"].opt_lib}/c++"` before the make command  to avoid the linking error.
+* **Solution2:** Use gcc to build it. However the formula [.rb file](https://github.com/Homebrew/homebrew-core/blob/master/Formula/b/btop.rb) is mandatory to use llvm, so need to modify it and install from local. `depends_on "llvm"...` => `depends_on "gcc"...`; `ENV.llvm_clang if OS.mac?...` => `ENV.cxx if OS.mac?...`
+
 
 ### [tesseract](https://formulae.brew.sh/formula/tesseract)
 
