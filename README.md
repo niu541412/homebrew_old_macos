@@ -119,7 +119,8 @@ ld: 8 duplicate symbols for architecture x86_64
   extern "C" uint64_t llvmRustDIBuilderCreateOpDeref() {
   ```
 > [!NOTE]
-> Maybe also need llvm 18 and need to run `make` or `build/bootstrap/debug/bootstrap build --stage 2 -v` manually (not sure) in the shell after building fails with the brew command.
+> Do not add `--cc=llvm_clang` option when you build rust formula because it will fail to find `llvm-ar`.
+> Maybe also need llvm 18 and need to run `make`, `build/bootstrap/debug/bootstrap build --stage 2 -v` or `VERBOSE=1 make` to get the failed command and then manually in the shell after errors with the brew command.
 
 
 ### [openjdk@17](https://formulae.brew.sh/formula/openjdk@17)
