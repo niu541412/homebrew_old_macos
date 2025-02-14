@@ -332,7 +332,7 @@ Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library
 - **Issue1:** `    AsyncSocket::failRead(__func__, ex);
                  ^~~~~~~~
 fatal error: too many errors emitted, stopping now [-ferror-limit=]`
-- **Solution:** Add `folly-balabala/folly/io/async/fdsock/AsyncFdSocket.h` with these macros:
+- **Solution:** Append the following macros content to `#include <folly/io/async/fdsock/SocketFds.h>` in `folly-balabala/folly/io/async/fdsock/AsyncFdSocket.h`:
 ```c++
 #ifdef __APPLE__
 #include <AvailabilityMacros.h>
@@ -350,7 +350,7 @@ fatal error: too many errors emitted, stopping now [-ferror-limit=]`
 - **Solution:** Use llvm `brew install folly --cc=llvm_clang`.
   + Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command
 `cmake -S . -B build/shared balabala...` to avoid the linking error.
-  + Add `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command
+  + Add `-DCMAKE_STATIC_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command
 `cmake -S . -B build/static balabala...` to avoid the linking error.
 
 
@@ -365,3 +365,19 @@ fatal error: too many errors emitted, stopping now [-ferror-limit=]`
 - **Issue2:**  Linker error
 - **Solution:** Use llvm `brew install freerdp --cc=llvm_clang`.
   + Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command `cmake -S . -B build/shared balabala...` to avoid the linking error.
+
+
+### [pandoc](https://formulae.brew.sh/formula/pandoc)
+- **Issue:**  
+```
+Error: [Cabal-7107]
+Could not resolve dependencies:
+[__0] trying: pandoc-3.6.3 (user goal)
+[__1] trying: tls-2.1.7 (dependency of pandoc)
+[__2] trying: serialise-0.2.6.1 (dependency of tls)
+[__3] next goal: base (dependency of pandoc)
+[__3] rejecting: base-4.21.0.0/installed-inplace (conflict: serialise => base>=4.11 && <4.21)
+[__3] skipping: base-4.21.0.0 (has the same characteristics that caused the previous version to fail: excluded by constraint '>=4.11 && <4.21' from 'serialise')
+```
+- **Solution:** Add `--allow-newer` to the `cabal v2-install balabala...` command.
+- **Reference:** [Running into depdency conflicts when running cabal test](https://github.com/jgm/pandoc/issues/10597)
