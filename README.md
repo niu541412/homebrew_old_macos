@@ -379,5 +379,5 @@ Could not resolve dependencies:
 [__3] rejecting: base-4.21.0.0/installed-inplace (conflict: serialise => base>=4.11 && <4.21)
 [__3] skipping: base-4.21.0.0 (has the same characteristics that caused the previous version to fail: excluded by constraint '>=4.11 && <4.21' from 'serialise')
 ```
-- **Solution:** Add `--allow-newer` to the `cabal v2-install balabala...` command.
+- **Solution:** Add `--allow-newer` to the `cabal v2-install balabala...` command and use LLVM 18 `brew install folly --cc=llvm_clang`.
 - **Reference:** [Running into depdency conflicts when running cabal test](https://github.com/jgm/pandoc/issues/10597)
