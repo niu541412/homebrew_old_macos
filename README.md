@@ -2,11 +2,11 @@
 
 ## Tips for Building Formulae on Deprecated macOS
 
-If you have a deprecated model, such as the Mac Pro 5,1 as mine, the last supported macOS version is 10.13 High Sierra. While the latest [Homebrew](https://brew.sh/) can still run on this system version, pre-built bottles are not provided. Therefore, Homebrew will try to build every formula from source following the [Formula code](https://github.com/Homebrew/homebrew-core/tree/master/Formula). Due to the API limitations of this deprecated macOS, some packages cannot be installed directly with `brew install formula`.
+If you have a deprecated model, such as the Mac Pro 5,1 like mine, the last supported macOS version is 10.13 High Sierra. While the latest [Homebrew](https://brew.sh/) can still run on this system, pre-built bottles are not provided. As a result, Homebrew will attempt to build every formula from source according to the [formula code](https://github.com/Homebrew/homebrew-core/tree/master/Formula). Due to API limitations in this deprecated macOS version, some packages cannot be installed directly using `brew install formula`.  
 
-Below is a list of packages that can still be installed using the `brew` command, based on my experience. Most of them require patches or suitable compilers. Note that these tips might not always work due to updates in the upstream source code and Homebrew formula code. Besides, I only garentee that these tips only work on 10.13
+Below is a list of packages that can still be installed via `brew`, based on my experience. Most of them require patches or suitable compilers. However, these tips may not always work due to updates in the upstream source code and Homebrew formula code. Additionally, I can only guarantee that these tips work on macOS 10.13.  
 
-Because Homebrew will not recieve pull request for unsupport macOS version, I only leave these tips here.
+Since Homebrew no longer accepts pull requests for unsupported macOS versions, I am simply sharing these tips here.  
 
 > [!TIP]
 >
@@ -267,6 +267,17 @@ ld: 8 duplicate symbols for architecture x86_64
 
 ### [jpeg-xl](https://formulae.brew.sh/formula/jpeg-xl)
 * **Solution:** Use a specific version (maybe <14) of gcc for compilation. `brew install jpeg-xl --cc=gcc-13`
+
+### [libavif](https://formulae.brew.sh/formula/)
+* **Issue:** `CMake Error at build/_deps/libargparse-src/CMakeLists.txt:24:
+  Parse error.  Expected a newline, got identifier with text "ninstall".`
+* **Solution:** Edit `build/_deps/libargparse-src/CMakeLists.txt`, change `...(GNUInstallDirs)\\\\ninstall(TARGETS...` to 
+```
+...(GNUInstallDirs)
+install(TARGETS...
+```
+.
+
 
 ### [shared-mime-info](https://formulae.brew.sh/formula/shared-mime-info)
 * **Solution:** Use a higher version of gcc for compilation. `brew install shared-mime-info --cc=gcc-14`
