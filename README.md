@@ -266,18 +266,18 @@ ld: 8 duplicate symbols for architecture x86_64
 * **Solution:** libssl.dylib provided by macOS don't have `_OPENSSL_init_ssl` symbol. Set LDFLAGS include /usr/local/lib to use the libssl provided by homebrew.
 
 ### [jpeg-xl](https://formulae.brew.sh/formula/jpeg-xl)
-* **Solution:** Use a specific version (maybe <14) of gcc for compilation. `brew install jpeg-xl --cc=gcc-13`
+* **Solution:** Use a specific version (maybe <14) of gcc for compilation. `brew install jpeg-xl --cc=gcc-xx`
+* **Reference:** [MacOS brew install jpeg-xl error](https://github.com/libjxl/libjxl/issues/2461)
 
 ### [libavif](https://formulae.brew.sh/formula/)
 * **Issue:** `CMake Error at build/_deps/libargparse-src/CMakeLists.txt:24:
   Parse error.  Expected a newline, got identifier with text "ninstall".`
-* **Solution:** Edit `build/_deps/libargparse-src/CMakeLists.txt`, change `...(GNUInstallDirs)\\\\ninstall(TARGETS...` to 
+* **Solution:** Edit `build/_deps/libargparse-src/CMakeLists.txt`, change `include(GNUInstallDirs)ninstall(TARGETS libargparse ...` to 
 ```
-...(GNUInstallDirs)
-install(TARGETS...
+include(GNUInstallDirs)
+install(TARGETS libargparse...
 ```
 .
-
 
 ### [shared-mime-info](https://formulae.brew.sh/formula/shared-mime-info)
 * **Solution:** Use a higher version of gcc for compilation. `brew install shared-mime-info --cc=gcc-14`
