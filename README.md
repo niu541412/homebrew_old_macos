@@ -269,7 +269,7 @@ ld: 8 duplicate symbols for architecture x86_64
 * **Solution:** Use a specific version (maybe <14) of gcc for compilation. `brew install jpeg-xl --cc=gcc-xx`
 * **Reference:** [MacOS brew install jpeg-xl error](https://github.com/libjxl/libjxl/issues/2461)
 
-### [libavif](https://formulae.brew.sh/formula/)
+### [libavif](https://formulae.brew.sh/formula/libavif)
 * **Issue:** `CMake Error at build/_deps/libargparse-src/CMakeLists.txt:24:
   Parse error.  Expected a newline, got identifier with text "ninstall".`
 * **Solution:** Edit `build/_deps/libargparse-src/CMakeLists.txt`, change `include(GNUInstallDirs)ninstall(TARGETS libargparse ...` to 
@@ -278,6 +278,15 @@ include(GNUInstallDirs)
 install(TARGETS libargparse...
 ```
 .
+
+### [chafa](https://formulae.brew.sh/formula/chafa)
+* **Issue:** 
+```
+Undefined symbols for architecture x86_64:
+  "_aom_codec_av1_cx", referenced from:
+      _aomCodecEncodeImage in libavif.a(codec_aom.c.o)
+```
+* **Solution:** add libaom in during linking, e.g., add `ENV["LIBS"] = "-laom"` to rb file.
 
 ### [shared-mime-info](https://formulae.brew.sh/formula/shared-mime-info)
 * **Solution:** Use a higher version of gcc for compilation. `brew install shared-mime-info --cc=gcc-14`
