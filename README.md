@@ -122,6 +122,11 @@ ld: 8 duplicate symbols for architecture x86_64
 > Do not add `--cc=llvm_clang` option when you build rust formula because it will fail to find `llvm-ar`.
 > Maybe also need llvm 18 and need to run `make`, `build/bootstrap/debug/bootstrap build --stage 2 -v` or `VERBOSE=1 make` to get the failed command and then manually in the shell after errors with the brew command.
 
+### [librsvg](https://formulae.brew.sh/formula/librsvg)
+* **Issue:** `subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-only', '-g', 'rsvg/librsvg_2.a']' returned non-zero exit status 1.`
+`/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/nm: /private/tmp/librsvg-20250304-48945-hfcy5l/librsvg-2.59.2/build/rsvg/librsvg_2.a(std-c5c1ffaef87f3f54.std.5e7d81c0803c9b5b-cgu.00.rcgu.o) Invalid value (Producer: 'LLVM18.1.8' Reader: 'LLVM APPLE_1_1000.11.45.5_0')`
+* **Solution:** The nm which is provided by macOS is not compatible with the rust. Use the llvm-nm of the llvm version which matched the rust instead, e.g., add `ENV.prepend_path "PATH", Formula["llvm@18"].opt_bin` into the rb file.
+
 
 ### [openjdk@17](https://formulae.brew.sh/formula/openjdk@17)
 
@@ -296,7 +301,7 @@ Undefined symbols for architecture x86_64:
 
 ### [gdk-pixbuf](https://formulae.brew.sh/formula/gdk-pixbuf)
 * **Issue:** `Dependency lookup for libtiff-4 with method 'pkgconfig' failed: Could not generate cflags for libtiff-4: Package libdeflate was not found in the pkg-config search path.`
-* **Solution:** Add `depends_on "libdeflate"` into  gdk-pixbuf.rb file, or add the the pkgconfig path of libdeflate into the environment variable `PKG_CONFIG_PATH`.
+* **Solution:** Reinstall `libtiff` because it add useless dependence in pkgconfig file. ~~Add `depends_on "libdeflate"` into  gdk-pixbuf.rb file, or add the the pkgconfig path of libdeflate into the environment variable `PKG_CONFIG_PATH`.~~
 
 ### [libheif](https://formulae.brew.sh/formula/libheif)
 
