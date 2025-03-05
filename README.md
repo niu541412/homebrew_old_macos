@@ -170,6 +170,11 @@ ld: 8 duplicate symbols for architecture x86_64
 * **Solution1:** Use llvm. Add `ENV.append "LDFLAGS", "-L#{Formula["llvm"].opt_lib}/c++"` before the make command  to avoid the linking error.
 * **Solution2:** Use gcc to build it. However the formula [.rb file](https://github.com/Homebrew/homebrew-core/blob/master/Formula/b/btop.rb) is mandatory to use llvm, so need to modify it and install from local. `depends_on "llvm"...` => `depends_on "gcc"...`; `ENV.llvm_clang if OS.mac?...` => `ENV.cxx if OS.mac?...`
 
+### [node](https://formulae.brew.sh/formula/node)(>=23.9)
+> [!IMPORTANT]
+> node>=23.9 only suppport in macOS Catalina and later. Besides, node>=16.X can only be built in macOS>= 10.14 (Xcode >=11), see [macOS 10.13/Xcode 10.1 due to missing os/signpost.h](https://github.com/nodejs/node/issues/39584#issuecomment-889692761).
+* **Issue:** linking errors, Undefined symbols for architecture x86_64:
+* **Solution:** Use llvm. Add `ENV.append "LDFLAGS", "-L#{Formula["llvm"].opt_lib}/c++"` before the make command  to avoid the linking error.
 
 ### [tesseract](https://formulae.brew.sh/formula/tesseract)
 
@@ -220,7 +225,7 @@ ld: 8 duplicate symbols for architecture x86_64
 
 - **Reference** [https://github.com/ziglang/zig/issues/10318](#10318), [https://github.com/ziglang/zig/pull/11684](#11684)
 
-### [ncdu (&gt;2)](https://formulae.brew.sh/formula/ncdu "&gt;2")
+### [ncdu](https://formulae.brew.sh/formula/ncdu)(>2)
 
 * **Issue:** depends on a recent zig.
 * **Solution:** Download the bottle for monterey and modify the link path.
