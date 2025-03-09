@@ -223,7 +223,7 @@ ld: 8 duplicate symbols for architecture x86_64
   }
   ```
 
-- **Reference** [https://github.com/ziglang/zig/issues/10318](#10318), [https://github.com/ziglang/zig/pull/11684](#11684)
+- **Reference** [#10318](https://github.com/ziglang/zig/issues/10318), [#11684](https://github.com/ziglang/zig/pull/11684)
 
 ### [ncdu](https://formulae.brew.sh/formula/ncdu)(>2)
 
@@ -392,10 +392,14 @@ fatal error: too many errors emitted, stopping now [-ferror-limit=]`
 
 
 ### [freerdp](https://formulae.brew.sh/formula/freerdp)
-- **Issue2:**  Linker error
-- **Solution:** Use llvm `brew install freerdp --cc=llvm_clang`.
-  + Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command `cmake -S . -B build/shared balabala...` to avoid the linking error.
 
+- **Issue 1:** Dependency missing `SDL3`, which is only supported to be built on macOS 10.15+. See [Bumped deployment requirements](https://github.com/libsdl-org/SDL/commit/cdde6dd7bb182a430f82c5e059122b350df7f1dd). However, it seems it can be deployed to 10.13 with the build on newer macOS.
+- **Solution:** Continue using `SDL2`. Modify the [rb](https://github.com/Homebrew/homebrew-core/blob/9040bc413622ff58d9df25e2f8735b062c58eeb5/Formula/f/freerdp.rb) file with the latest FreeRDP tarball.
+- **Issue 2:** Linker error
+- **Solution:** Use LLVM by running `brew install ./freerdp.rb --cc=llvm_clang`.
+  Additionally, add the following flags to the CMake command `cmake -S . -B build/shared ...` to avoid the linking error:
+  - `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}`
+  - `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}`
 
 ### [pandoc](https://formulae.brew.sh/formula/pandoc)
 - **Issue:**  
