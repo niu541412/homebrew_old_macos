@@ -275,6 +275,10 @@ ld: 8 duplicate symbols for architecture x86_64
 * **Issue:** `configure: error: --with-ssl=openssl was given, but SSL is not available.`
 * **Solution:** libssl.dylib provided by macOS don't have `_OPENSSL_init_ssl` symbol. Set LDFLAGS include /usr/local/lib to use the libssl provided by homebrew.
 
+### [gd](https://formulae.brew.sh/formula/gd)
+* **Issue:** `Undefined symbols for architecture x86_64: "_aom_codec_av1_cx", referenced from: _aomCodecEncodeImage in libavif.a(codec_aom.c.o)`
+* **Solution:** Add `depends_on "aom"` and `ENV.append "LDFLAGS", "-L#{Formula["aom"].lib} -laom"` to the rb file.
+
 ### [jpeg-xl](https://formulae.brew.sh/formula/jpeg-xl)
 * **Solution:** Use a specific version (maybe <14) of gcc for compilation. `brew install jpeg-xl --cc=gcc-xx`
 * **Reference:** [MacOS brew install jpeg-xl error](https://github.com/libjxl/libjxl/issues/2461)
