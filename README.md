@@ -65,6 +65,20 @@ ld: 8 duplicate symbols for architecture x86_64
 - **Issuse2:** `Errno::ENOENT: No such file or directory @ apply2files...`
 - **Solution:** Replace tar as following this [link](https://github.com/koekeishiya/yabai/issues/1208#issuecomment-1171165126).
 
+### [php](https://formulae.brew.sh/formula/php)
+
+- **Issue:**
+
+```log
+Zend/zend_atomic.h:85:9: error: address argument to atomic operation must be a pointer to non-const _Atomic type ('const _Atomic(bool) *' invalid)
+        return __c11_atomic_load(&obj->value, __ATOMIC_SEQ_CST);
+               ^                 ~~~~~~~~~~~
+```
+
+- **Solution:** Use a specific version of llvm for compilation. `brew install php --debug --cc=llvm_clang` or modify the `Zend/zend_atomic.h` file as the following reference url.
+- **Reference:** [https://github.com/php/php-src/issues/8881](#8881)
+
+
 ### [z3](https://formulae.brew.sh/formula/z3)
 
 - **Issue:** Undefined symbols: "__ZN12rewriter_tplI17elim_term_ite_cfgEC2ER11ast_managerbRS0_"
