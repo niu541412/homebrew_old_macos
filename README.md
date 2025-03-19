@@ -137,10 +137,11 @@ Zend/zend_atomic.h:85:9: error: address argument to atomic operation must be a p
 > Maybe also need llvm 18 and need to run `make`, `build/bootstrap/debug/bootstrap build --stage 2 -v` or `VERBOSE=1 make` to get the failed command and then manually in the shell after errors with the brew command.
 
 ### [librsvg](https://formulae.brew.sh/formula/librsvg)
-* **Issue:** `subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-only', '-g', 'rsvg/librsvg_2.a']' returned non-zero exit status 1.`
+* **Issue1:** `subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-only', '-g', 'rsvg/librsvg_2.a']' returned non-zero exit status 1.`
 `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/nm: /private/tmp/librsvg-20250304-48945-hfcy5l/librsvg-2.59.2/build/rsvg/librsvg_2.a(std-c5c1ffaef87f3f54.std.5e7d81c0803c9b5b-cgu.00.rcgu.o) Invalid value (Producer: 'LLVM18.1.8' Reader: 'LLVM APPLE_1_1000.11.45.5_0')`
 * **Solution:** The nm which is provided by macOS is not compatible with the rust. Use the llvm-nm of the llvm version which matched the rust instead, e.g., add `ENV.prepend_path "PATH", Formula["llvm@18"].opt_bin` into the rb file.
-
+* **Issue2:** `Command `/private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/meson/makedef.py --regex '^rsvg_.' --os darwin --prefix _ --list /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg.symbols /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg-pixbuf.symbols` failed with status 127.`
+* **Solution:** Add `depends_on "python"` into the local rb file.
 
 ### [openjdk@17](https://formulae.brew.sh/formula/openjdk@17)
 
@@ -172,6 +173,10 @@ Zend/zend_atomic.h:85:9: error: address argument to atomic operation must be a p
 * **Issue:** `configure:9742: error: Python failed to run`, icu4c uses "python" to build it. However, in deprecated macOS, "python" is python2.
 * **Solution:** Add `depends_on "python"` into the local rb file.
 
+### [pango](https://formulae.brew.sh/formula/pango)
+* **Issue:** `Python failed to run`
+* **Solution:** Add `depends_on "python"` into the local rb file.
+
 ### [carthage](https://formulae.brew.sh/formula/carthage)
 * **Issue:**  `swift-build-tool -f .build/release.yaml` shows error:
 ```log
@@ -193,15 +198,15 @@ Zend/zend_atomic.h:85:9: error: address argument to atomic operation must be a p
 ### [tesseract](https://formulae.brew.sh/formula/tesseract)
 
 * **Issue:** fatal error: `filesystem` file not found
-* **Solution:** For the src file using header `filesystem`, e.g. baseapi.cpp, ccutil.cpp, use the code in 5.4.0 version. Remove training options during `make` and `make install` steps.
+* **Solution:** Use llvm to build, i.e. brew install tesseract --cc=llvm_clang. BTW, remove `training` options during `make` and `make install` steps (not sure).
 
 ### [ghostscript](https://formulae.brew.sh/formula/ghostscript)
-
-* **Issue:**  Can't build with llvm or recent gcc.
+* **Issue1:** Linking error caused by `tesseract`
+* **Solution:** Currently no good solution, just remove the `tesseract` dependence in the rb file.
+* **Issue2:**  Can't build with llvm or recent gcc. 
 * **Solution:** Use gcc compile with specific version. `brew install ghostscript --cc=gcc-xx`
 
 ### [numpy](https://formulae.brew.sh/formula/numpy), [lftp](https://formulae.brew.sh/formula/lftp)
-
 * **Solution:** Needs gcc or llvm for compilation. `brew install formula --cc=llvm_clang` or `brew install formula --cc=gcc-xx`
 
 ### [coreutils](https://formulae.brew.sh/formula/coreutils)
@@ -271,6 +276,10 @@ Zend/zend_atomic.h:85:9: error: address argument to atomic operation must be a p
   `make test TESTS='-test_cmp_http'`
   If additional errors occur, append them similarly to `-test_cmp_http`.
 * **Reference:** [OpenSSL Issue on GitHub](https://github.com/openssl/openssl/issues/22467#issuecomment-1779402143)
+
+### [icu4c@77](https://formulae.brew.sh/formula/icu4c@77)
+* **Issue:** `measunit_extra.cpp:577:13: error: call to 'abs' is ambiguous`
+* **Solution:** Use gcc or llvm to compile.
 
 ### [difftastic](https://formulae.brew.sh/formula/difftastic)
 * **Issue:** unknown type name 'CCCryptorStatus'.
@@ -431,5 +440,5 @@ Could not resolve dependencies:
 [__3] rejecting: base-4.21.0.0/installed-inplace (conflict: serialise => base>=4.11 && <4.21)
 [__3] skipping: base-4.21.0.0 (has the same characteristics that caused the previous version to fail: excluded by constraint '>=4.11 && <4.21' from 'serialise')
 ```
-- **Solution:** Add `--allow-newer` to the `cabal v2-install balabala...` command and use LLVM 18 `brew install folly --cc=llvm_clang`.
+- **Solution:** Add `--allow-newer` to the `cabal v2-install balabala...` command and use LLVM 18 `brew install pandoc --cc=llvm_clang`.
 - **Reference:** [Running into depdency conflicts when running cabal test](https://github.com/jgm/pandoc/issues/10597)
