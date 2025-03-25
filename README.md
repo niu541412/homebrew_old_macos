@@ -111,18 +111,15 @@ Zend/zend_atomic.h:85:9: error: address argument to atomic operation must be a p
   ~~* **Solution:** Change PATH in debug mode or modify the `configure` file.~~
   ~~* **Issue2:** /usr/local/Cellar/llvm/19.1.2/include/llvm/CodeGen/MachineFunction.h:440:39: error: call to unavailable function 'get': introduced in macOS 10.14~~
   ~~* **Solution:** use llvm 17, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. llvm is mandatory to compile in rust formula.~~
-- \>1.83.0
+- \>=1.83.0
 
-  - **Solution:** use llvm 18, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. llvm is mandatory to compile in rust formula.
-- \>1.84.0
-
-  - **Issue:** `call to unavailable member function 'value': introduced in macOS 10.14`
+  - **Issue1:** `call to unavailable member function 'value': introduced in macOS 10.14`
   - **Solution:** patch `rustc-balabala-src/compiler/rustc_llvm/llvm-wrapper/RustWrapper.cpp` with
 
   ```diff
   --- RustWrapper.cpp	2025-01-15 20:39:28
   +++ RustWrapper.cpp	2025-01-15 20:39:53
-  @@ -1310,7 +1310,7 @@ llvmRustDILocationCloneWithBaseDiscriminator(llvmMetad
+  @@ -1387,7 +1387,7 @@ llvmRustDILocationCloneWithBaseDiscriminator(llvmMetad
                                                 unsigned BD) {
     DILocation *Loc = unwrapDIPtr<DILocation>(Location);
     auto NewLoc = Loc->cloneWithBaseDiscriminator(BD);
@@ -132,15 +129,43 @@ Zend/zend_atomic.h:85:9: error: address argument to atomic operation must be a p
 
   extern "C" uint64_t llvmRustDIBuilderCreateOpDeref() {
   ```
-> [!NOTE]
-> Do not add `--cc=llvm_clang` option when you build rust formula because it will fail to find `llvm-ar`.
-> Maybe also need llvm 18 and need to run `make`, `build/bootstrap/debug/bootstrap build --stage 2 -v` or `VERBOSE=1 make` to get the failed command and then manually in the shell after errors with the brew command.
+  - **Issue2:** `couldn't find required command: "llvm_ar"`
+  - **Solution:** patch `rustc-balabala-src/src/bootstrap/src/utils/cc_detect.rs` with
+
+  ```diff
+  --- cc_detect.rs    2025-03-23 23:00:05.000000000 +0800
+  +++ cc_detect.rs    2025-03-23 22:59:09.000000000 +0800
+  @@ -62,7 +62,8 @@ fn cc2ar(cc: &Path, target: TargetSelect
+            for suffix in &["gcc", "cc", "clang"] {
+                if let Some(idx) = file.rfind(suffix) {
+                    let mut file = file[..idx].to_owned();
+  -                file.push_str("ar");
+  +                file.pop();
+  +                file.push_str("-ar");
+                    return Some(parent.join(&file));
+                }
+            }
+  ```
+  - **Issue3:** `ld: symbol(s) not found for architecture x86_64`
+  - **Solution:** add configure parameter `--llvm-ldflags=-L#{Formula["llvm"].opt_lib}/c++` to the rb file. If
+  still not work, try to temporally hide `/usr/lib/libc++.dylib`.
+
+### [harfbuzz](https://formulae.brew.sh/formula/harfbuzz)
+  - **Issue:** `../src/hb-coretext.cc:210:31: error: use of undeclared identifier 'CTFontManagerCreateFontDescriptorsFromData'; did you mean 'CTFontManagerCreateFontDescriptorFromData'?`
+  - **Solution:** add 
+```c++
+ CFArrayRef __nullable CTFontManagerCreateFontDescriptorsFromData(
+     CFDataRef               data ) CT_AVAILABLE(macos(10.13), ios(7.0), watchos(2.0), tvos(9.0));
+```
+to `/System/Library/Frameworks/CoreText.framework/Versions/A/Headers/CTFontManager.h`.
+It's seems `CTFontManagerCreateFontDescriptorsFromData` is forgot to declare in macOS 10.13
+
 
 ### [librsvg](https://formulae.brew.sh/formula/librsvg)
-* **Issue1:** `subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-only', '-g', 'rsvg/librsvg_2.a']' returned non-zero exit status 1.`
-`/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/nm: /private/tmp/librsvg-20250304-48945-hfcy5l/librsvg-2.59.2/build/rsvg/librsvg_2.a(std-c5c1ffaef87f3f54.std.5e7d81c0803c9b5b-cgu.00.rcgu.o) Invalid value (Producer: 'LLVM18.1.8' Reader: 'LLVM APPLE_1_1000.11.45.5_0')`
-* **Solution:** The nm which is provided by macOS is not compatible with the rust. Use the llvm-nm of the llvm version which matched the rust instead, e.g., add `ENV.prepend_path "PATH", Formula["llvm@18"].opt_bin` into the rb file.
-* **Issue2:** `Command `/private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/meson/makedef.py --regex '^rsvg_.' --os darwin --prefix _ --list /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg.symbols /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg-pixbuf.symbols` failed with status 127.`
+~~ * **Issue1:** `subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-only', '-g', 'rsvg/librsvg_2.a']' returned non-zero exit status 1.`~~
+~~ `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/nm: /private/tmp/librsvg-20250304-48945-hfcy5l/librsvg-2.59.2/build/rsvg/librsvg_2.a(std-c5c1ffaef87f3f54.std.5e7d81c0803c9b5b-cgu.00.rcgu.o) Invalid value (Producer: 'LLVM18.1.8' Reader: 'LLVM APPLE_1_1000.11.45.5_0')`~~
+~~ * **Solution:** The nm which is provided by macOS is not compatible with the rust. Use the llvm-nm of the llvm version which matched the rust instead, e.g., add `ENV.prepend_path "PATH", Formula["llvm@18"].opt_bin` into the rb file.~~
+* **Issue:** `Command `/private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/meson/makedef.py --regex '^rsvg_.' --os darwin --prefix _ --list /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg.symbols /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg-pixbuf.symbols` failed with status 127.`
 * **Solution:** Add `depends_on "python"` into the local rb file.
 
 ### [openjdk@17](https://formulae.brew.sh/formula/openjdk@17)
@@ -186,7 +211,7 @@ Zend/zend_atomic.h:85:9: error: address argument to atomic operation must be a p
 
 ### [btop](https://formulae.brew.sh/formula/btop)
 * **Issue:** linking errors, Undefined symbols for architecture x86_64:
-* **Solution1:** Use llvm. Add `ENV.append "LDFLAGS", "-L#{Formula["llvm"].opt_lib}/c++"` before the make command  to avoid the linking error.
+* **Solution1:** Use llvm. Add `ENV.append "LDFLAGS", "-L#{Formula["llvm"].opt_lib}/c++"` before the make command to avoid the linking error, but do not add `--cc=llvm_clang` to the end.
 * **Solution2:** Use gcc to build it. However the formula [.rb file](https://github.com/Homebrew/homebrew-core/blob/master/Formula/b/btop.rb) is mandatory to use llvm, so need to modify it and install from local. `depends_on "llvm"...` => `depends_on "gcc"...`; `ENV.llvm_clang if OS.mac?...` => `ENV.cxx if OS.mac?...`
 
 ### [node](https://formulae.brew.sh/formula/node)(>=23.9)
