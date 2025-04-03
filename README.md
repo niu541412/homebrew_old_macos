@@ -78,6 +78,20 @@ Zend/zend_atomic.h:85:9: error: address argument to atomic operation must be a p
 - **Solution:** Use a specific version of llvm for compilation. `brew install php --debug --cc=llvm_clang` or modify the `Zend/zend_atomic.h` file as the following reference url.
 - **Reference:** [https://github.com/php/php-src/issues/8881](#8881)
 
+### [cmake(>=4.0)](https://formulae.brew.sh/formula/cmake)
+- **Issue:** 
+```log
+In file included from /private/tmp/cmake-20250403-51275-k5zrwe/cmake-4.0.0/Source/cmArgumentParser.cxx:8:
+In file included from /private/tmp/cmake-20250403-51275-k5zrwe/cmake-4.0.0/Source/cmMakefile.h:15:
+In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/unordered_map:369:
+In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/__hash_table:19:
+//Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/cmath:313:9: error: no member named 'signbit' in the global
+      namespace
+```
+- **Solution:** 
+In debug mode, `brew install cmake --debug`, add `-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1` to the fail command.
+It's due `/usr/include/math.h` doesn't have the function `signbit` defined.
+- **Reference:** http://dengxiaolong.com/article/2020/08/mac-1015-compilation-of-spoole-failed.html
 
 ### [z3](https://formulae.brew.sh/formula/z3)
 
@@ -85,7 +99,7 @@ Zend/zend_atomic.h:85:9: error: address argument to atomic operation must be a p
 - **Solution:** Install the head version. `brew install z3 --HEAD `
 - **Reference:** [https://github.com/Z3Prover/z3/issues/6869](#6869)
 
-### [gsl (&gt;=2.8)](https://formulae.brew.sh/formula/gsl "&gt;=2.8")
+### [gsl (>=2.8)](https://formulae.brew.sh/formula/gsl "&gt;=2.8")
 
 * **Issue:** ld parameter issue.
 * **Solution:** Patch `configure` script.
