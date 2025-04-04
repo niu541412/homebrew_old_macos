@@ -126,8 +126,11 @@ It's due to `/usr/include/math.h` doesn't have the function `signbit` defined.
   ~~* **Issue2:** /usr/local/Cellar/llvm/19.1.2/include/llvm/CodeGen/MachineFunction.h:440:39: error: call to unavailable function 'get': introduced in macOS 10.14~~
   ~~* **Solution:** use llvm 17, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. llvm is mandatory to compile in rust formula.~~
 - \>=1.83.0
+  - **Issue1:** `TypeError: split() takes no keyword arguments`
+  - **Solution:** The builtin python in macOS is python2, which doesn't support the `split` function with keyword arguments. 
+  add `depends_on "python" => :build` to the rb file and comment out `uses_from_macos "python" => :build` in the rb fike.
 
-  - **Issue1:** `call to unavailable member function 'value': introduced in macOS 10.14`
+  - **Issue2:** `call to unavailable member function 'value': introduced in macOS 10.14`
   - **Solution:** patch `rustc-balabala-src/compiler/rustc_llvm/llvm-wrapper/RustWrapper.cpp` with
 
   ```diff
@@ -143,7 +146,9 @@ It's due to `/usr/include/math.h` doesn't have the function `signbit` defined.
 
   extern "C" uint64_t llvmRustDIBuilderCreateOpDeref() {
   ```
-  - **Issue2:** `couldn't find required command: "llvm_ar"`
+  And add `ENV.prepend_path "PATH", Formula["llvm"].opt_bin` to the rb file.
+
+  - **Issue3:** `couldn't find required command: "llvm_ar"`
   - **Solution:** patch `rustc-balabala-src/src/bootstrap/src/utils/cc_detect.rs` with
 
   ```diff
@@ -160,7 +165,7 @@ It's due to `/usr/include/math.h` doesn't have the function `signbit` defined.
                 }
             }
   ```
-  - **Issue3:** `ld: symbol(s) not found for architecture x86_64`
+  - **Issue4:** `ld: symbol(s) not found for architecture x86_64`
   - **Solution:** add configure parameter `--llvm-ldflags=-L#{Formula["llvm"].opt_lib}/c++` to the rb file. If
   still not work, try to temporally hide `/usr/lib/libc++.dylib`.
 
