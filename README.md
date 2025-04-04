@@ -76,7 +76,7 @@ Zend/zend_atomic.h:85:9: error: address argument to atomic operation must be a p
 ```
 
 - **Solution:** Use a specific version of llvm for compilation. `brew install php --debug --cc=llvm_clang` or modify the `Zend/zend_atomic.h` file as the following reference url.
-- **Reference:** [https://github.com/php/php-src/issues/8881](#8881)
+- **Reference:** [#8881](https://github.com/php/php-src/issues/8881)
 
 ### [cmake(>=4.0)](https://formulae.brew.sh/formula/cmake)
 - **Issue:** 
@@ -90,16 +90,16 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 ```
 - **Solution:** 
 In debug mode, `brew install cmake --debug`, add `-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1` to the fail command.
-It's due `/usr/include/math.h` doesn't have the function `signbit` defined.
+It's due to `/usr/include/math.h` doesn't have the function `signbit` defined.
 - **Reference:** http://dengxiaolong.com/article/2020/08/mac-1015-compilation-of-spoole-failed.html
 
 ### [z3](https://formulae.brew.sh/formula/z3)
 
 - **Issue:** Undefined symbols: "__ZN12rewriter_tplI17elim_term_ite_cfgEC2ER11ast_managerbRS0_"
 - **Solution:** Install the head version. `brew install z3 --HEAD `
-- **Reference:** [https://github.com/Z3Prover/z3/issues/6869](#6869)
+- **Reference:** [#6869](https://github.com/Z3Prover/z3/issues/6869)
 
-### [gsl (>=2.8)](https://formulae.brew.sh/formula/gsl "&gt;=2.8")
+### [gsl (>=2.8)](https://formulae.brew.sh/formula/gsl)
 
 * **Issue:** ld parameter issue.
 * **Solution:** Patch `configure` script.
@@ -178,6 +178,7 @@ It's seems `CTFontManagerCreateFontDescriptorsFromData` is forgot to declare in 
 ### [librsvg](https://formulae.brew.sh/formula/librsvg)
 ~~ * **Issue1:** `subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-only', '-g', 'rsvg/librsvg_2.a']' returned non-zero exit status 1.`~~
 ~~ `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/nm: /private/tmp/librsvg-20250304-48945-hfcy5l/librsvg-2.59.2/build/rsvg/librsvg_2.a(std-c5c1ffaef87f3f54.std.5e7d81c0803c9b5b-cgu.00.rcgu.o) Invalid value (Producer: 'LLVM18.1.8' Reader: 'LLVM APPLE_1_1000.11.45.5_0')`~~
+
 ~~ * **Solution:** The nm which is provided by macOS is not compatible with the rust. Use the llvm-nm of the llvm version which matched the rust instead, e.g., add `ENV.prepend_path "PATH", Formula["llvm@18"].opt_bin` into the rb file.~~
 * **Issue:** `Command `/private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/meson/makedef.py --regex '^rsvg_.' --os darwin --prefix _ --list /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg.symbols /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg-pixbuf.symbols` failed with status 127.`
 * **Solution:** Add `depends_on "python"` into the local rb file.
