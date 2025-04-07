@@ -78,7 +78,7 @@ Zend/zend_atomic.h:85:9: error: address argument to atomic operation must be a p
 - **Solution:** Use a specific version of llvm for compilation. `brew install php --debug --cc=llvm_clang` or modify the `Zend/zend_atomic.h` file as the following reference url.
 - **Reference:** [#8881](https://github.com/php/php-src/issues/8881)
 
-### [cmake(&gt;=4.0)](https://formulae.brew.sh/formula/cmake)
+### [cmake](https://formulae.brew.sh/formula/cmake)(>=4.0)
 
 - **Issue:**
 
@@ -90,11 +90,10 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 //Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/cmath:313:9: error: no member named 'signbit' in the global
       namespace
 ```
-
-- **Solution:**
-  In debug mode, `brew install cmake --debug`, add `-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1` to these `flags.make` in the path `Source/CMakeFiles/*.dir/` and `CursesDialog/CMakeFiles/ccmake.dir`
-  It's due to `/usr/include/math.h` doesn't have the function `signbit` defined.
-- **Reference:** [1](https://stackoverflow.com/questions/58628377), [2](http://dengxiaolong.com/article/2020/08/mac-1015-compilation-of-spoole-failed.html)
+- **Solution:** Replace the `Modules/Platform/Darwin-Initialize.cmake` with this [version](https://github.com/Kitware/CMake/blob/3b8b70fe727088844dbf97ee62bdaa2254a70b65/Modules/Platform/Darwin-Initialize.cmake)
+~~- **Solution:**~~
+  ~~In debug mode, `brew install cmake --debug`, add `-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1` to these `flags.make` in the path `Source/CMakeFiles/*.dir/` and `CursesDialog/CMakeFiles/ccmake.dir`. It's due to `/usr/include/math.h` doesn't have the function `signbit` defined.~~
+~~- **Reference:** [1](https://stackoverflow.com/questions/58628377), [2](http://dengxiaolong.com/article/2020/08/mac-1015-compilation-of-spoole-failed.html)~~
 
 ### [z3](https://formulae.brew.sh/formula/z3)
 
@@ -102,7 +101,7 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 - **Solution:** Install the head version. `brew install z3 --HEAD `
 - **Reference:** [#6869](https://github.com/Z3Prover/z3/issues/6869)
 
-### [gsl (&gt;=2.8)](https://formulae.brew.sh/formula/gsl)
+### [gsl](https://formulae.brew.sh/formula/gsl)(>=2.8)
 
 * **Issue:** ld parameter issue.
 * **Solution:** Patch `configure` script.
@@ -278,7 +277,7 @@ It's seems `CTFontManagerCreateFontDescriptorsFromData` is forgot to declare in 
 
 * **Solution:** Use llvm. `brew install coreutils --cc=llvm_clang`
 
-### [zig](https://formulae.brew.sh/formula/zig)
+### [zig](https://formulae.brew.sh/formula/zig)(<=0.9.1_2)
 
 > [!WARNING]
 > (<=0.9.1_2, higher version not support)
