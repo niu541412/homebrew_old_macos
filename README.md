@@ -39,11 +39,19 @@ Since Homebrew no longer accepts pull requests for unsupported macOS versions, I
   ```
 - **Reference:** [Stack Overflow: How to install llvm@13 on macOS High Sierra](https://stackoverflow.com/questions/69906053/how-to-install-llvm13-with-homerew-on-macos-high-sierra-10-13-6-got-built-tar)
 - **Issue2:** Undefined symbols "std::__1::__libcpp_verbose_abort(char const*, ...)" or something like this
-- **Solution:** Recommand to use the previous llvm as the brew C/C++ compiler, but for building llvm versions beyond 18, use llvm 16. Since brew's "-cc=llvm_clang" option only supports the latest llvm, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. Then
+- **Solution:** Use llvm for compilation. `brew install llvm --debug --cc=llvm_clang`
+  + Add `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the `args` list to avoid the linking error.
+- **Issue3:** Undefined symbols 
+```
+"__availability_version_check", referenced from:
+      ___isPlatformVersionAtLeast in libclang_rt.osx.a(os_version_check.c.o)
+      __initializeAvailabilityCheck in libclang_rt.osx.a(os_version_check.c.o)
+```
+- **Solution:** In debug mode, modify `llvm/build/build.ninja` file : add `lib/clang/20/lib/darwin/libclang_rt.osx.a` to the `LINK_LIBRARIES` variable of failed command, e.g. `Link the shared library lib/liblldb.20.1.2.dylib` and `Link the executable bin/lldb-server` (Testing...). 
 
-  `brew install llvm --debug --cc=llvm_clang`
-
-  . After installation, revert the symlink to the original. Of course that if you compile the latest llvm, this symlink will be overridden automatically.
+~~- **Solution:** Recommand to use the previous llvm as the brew C/C++ compiler, but for building llvm versions beyond 18, use llvm 16. Since brew's "-cc=llvm_clang" option only supports the latest llvm, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. Then~~
+  ~~`brew install llvm --debug --cc=llvm_clang`~~
+  ~~. After installation, revert the symlink to the original. Of course that if you compile the latest llvm, this symlink will be overridden automatically.~~
 
 > [!NOTE]
 > Python > 3.13 may conflict with llvm@16 during the build process. You can temporarily uninstall python forcefully and reinstall it later.
@@ -90,7 +98,8 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 //Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/cmath:313:9: error: no member named 'signbit' in the global
       namespace
 ```
-- **Solution:** Replace the `Modules/Platform/Darwin-Initialize.cmake` with this [version](https://github.com/Kitware/CMake/blob/3b8b70fe727088844dbf97ee62bdaa2254a70b65/Modules/Platform/Darwin-Initialize.cmake)
+- **Solution:** Replace the `Modules/Platform/Darwin-Initialize.cmake` with this [version](https://github.com/Kitware/CMake/blob/3b8b70fe727088844dbf97ee62bdaa2254a70b65/Modules/Platform/Darwin-Initialize.cmake).
+
 ~~- **Solution:**~~
   ~~In debug mode, `brew install cmake --debug`, add `-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1` to these `flags.make` in the path `Source/CMakeFiles/*.dir/` and `CursesDialog/CMakeFiles/ccmake.dir`. It's due to `/usr/include/math.h` doesn't have the function `signbit` defined.~~
 ~~- **Reference:** [1](https://stackoverflow.com/questions/58628377), [2](http://dengxiaolong.com/article/2020/08/mac-1015-compilation-of-spoole-failed.html)~~
