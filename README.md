@@ -98,17 +98,36 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 //Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/cmath:313:9: error: no member named 'signbit' in the global
       namespace
 ```
-- **Solution:** Replace the `Modules/Platform/Darwin-Initialize.cmake` with this [version](https://github.com/Kitware/CMake/blob/3b8b70fe727088844dbf97ee62bdaa2254a70b65/Modules/Platform/Darwin-Initialize.cmake).
+- **Solution:** patch file `Modules/Platform/Darwin-Initialize.cmake` with
+```diff
+--- Darwin-Initialize.cmake
++++ Darwin-Initialize.cmake
+@@ -276,6 +276,8 @@ elseif(CMAKE_OSX_SYSROOT)
+     set(CMAKE_OSX_SYSROOT "${_CMAKE_OSX_SYSROOT_PATH}")
+   endif()
+ endif()
++
++if(APPLE AND CMAKE_HOST_SYSTEM_VERSION VERSION_GREATER_EQUAL "19.0.0")
+ if(NOT CMAKE_OSX_SYSROOT)
+   # Without any explicit SDK we rely on the toolchain default,
+   # which we assume to be what wrappers like /usr/bin/cc use.
+@@ -293,3 +295,4 @@ if(NOT CMAKE_OSX_SYSROOT)
+   )
+   unset(_sdk_macosx)
+ endif()
++endif()
+```
+.
 
 ~~- **Solution:**~~
   ~~In debug mode, `brew install cmake --debug`, add `-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1` to these `flags.make` in the path `Source/CMakeFiles/*.dir/` and `CursesDialog/CMakeFiles/ccmake.dir`. It's due to `/usr/include/math.h` doesn't have the function `signbit` defined.~~
-~~- **Reference:** [1](https://stackoverflow.com/questions/58628377), [2](http://dengxiaolong.com/article/2020/08/mac-1015-compilation-of-spoole-failed.html)~~
+~~- **Reference:** [1](https://stackoverflow.com/questions/58628377), [2](http://dengxiaolong.com/article/2020/08/mac-1015-compilation-of-spoole-failed.html).~~
 
 ### [z3](https://formulae.brew.sh/formula/z3)
 
 - **Issue:** Undefined symbols: "__ZN12rewriter_tplI17elim_term_ite_cfgEC2ER11ast_managerbRS0_"
 - **Solution:** Install the head version. `brew install z3 --HEAD `
-- **Reference:** [#6869](https://github.com/Z3Prover/z3/issues/6869)
+- **Reference:** [#6869](https://github.com/Z3Prover/z3/issues/6869).
 
 ### [gsl](https://formulae.brew.sh/formula/gsl)(>=2.8)
 
@@ -145,8 +164,8 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
   - **Solution:** patch `rustc-balabala-src/compiler/rustc_llvm/llvm-wrapper/RustWrapper.cpp` with
 
   ```diff
-  --- RustWrapper.cpp	2025-01-15 20:39:28
-  +++ RustWrapper.cpp	2025-01-15 20:39:53
+  --- RustWrapper.cpp
+  +++ RustWrapper.cpp
   @@ -1387,7 +1387,7 @@ llvmRustDILocationCloneWithBaseDiscriminator(llvmMetad
                                                 unsigned BD) {
     DILocation *Loc = unwrapDIPtr<DILocation>(Location);
@@ -164,8 +183,8 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
   - **Solution:** patch `rustc-balabala-src/src/bootstrap/src/utils/cc_detect.rs` with
 
   ```diff
-  --- cc_detect.rs    2025-03-23 23:00:05.000000000 +0800
-  +++ cc_detect.rs    2025-03-23 22:59:09.000000000 +0800
+  --- cc_detect.rs
+  +++ cc_detect.rs
   @@ -62,7 +62,8 @@ fn cc2ar(cc: &Path, target: TargetSelect
             for suffix in &["gcc", "cc", "clang"] {
                 if let Some(idx) = file.rfind(suffix) {
@@ -210,8 +229,8 @@ It's seems `CTFontManagerCreateFontDescriptorsFromData` is forgot to declare in 
 - **Solution:**patch `jdk17u-jdk-17.balabala-ga/src/java.desktop/macosx/native/libawt_lwawt/awt/CGraphicsDevice.m` with
 
   ```diff
-  --- CGraphicsDevice.m   2025-01-19 19:53:36.000000000 +0800
-  +++ CGraphicsDevice.m   2025-01-19 19:55:30.000000000 +0800
+  --- CGraphicsDevice.m
+  +++ CGraphicsDevice.m
   @@ -28,6 +28,10 @@
   #include "GeomUtilities.h"
   #include "JNIUtilities.h"
@@ -292,12 +311,10 @@ It's seems `CTFontManagerCreateFontDescriptorsFromData` is forgot to declare in 
 > (<=0.9.1_2, higher version not support)
 
 * **Issue:** Compatibility issue.
-* **Solution:** Modify `os_version_check.zig`.
+* **Solution:** Modify `lib/std/special/compiler_rt/os_version_check.zig` with this patch:
   ```diff
-  diff --git a/lib/std/special/compiler_rt/os_version_check.zig b/lib/std/special/compiler_rt/os_version_check.zig
-  index d7408e2..e4bfbce 100644
-  --- a/lib/std/special/compiler_rt/os_version_check.zig
-  +++ b/lib/std/special/compiler_rt/os_version_check.zig
+  --- os_version_check.zig
+  +++ os_version_check.zig
   @@ -22,12 +22,11 @@ inline fn constructVersion(major: u32, minor: u32, subminor: u32) u32 {
 
   // Darwin-only
@@ -457,8 +474,8 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
 * **Solution:** Modify `/private/tmp/sdl2-balabala.../src/audio/coreaudio/SDL_coreaudio.m` by this patch:
 
   ```diff
-  --- SDL_coreaudio.m     2025-01-17 00:24:16.000000000 +0800
-  +++ SDL_coreaudio.m     2025-01-17 00:20:11.000000000 +0800
+  --- SDL_coreaudio.m
+  +++ SDL_coreaudio.m
   @@ -23,6 +23,14 @@
   #ifdef SDL_AUDIO_DRIVER_COREAUDIO
 
@@ -479,18 +496,28 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
 ### [folly](https://formulae.brew.sh/formula/folly)
 
 - **Issue1:** `    AsyncSocket::failRead(__func__, ex); ^~~~~~~~ fatal error: too many errors emitted, stopping now [-ferror-limit=]`
-- **Solution:** Append the following macros content to `#include <folly/io/async/fdsock/SocketFds.h>` in `folly-balabala/folly/io/async/fdsock/AsyncFdSocket.h`:
+- **Solution:** patch  `folly-balabala/folly/io/async/fdsock/AsyncFdSocket.h` with:
 
-```c++
-#ifdef __APPLE__
-#include <AvailabilityMacros.h>
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 110000
-#ifdef __DARWIN_ALIGN32
-#undef __DARWIN_ALIGN32
-#define __DARWIN_ALIGN32(p) ((__darwin_size_t)((__darwin_size_t)(p) + __DARWIN_ALIGNBYTES32) &~ __DARWIN_ALIGNBYTES32)
-#endif
-#endif
-#endif
+```diff
+--- AsyncFdSocket.h
++++ AsyncFdSocket.h
+@@ -20,6 +20,16 @@
+ #include <folly/io/async/fdsock/SocketFds.h>
+ #include <folly/portability/GTestProd.h>
+ 
++#ifdef __APPLE__
++#include <AvailabilityMacros.h>
++#if MAC_OS_X_VERSION_MIN_REQUIRED < 110000
++#ifdef __DARWIN_ALIGN32
++#undef __DARWIN_ALIGN32
++#define __DARWIN_ALIGN32(p) ((__darwin_size_t)((__darwin_size_t)(p) + __DARWIN_ALIGNBYTES32) &~ __DARWIN_ALIGNBYTES32)
++#endif
++#endif
++#endif
++
+ namespace folly {
+ 
+ /**
 ```
 
 - **Reference:** [Installation with homebrew fails (Mac) #2031](https://github.com/facebook/folly/issues/2031#issuecomment-1752127213)
@@ -511,7 +538,7 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
 
 ### [freerdp](https://formulae.brew.sh/formula/freerdp)
 
-- **Issue 1:** Dependency missing `SDL3`, which is only supported to be built on macOS 10.15+. See [Bumped deployment requirements](https://github.com/libsdl-org/SDL/commit/cdde6dd7bb182a430f82c5e059122b350df7f1dd). However, it seems it can be deployed to 10.13 with the build on newer macOS.
+- **Issue 1:** Dependency missing `SDL3`, which is only supported to be built on macOS 11+. See [Bumped deployment requirements](https://github.com/libsdl-org/SDL/commit/cdde6dd7bb182a430f82c5e059122b350df7f1dd). However, it seems it can be deployed to 10.13 with the build on newer macOS.
 - **Solution:** Continue using `SDL2`. Modify the [rb](https://github.com/Homebrew/homebrew-core/blob/9040bc413622ff58d9df25e2f8735b062c58eeb5/Formula/f/freerdp.rb) file with the latest FreeRDP tarball.
 - **Issue 2:** Linker error
 - **Solution:** Use LLVM by running `brew install ./freerdp.rb --cc=llvm_clang`.
