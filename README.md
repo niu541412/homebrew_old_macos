@@ -204,11 +204,19 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 ### [harfbuzz](https://formulae.brew.sh/formula/harfbuzz)
 
 - **Issue:** `../src/hb-coretext.cc:210:31: error: use of undeclared identifier 'CTFontManagerCreateFontDescriptorsFromData'; did you mean 'CTFontManagerCreateFontDescriptorFromData'?`
-- **Solution:** add
-
-```c++
- CFArrayRef __nullable CTFontManagerCreateFontDescriptorsFromData(
-     CFDataRef               data ) CT_AVAILABLE(macos(10.13), ios(7.0), watchos(2.0), tvos(9.0));
+- **Solution:** patch `src/hb-coretext.cc` with:
+```diff
+--- a/src/hb-coretext.cc
++++ b/src/hb-coretext.cc
+@@ -34,6 +34,8 @@
+ 
+ #include "hb-coretext.hh"
+ 
++extern "C" CFArrayRef CTFontManagerCreateFontDescriptorsFromData(CFDataRef data) CT_AVAILABLE(macos(10.13), ios(7.0), watchos(2.0), tvos(9.0));
++
+ /**
+  * SECTION:hb-coretext
+  * @title: hb-coretext
 ```
 
 to `/System/Library/Frameworks/CoreText.framework/Versions/A/Headers/CTFontManager.h`.
@@ -254,6 +262,11 @@ It's seems `CTFontManagerCreateFontDescriptorsFromData` is forgot to declare in 
 ### [icu4c@76](https://formulae.brew.sh/formula/icu4c@76)
 
 * **Issue:** `configure:9742: error: Python failed to run`, icu4c uses "python" to build it. However, in deprecated macOS, "python" is python2.
+* **Solution:** Add `depends_on "python"` into the local rb file.
+
+### [netpbm](https://formulae.brew.sh/formula/netpbm)
+
+* **Issue:** 
 * **Solution:** Add `depends_on "python"` into the local rb file.
 
 ### [pango](https://formulae.brew.sh/formula/pango)
