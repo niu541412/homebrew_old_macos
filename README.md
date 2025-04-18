@@ -47,11 +47,7 @@ Since Homebrew no longer accepts pull requests for unsupported macOS versions, I
       ___isPlatformVersionAtLeast in libclang_rt.osx.a(os_version_check.c.o)
       __initializeAvailabilityCheck in libclang_rt.osx.a(os_version_check.c.o)
 ```
-- **Solution:** In debug mode, modify `llvm/build/build.ninja` file : add `lib/clang/20/lib/darwin/libclang_rt.osx.a` to the `LINK_LIBRARIES` variable of failed command, e.g. `Link the shared library lib/liblldb.20.1.2.dylib` and `Link the executable bin/lldb-server` (Testing...). 
-
-~~- **Solution:** Recommand to use the previous llvm as the brew C/C++ compiler, but for building llvm versions beyond 18, use llvm 16. Since brew's "-cc=llvm_clang" option only supports the latest llvm, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. Then~~
-  ~~`brew install llvm --debug --cc=llvm_clang`~~
-  ~~. After installation, revert the symlink to the original. Of course that if you compile the latest llvm, this symlink will be overridden automatically.~~
+- **Solution:** In debug mode, modify `llvm/build/build.ninja` file : add `lib/clang/20/lib/darwin/libclang_rt.osx.a` to the `LINK_LIBRARIES` variable of failed command, e.g. `Link the shared library lib/liblldb.20.1.2.dylib` and `Link the executable bin/lldb-server` (Seems solved in later version). 
 
 > [!NOTE]
 > Python > 3.13 may conflict with llvm@16 during the build process. You can temporarily uninstall python forcefully and reinstall it later.
@@ -118,10 +114,6 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 +endif()
 ```
 .
-
-~~- **Solution:**~~
-  ~~In debug mode, `brew install cmake --debug`, add `-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1` to these `flags.make` in the path `Source/CMakeFiles/*.dir/` and `CursesDialog/CMakeFiles/ccmake.dir`. It's due to `/usr/include/math.h` doesn't have the function `signbit` defined.~~
-~~- **Reference:** [1](https://stackoverflow.com/questions/58628377), [2](http://dengxiaolong.com/article/2020/08/mac-1015-compilation-of-spoole-failed.html).~~
 
 ### [z3](https://formulae.brew.sh/formula/z3)
 
@@ -219,15 +211,7 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
   * @title: hb-coretext
 ```
 
-to `/System/Library/Frameworks/CoreText.framework/Versions/A/Headers/CTFontManager.h`.
-It's seems `CTFontManagerCreateFontDescriptorsFromData` is forgot to declare in macOS 10.13
-
 ### [librsvg](https://formulae.brew.sh/formula/librsvg)
-
-~~**Issue1:** `subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-only', '-g', 'rsvg/librsvg_2.a']' returned non-zero exit status 1.`~~
-~~`/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/nm: /private/tmp/librsvg-20250304-48945-hfcy5l/librsvg-2.59.2/build/rsvg/librsvg_2.a(std-c5c1ffaef87f3f54.std.5e7d81c0803c9b5b-cgu.00.rcgu.o) Invalid value (Producer: 'LLVM18.1.8' Reader: 'LLVM APPLE_1_1000.11.45.5_0')`~~
-~~**Solution:** The nm which is provided by macOS is not compatible with the rust. Use the llvm-nm of the llvm version which matched the rust instead, e.g., add `ENV.prepend_path "PATH", Formula["llvm@18"].opt_bin` into the rb file.~~
-
 * **Issue:** `Command `/private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/meson/makedef.py --regex '^rsvg_.' --os darwin --prefix _ --list /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg.symbols /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg-pixbuf.symbols ` failed with status 127.`
 * **Solution:** Add `depends_on "python"` into the local rb file.
 
@@ -394,8 +378,8 @@ It's seems `CTFontManagerCreateFontDescriptorsFromData` is forgot to declare in 
 
   `#include <CommonCrypto/CommonCryptoError.h>`
 
-  ~~Then compile with llvm
-  `brew install difftastic --cc=llvm_clang`~~
+  ~~Then compile with llvm~~
+  ~~`brew install difftastic --cc=llvm_clang`~~
 * **Reference:** [can not build mimalloc](https://github.com/microsoft/mimalloc/issues/549)
 
 ### [doxygen](https://formulae.brew.sh/formula/doxygen)
@@ -452,7 +436,7 @@ Undefined symbols for architecture x86_64:
 ### [gdk-pixbuf](https://formulae.brew.sh/formula/gdk-pixbuf)
 
 * **Issue:** `Dependency lookup for libtiff-4 with method 'pkgconfig' failed: Could not generate cflags for libtiff-4: Package libdeflate was not found in the pkg-config search path.`
-* **Solution:** Reinstall `libtiff` because it add useless dependence in pkgconfig file. ~~Add `depends_on "libdeflate"` into  gdk-pixbuf.rb file, or add the the pkgconfig path of libdeflate into the environment variable `PKG_CONFIG_PATH`.~~
+* **Solution:** Reinstall `libtiff` because it add useless dependence in pkgconfig file.
 
 ### [libheif](https://formulae.brew.sh/formula/libheif)
 
@@ -467,12 +451,6 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
 ```
 
 * **Solution2:** do not pre-install gdk-pixbuf package, or uninstall it then reinstall it again.
-  ~~brew install in debug mode `brew install libheif --debug`, then choose to the shell and run cmake with specific flags.~~
-  ~~shell
-  #first error
-  cmake -S . -B build -DWITH_RAV1E=OFF -DWITH_DAV1D=OFF -DWITH_SvtEnc=OFF -DCMAKE_INSTALL_RPATH=@loader_path/../lib -DCMAKE_INSTALL_PREFIX=/usr/local/Cellar/libheif/1.17.6_1 -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_VERBOSE_MAKEFILE=ON -DFETCHCONTENT_FULLY_DISCONNECTED=ON -Wno-dev -DBUILD_TESTING=OFF -DWITH_GDK_PIXBUF=OFF
-  #second error
-  cmake -S . -B static -DWITH_RAV1E=OFF -DWITH_DAV1D=OFF -DWITH_SvtEnc=OFF -DCMAKE_INSTALL_RPATH=@loader_path/../lib -DCMAKE_INSTALL_PREFIX=/usr/local/Cellar/libheif/1.17.6_1 -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_VERBOSE_MAKEFILE=ON -DFETCHCONTENT_FULLY_DISCONNECTED=ON -Wno-dev -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=OFF -DWITH_GDK_PIXBUF=OFF~~
 
 ### [snappy](https://formulae.brew.sh/formula/snappy), [abseil](https://formulae.brew.sh/formula/abseil), [protobuf](https://formulae.brew.sh/formula/protobuf)
 
