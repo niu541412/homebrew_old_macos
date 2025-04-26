@@ -299,13 +299,13 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 * **Solution1:** Use llvm. Add `ENV.append "LDFLAGS", "-L#{Formula["llvm"].opt_lib}/c++"` before the make command to avoid the linking error, but do not add `--cc=llvm_clang` to the end.
 * **Solution2:** Use gcc to build it. However the formula [.rb file](https://github.com/Homebrew/homebrew-core/blob/master/Formula/b/btop.rb) is mandatory to use llvm, so need to modify it and install from local. `depends_on "llvm"...` => `depends_on "gcc"...`; `ENV.llvm_clang if OS.mac?...` => `ENV.cxx if OS.mac?...`
 
-### [node](https://formulae.brew.sh/formula/node)(>=23.9)
+### [node@18](https://formulae.brew.sh/formula/node@18), [node@20](https://formulae.brew.sh/formula/node@20), [node@22](https://formulae.brew.sh/formula/node@22)
 
 > [!IMPORTANT]
-> node>=23.9 only suppport in macOS Catalina and later. Besides, node>=16.X can only be built in macOS>= 10.14 (Xcode >=11), see [macOS 10.13/Xcode 10.1 due to missing os/signpost.h](https://github.com/nodejs/node/issues/39584#issuecomment-889692761).
+> node>=23.9 only suppport in macOS Catalina and later.
 
-* **Issue:** linking errors, Undefined symbols for architecture x86_64:
-* **Solution:** Use llvm. Add `ENV.append "LDFLAGS", "-L#{Formula["llvm"].opt_lib}/c++"` before the make command  to avoid the linking error.
+* **Issue:** `missing os/signpost.h'`, `zlib issue` and `linking issue` etc.
+* **Solution:** Just use the rb files in the Formula diretory.
 
 ### [tesseract](https://formulae.brew.sh/formula/tesseract)
 
