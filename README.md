@@ -248,6 +248,31 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 * **Issue:** `configure:9742: error: Python failed to run`, icu4c uses "python" to build it. However, in deprecated macOS, "python" is python2.
 * **Solution:** Add `depends_on "python"` into the local rb file.
 
+### [icu4c@77](https://formulae.brew.sh/formula/icu4c@77)
+
+* **Issue:** `measunit_extra.cpp:577:13: error: call to 'abs' is ambiguous`
+* **Solution:** patch `source/i18n/measunit_extra.cpp` with
+  ```diff
+  --- measunit_extra.cpp
+  +++ measunit_extra.cpp
+  @@ -33,6 +33,7 @@
+  #include "util.h"
+  #include <limits.h>
+  #include <cstdlib>
+  +#include <cmath>
+  U_NAMESPACE_BEGIN
+
+
+  @@ -574,7 +575,7 @@
+          // Check if the value is integer.
+          uint64_t int_result = static_cast<uint64_t>(double_result);
+          const double kTolerance = 1e-9;
+  -        if (abs(double_result - int_result) > kTolerance) {
+  +        if (std::fabs(double_result - int_result) > kTolerance) {
+              status = kUnitIdentifierSyntaxError;
+              return 0;
+          }
+
 ### [netpbm](https://formulae.brew.sh/formula/netpbm)
 
 * **Issue:** 
@@ -365,11 +390,6 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
   `make test TESTS='-test_cmp_http'`
   If additional errors occur, append them similarly to `-test_cmp_http`.
 * **Reference:** [OpenSSL Issue on GitHub](https://github.com/openssl/openssl/issues/22467#issuecomment-1779402143)
-
-### [icu4c@77](https://formulae.brew.sh/formula/icu4c@77)
-
-* **Issue:** `measunit_extra.cpp:577:13: error: call to 'abs' is ambiguous`
-* **Solution:** Use gcc or llvm to compile.
 
 ### [difftastic](https://formulae.brew.sh/formula/difftastic)
 
