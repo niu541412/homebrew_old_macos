@@ -1,34 +1,32 @@
-class NodeAT18 < Formula
+class NodeAT22 < Formula
   desc "Platform built on V8 to build network applications"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v18.20.8/node-v18.20.8.tar.xz"
-  sha256 "36a7bf1a76d62ce4badd881ee5974a323c70e1d8d19165732684e145632460d9"
+  url "https://nodejs.org/dist/v22.15.0/node-v22.15.0.tar.xz"
+  sha256 "e7c4226d1d92f33ad854d6da4f7e519e77690b8e73f93496881f8c539174d9df"
   license "MIT"
 
-  # Remove livecheck on 2025-04-30
   livecheck do
     url "https://nodejs.org/dist/"
-    regex(%r{href=["']?v?(18(?:\.\d+)+)/?["' >]}i)
+    regex(%r{href=["']?v?(22(?:\.\d+)+)/?["' >]}i)
   end
 
   bottle do
-    sha256 arm64_sequoia: "85339a0121bfd4eade3f70a49197c59fd1d0dee18511edf924d4acf4d81cc012"
-    sha256 arm64_sonoma:  "cce72f3a40cb31861f419e0ea364cf0581e6f59b28f3e5c00196ccdea6a9f295"
-    sha256 arm64_ventura: "abf275d5c731c19cc83cac346960ee3d53e845c35e1cb04278d31e26a9aad9ec"
-    sha256 sonoma:        "5d6cc20ba0c4f0e75534b961530c236222d2f11b8fb5dd890f0f2f7d71d778cb"
-    sha256 ventura:       "979121dc9e057de08c03b75690f3111b7d3bfb03974299bc340166441f0a3ce8"
-    sha256 arm64_linux:   "006629948d696eaebdc65531418f095b71e4f3fd66e966f594f61021137c771c"
-    sha256 x86_64_linux:  "47a91f8bf2f6c0915eebc7793c97ea3d980d292c0242e1cc376e621fbb9d18d5"
+    sha256 arm64_sequoia: "e862f6bf567ffee63d3be4dd949ba09dec5a2697faf2e45a13fef3ca0c58b1db"
+    sha256 arm64_sonoma:  "9a1d15587c1f4a7c028f1539763c2dd3c0b0aa4443092703d18ce7ec207cc615"
+    sha256 arm64_ventura: "250b83bdcd4dca982ada197b7f5c1d52cbcbb01dc6b133e2e75854123400fc8c"
+    sha256 sonoma:        "486c49a5480739d774dae1385ccf40e3e7433775903674ee4a8e261c84e7f055"
+    sha256 ventura:       "3c543d9dcadbac56915fa32516a22a9d3f65708d25034f0a28932e7beaf3db51"
+    sha256 arm64_linux:   "1d261576792106888ae8c94d359f4826e9319a7181b5eb4eae833169afc182e4"
+    sha256 x86_64_linux:  "3582cefbc7725e7c6c66cd5af0d0a44422ec32811fb6e606e53c6cd34c2ef32f"
   end
 
   keg_only :versioned_formula
 
   # https://github.com/nodejs/release#release-schedule
-  # disable! date: "2025-04-30", because: :unsupported
-  deprecate! date: "2024-10-29", because: :unsupported
+  # disable! date: "2027-04-30", because: :unsupported
+  deprecate! date: "2026-10-28", because: :unsupported
 
   depends_on "pkgconf" => :build
-  depends_on "python-setuptools" => :build
   depends_on "python@3.13" => :build
   depends_on "brotli"
   depends_on "c-ares"
@@ -41,7 +39,7 @@ class NodeAT18 < Formula
   uses_from_macos "zlib"
 
   on_macos do
-    depends_on "llvm@18" => :build if DevelopmentTools.clang_build_version <= 1100
+    depends_on "llvm@18" => [:build, :test] if DevelopmentTools.clang_build_version <= 1100
   end
 
   fails_with :clang do
@@ -51,18 +49,15 @@ class NodeAT18 < Formula
     EOS
   end
 
-  # Backport support for ICU 76+
-  patch do
-    url "https://github.com/nodejs/node/commit/81517faceac86497b3c8717837f491aa29a5e0f9.patch?full_index=1"
-    sha256 "79a5489617665c5c88651a7dc364b8967bebdea5bdf361b85572d041a4768662"
-  end
-
   patch :DATA
   def install
     # ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
 
+    # The new linker crashed during LTO due to high memory usage.
+    ENV.append "LDFLAGS", "-Wl,-ld_classic" if DevelopmentTools.clang_build_version >= 1500
+
     if OS.mac? && DevelopmentTools.clang_build_version <= 1100
-      inreplace "common.gypi", "10.15", "#{MacOS.version}"
+      inreplace "common.gypi", "11.0", "#{MacOS.version}"
       
       llvm = Formula["llvm@18"]
       ENV["CC"] = "#{llvm.opt_bin}/clang"
@@ -96,6 +91,12 @@ class NodeAT18 < Formula
       --openssl-use-def-ca-store
     ]
 
+    # Enabling LTO errors on Linux with:
+    # terminate called after throwing an instance of 'std::out_of_range'
+    # Pre-Catalina macOS also can't build with LTO
+    # LTO is unpleasant if you have to build from source.
+    args << "--enable-lto" if OS.mac? && MacOS.version >= :catalina && build.bottle?
+
     system "./configure", *args
     system "make", "install"
   end
@@ -127,7 +128,7 @@ class NodeAT18 < Formula
     assert_predicate bin/"npm", :executable?, "npm must be executable"
     npm_args = ["-ddd", "--cache=#{HOMEBREW_CACHE}/npm_cache", "--build-from-source"]
     system bin/"npm", *npm_args, "install", "npm@latest"
-    system bin/"npm", *npm_args, "install", "ref-napi"
+    system bin/"npm", *npm_args, "install", "nan"
     assert_path_exists bin/"npx", "npx must exist"
     assert_predicate bin/"npx", :executable?, "npx must be executable"
     assert_match "< hello >", shell_output("#{bin}/npx --yes cowsay hello")
@@ -150,25 +151,3 @@ __END__
  }
 
  }  // namespace tracing
-
---- a/deps/v8/third_party/zlib/zutil.h
-+++ b/deps/v8/third_party/zlib/zutil.h
-@@ -130,17 +130,8 @@
- #  endif
- #endif
- 
--#if defined(MACOS) || defined(TARGET_OS_MAC)
-+#if defined(MACOS)
- #  define OS_CODE  7
--#  ifndef Z_SOLO
--#    if defined(__MWERKS__) && __dest_os != __be_os && __dest_os != __win32_os
--#      include <unix.h> /* for fdopen */
--#    else
--#      ifndef fdopen
--#        define fdopen(fd,mode) NULL /* No fdopen() */
--#      endif
--#    endif
--#  endif
- #endif
- 
- #ifdef __acorn

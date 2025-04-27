@@ -302,10 +302,13 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 ### [node@18](https://formulae.brew.sh/formula/node@18), [node@20](https://formulae.brew.sh/formula/node@20), [node@22](https://formulae.brew.sh/formula/node@22)
 
 > [!IMPORTANT]
-> node>=23.9 only suppport in macOS Catalina and later.
+> node>=23.9 only suppport in macOS Catalina and later. See [Build error on MacOs 10.15](https://github.com/nodejs/node/issues/52847).
 
 * **Issue:** `missing os/signpost.h'`, `zlib issue` and `linking issue` etc.
-* **Solution:** Just use the rb files in the Formula diretory.
+* **Solution:** Just use the rb files in the [Formula](./Formula) diretory.
+> [!NOTE]
+> Seems only llvm <= 18 can build node due to the deprecated `std::char_traits` api. see [release notes](https://releases.llvm.org/18.1.0/projects/libcxx/docs/ReleaseNotes.html#llvm-19)
+
 
 ### [tesseract](https://formulae.brew.sh/formula/tesseract)
 

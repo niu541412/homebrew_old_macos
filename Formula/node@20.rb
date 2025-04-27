@@ -1,34 +1,33 @@
-class NodeAT18 < Formula
+class NodeAT20 < Formula
   desc "Platform built on V8 to build network applications"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v18.20.8/node-v18.20.8.tar.xz"
-  sha256 "36a7bf1a76d62ce4badd881ee5974a323c70e1d8d19165732684e145632460d9"
+  url "https://nodejs.org/dist/v20.19.0/node-v20.19.0.tar.xz"
+  sha256 "5ac2516fc905b6a0bc1a33e7302937eac664a820b887cc86bd48c035fba392d7"
   license "MIT"
+  revision 1
 
-  # Remove livecheck on 2025-04-30
   livecheck do
     url "https://nodejs.org/dist/"
-    regex(%r{href=["']?v?(18(?:\.\d+)+)/?["' >]}i)
+    regex(%r{href=["']?v?(20(?:\.\d+)+)/?["' >]}i)
   end
 
   bottle do
-    sha256 arm64_sequoia: "85339a0121bfd4eade3f70a49197c59fd1d0dee18511edf924d4acf4d81cc012"
-    sha256 arm64_sonoma:  "cce72f3a40cb31861f419e0ea364cf0581e6f59b28f3e5c00196ccdea6a9f295"
-    sha256 arm64_ventura: "abf275d5c731c19cc83cac346960ee3d53e845c35e1cb04278d31e26a9aad9ec"
-    sha256 sonoma:        "5d6cc20ba0c4f0e75534b961530c236222d2f11b8fb5dd890f0f2f7d71d778cb"
-    sha256 ventura:       "979121dc9e057de08c03b75690f3111b7d3bfb03974299bc340166441f0a3ce8"
-    sha256 arm64_linux:   "006629948d696eaebdc65531418f095b71e4f3fd66e966f594f61021137c771c"
-    sha256 x86_64_linux:  "47a91f8bf2f6c0915eebc7793c97ea3d980d292c0242e1cc376e621fbb9d18d5"
+    sha256 arm64_sequoia: "6dbede32ed7d323ceeed43a83789824ab7cdfaf9df92041a2486eb522ca6769e"
+    sha256 arm64_sonoma:  "055407d0f413c52142e700b193a4fac6b309e4e6bc90a14e6f7ee59d848d18d2"
+    sha256 arm64_ventura: "cd12c0e1b8d6bf21f683165fbaf5cf59826d9e9b153edd279e2903275bd7547c"
+    sha256 sonoma:        "a5d4e6820e57c3ffc0e18ca743d8b691e9c4767a8446fede3033bf0fe9c712f4"
+    sha256 ventura:       "27208e60a4e8c5efeb422ae6511e4a7e8136ab68e7c1d8b7122d41f386fac6b2"
+    sha256 arm64_linux:   "204ccf94c351e5d9b53cc06e3954f60afb4d1abfe623c5182cafd652bff9acef"
+    sha256 x86_64_linux:  "839975a075d3f16bf8d6cc47e229b8a3a0bbd43146356bba927de449135dcbb8"
   end
 
   keg_only :versioned_formula
 
   # https://github.com/nodejs/release#release-schedule
-  # disable! date: "2025-04-30", because: :unsupported
-  deprecate! date: "2024-10-29", because: :unsupported
+  # disable! date: "2026-04-30", because: :unsupported
+  deprecate! date: "2025-10-28", because: :unsupported
 
   depends_on "pkgconf" => :build
-  depends_on "python-setuptools" => :build
   depends_on "python@3.13" => :build
   depends_on "brotli"
   depends_on "c-ares"
@@ -41,7 +40,7 @@ class NodeAT18 < Formula
   uses_from_macos "zlib"
 
   on_macos do
-    depends_on "llvm@18" => :build if DevelopmentTools.clang_build_version <= 1100
+    depends_on "llvm@18" => [:build, :test] if DevelopmentTools.clang_build_version <= 1100
   end
 
   fails_with :clang do
@@ -51,15 +50,12 @@ class NodeAT18 < Formula
     EOS
   end
 
-  # Backport support for ICU 76+
-  patch do
-    url "https://github.com/nodejs/node/commit/81517faceac86497b3c8717837f491aa29a5e0f9.patch?full_index=1"
-    sha256 "79a5489617665c5c88651a7dc364b8967bebdea5bdf361b85572d041a4768662"
-  end
-
   patch :DATA
   def install
     # ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
+
+    # The new linker crashed during LTO due to high memory usage.
+    ENV.append "LDFLAGS", "-Wl,-ld_classic" if DevelopmentTools.clang_build_version >= 1500
 
     if OS.mac? && DevelopmentTools.clang_build_version <= 1100
       inreplace "common.gypi", "10.15", "#{MacOS.version}"
@@ -95,6 +91,12 @@ class NodeAT18 < Formula
       --shared-cares-libpath=#{Formula["c-ares"].lib}
       --openssl-use-def-ca-store
     ]
+
+    # Enabling LTO errors on Linux with:
+    # terminate called after throwing an instance of 'std::out_of_range'
+    # Pre-Catalina macOS also can't build with LTO
+    # LTO is unpleasant if you have to build from source.
+    args << "--enable-lto" if OS.mac? && MacOS.version >= :catalina && build.bottle?
 
     system "./configure", *args
     system "make", "install"
