@@ -62,7 +62,7 @@ class NodeAT18 < Formula
     # ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
 
     if OS.mac? && DevelopmentTools.clang_build_version <= 1100
-      inreplace "common.gypi", "10.15", "#{MacOS.version}"
+      inreplace "common.gypi", /'MACOSX_DEPLOYMENT_TARGET': '\d+\.\d+'/, "'MACOSX_DEPLOYMENT_TARGET': '#{MacOS.version}'"
       
       llvm = Formula["llvm@18"]
       ENV["CC"] = "#{llvm.opt_bin}/clang"

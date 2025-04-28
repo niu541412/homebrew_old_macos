@@ -296,24 +296,55 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 ### [btop](https://formulae.brew.sh/formula/btop)
 
 * **Issue:** linking errors, Undefined symbols for architecture x86_64:
-* **Solution1:** Use llvm. Add `ENV.append "LDFLAGS", "-L#{Formula["llvm"].opt_lib}/c++"` before the make command to avoid the linking error, but do not add `--cc=llvm_clang` to the end.
+* **Solution1:** Use llvm. Add `ENV.append "LDFLAGS", "-L#{Formula["llvm"].opt_lib}/c++"` before the make command to avoid the linking error, but do **not** add `--cc=llvm_clang` to the end.
 * **Solution2:** Use gcc to build it. However the formula [.rb file](https://github.com/Homebrew/homebrew-core/blob/master/Formula/b/btop.rb) is mandatory to use llvm, so need to modify it and install from local. `depends_on "llvm"...` => `depends_on "gcc"...`; `ENV.llvm_clang if OS.mac?...` => `ENV.cxx if OS.mac?...`
 
-### [node@18](https://formulae.brew.sh/formula/node@18), [node@20](https://formulae.brew.sh/formula/node@20), [node@22](https://formulae.brew.sh/formula/node@22)
+### [node](https://formulae.brew.sh/formula/node), [node@22](https://formulae.brew.sh/formula/node@22), [node@20](https://formulae.brew.sh/formula/node@20), [node@18](https://formulae.brew.sh/formula/node@18)
 
-> [!IMPORTANT]
-> node>=23.9 only suppport in macOS Catalina and later. See [Build error on MacOs 10.15](https://github.com/nodejs/node/issues/52847).
+~~> [!IMPORTANT]~~
+~~> node>=23.9 only suppport in macOS Catalina and later. See [Build error on MacOs 10.15](https://github.com/nodejs/node/issues/52847).~~
 
 * **Issue:** `missing os/signpost.h'`, `zlib issue` and `linking issue` etc.
 * **Solution:** Just use the rb files in the [Formula](./Formula) diretory.
 > [!NOTE]
-> Seems only llvm <= 18 can build node due to the deprecated `std::char_traits` api. see [release notes](https://releases.llvm.org/18.1.0/projects/libcxx/docs/ReleaseNotes.html#llvm-19)
+> Seems only llvm <= 18 can used to build node due to the deprecated `std::char_traits` api. see [release notes](https://releases.llvm.org/18.1.0/projects/libcxx/docs/ReleaseNotes.html#llvm-19)
 
 
 ### [tesseract](https://formulae.brew.sh/formula/tesseract)
 
-* **Issue:** fatal error: `filesystem` file not found
-* **Solution:** Use llvm to build, i.e. brew install tesseract --cc=llvm_clang. BTW, remove `training` options during `make` and `make install` steps (not sure).
+* **Issue:** fatal error: `filesystem` file not found and linker error.
+* **Solution:** 
+  1. patch `src/training/unicharset_extractor.cpp` with
+  ```diff
+  --- unicharset_extractor.cpp
+  +++ unicharset_extractor.cpp
+  @@ -21,7 +21,6 @@
+  // a unicharset.
+  
+  #include <cstdlib>
+  -#include <filesystem>
+  #include "boxread.h"
+  #include "commandlineflags.h"
+  #include "commontraining.h" // CheckSharedLibraryVersion
+  @@ -65,13 +64,14 @@
+    UNICHARSET unicharset;
+    // Load input files
+    for (int arg = 1; arg < argc; ++arg) {
+  -    std::filesystem::path filePath = argv[arg];
+  +    const char* filePath = argv[arg];
+  +    const char* dot = strrchr(filePath, '.');
+      std::string file_data = tesseract::ReadFile(argv[arg]);
+      if (file_data.empty()) {
+        continue;
+      }
+      std::vector<std::string> texts;
+  -    if (filePath.extension() == ".box") {
+  +    if (dot && strcmp(dot, ".box") == 0) {
+        tprintf("Extracting unicharset from box file %s\n", argv[arg]);
+        bool res = ReadMemBoxes(-1, /*skip_blanks*/ true, &file_data[0],
+                      /*continue_on_failure*/ false, /*boxes*/ nullptr, &texts,
+  ```
+  2. add `ENV.append "LDFLAGS", "#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}"` to the rb file.
 
 ### [ghostscript](https://formulae.brew.sh/formula/ghostscript)
 
@@ -463,7 +494,7 @@ Undefined symbols for architecture x86_64:
 
 ### [libheif](https://formulae.brew.sh/formula/libheif)
 
-* **Issue1:** `/tmp/libheif-20241109-81439-f0emb6/libheif-1.19.2/libheif/bitstream.cc:26:10: fatal error: 'bit' file not found`. "bit" is a standard library header since C++20 (gcc>=9 or llvm>=11).
+* **Issue1:** `/tmp/libheif-20241109-81439-f0emb6/libheif-1.19.2/libheif/bitstream.cc:26:10: fatal error: 'bit' file not found`. "bit" is a standard library header since C++20 (gcc>=9 or llvm>=11). When with llvm, add `-DCMAKE_STATIC_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command `cmake -S . -B build balabala...` to avoid the errors.
 * **Solution1:** Use gcc or llvm for compilation. `brew install libheif --cc=gcc-xx`
 * **Issue2:** pkg_config not found package.
 
