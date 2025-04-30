@@ -349,9 +349,9 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 ### [ghostscript](https://formulae.brew.sh/formula/ghostscript)
 
 * **Issue1:** Linking error caused by `tesseract`
-* **Solution:** Currently no good solution, just remove the `tesseract` dependence in the rb file.
+* **Solution:** Remove the `tesseract` dependence in the rb file. Or add `ENV.append_to_cflags "-stdlib=libc++" if OS.mac?` to the rb file.
 * **Issue2:**  Can't build with llvm or recent gcc.
-* **Solution:** Use gcc compile with specific version. `brew install ghostscript --cc=gcc-xx`
+* **Solution:** Use gcc compile with specific version. `brew install ghostscript --cc=llvm_clang`
 
 ### [numpy](https://formulae.brew.sh/formula/numpy), [lftp](https://formulae.brew.sh/formula/lftp)
 
