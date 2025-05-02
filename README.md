@@ -399,17 +399,18 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
   ```shell
   # uninstall old version
   brew uninstall ncdu
-  tarball=$(brew fetch --os ventura ncdu|grep Downloading|grep -o ncdu.*tar\.gz)
+  tarball=$(brew fetch --os ventura ncdu | grep Downloading | grep -o ncdu.*tar\.gz)
   tar xzf $HOME/Library/Caches/Homebrew/downloads/*${tarball} -C .
-  # #if you want homebrew to register it
-  mv ncdu $HOMEBREW_PREFIX/Cellar
+  # if you want homebrew to register it
+  HOMEBREW_PREFIX=$(brew --prefix)
+  mv ncdu/ $HOMEBREW_PREFIX/Cellar/
   brew link ncdu
-  # #but I found brew may clean it when it update...
-  # change the link path.
-  ncdu_executable=$(brew --prefix ncdu)/bin/ncdu
-  libncurse_path=$(otool -L $ncdu_executable| grep libncurse | sed s/\(.*\)//g | sed $'s/^\t//g')
-  libncurse_new=${HOMEBREW_PREFIX}$(echo $libncurse_path|sed s/@@HOMEBREW_PREFIX@@//g)
-  sudo install_name_tool -change $libncurse_path $libncurse_new $ncdu_executable
+  # but I found brew may clean it when it update...
+  ncdu_exe=$(brew --prefix ncdu)/bin/ncdu
+  # change the shared libaray path
+  for i in $(otool -L $ncdu_exe | grep HOMEBREW_PREFIX | grep -oE @@HOMEBREW_PREFIX@@.*dylib); do
+      sudo install_name_tool -change $i ${i/@@HOMEBREW_PREFIX@@/$HOMEBREW_PREFIX} $ncdu_exe
+  done
   ```
 
 > [!NOTE]
