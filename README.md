@@ -47,7 +47,7 @@ Since Homebrew no longer accepts pull requests for unsupported macOS versions, I
       ___isPlatformVersionAtLeast in libclang_rt.osx.a(os_version_check.c.o)
       __initializeAvailabilityCheck in libclang_rt.osx.a(os_version_check.c.o)
 ```
-- **Solution:** In debug mode, modify `llvm/build/build.ninja` file : add `lib/clang/20/lib/darwin/libclang_rt.osx.a` to the `LINK_LIBRARIES` variable of failed command, e.g. `Link the shared library lib/liblldb.20.1.2.dylib` and `Link the executable bin/lldb-server` (Seems solved in later version). 
+- **Solution:** patch `compiler-rt/lib/builtins/os_version_check.c` with this [patch](https://github.com/macports/macports-ports/blob/master/lang/llvm-20/files/0130-10.14-and-less-availability.patch) file. Then in debug mode, modify `llvm/build/build.ninja` file : add `lib/clang/20/lib/darwin/libclang_rt.osx.a` to the `LINK_LIBRARIES` variable of failed command, e.g. `Link the shared library lib/liblldb.20.1.2.dylib` and `Link the executable bin/lldb-server`.
 
 > [!NOTE]
 > Python > 3.13 may conflict with llvm@16 during the build process. You can temporarily uninstall python forcefully and reinstall it later.
