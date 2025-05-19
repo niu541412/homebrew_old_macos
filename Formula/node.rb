@@ -35,7 +35,11 @@ class Node < Formula
   uses_from_macos "zlib"
 
   on_macos do
-    depends_on "llvm@18" => :build if DevelopmentTools.clang_build_version <= 1500
+    if DevelopmentTools.clang_build_version <= 1100
+      depends_on "llvm@18" => :build
+    elsif DevelopmentTools.clang_build_version <= 1500
+      depends_on "llvm" => :build
+    end
   end
 
   on_linux do
@@ -65,20 +69,22 @@ class Node < Formula
 
   patch :DATA
   def install
-    # ENV.llvm_clang if OS.mac? && DevelopmentTools.clang_build_version <= 1500
+    if OS.mac?
+      if DevelopmentTools.clang_build_version <= 1100
+        inreplace "common.gypi", /'MACOSX_DEPLOYMENT_TARGET': '\d+\.\d+'/, "'MACOSX_DEPLOYMENT_TARGET': '#{MacOS.version}'"
+        llvm = Formula["llvm@18"]
+        ENV["CC"] = "#{llvm.opt_bin}/clang"
+        ENV["CXX"] = "#{llvm.opt_bin}/clang++"
+        ENV.append_to_cflags "-isysroot #{MacOS.sdk_path}" if OS.mac?
+      elsif DevelopmentTools.clang_build_version <= 1500
+        ENV.llvm_clang
+        llvm = Formula["llvm"]
+      else
+      ENV.append "LDFLAGS", "#{llvm.opt_lib}/c++/#{shared_library("libc++")}"
+    end
 
     # The new linker crashed during LTO due to high memory usage.
     ENV.append "LDFLAGS", "-Wl,-ld_classic" if DevelopmentTools.clang_build_version >= 1500
-
-    if OS.mac? && DevelopmentTools.clang_build_version <= 1100
-      inreplace "common.gypi", /'MACOSX_DEPLOYMENT_TARGET': '\d+\.\d+'/, "'MACOSX_DEPLOYMENT_TARGET': '#{MacOS.version}'"
-      
-      llvm = Formula["llvm@18"]
-      ENV["CC"] = "#{llvm.opt_bin}/clang"
-      ENV["CXX"] = "#{llvm.opt_bin}/clang++"
-      ENV.append_to_cflags "-isysroot #{MacOS.sdk_path}" if OS.mac?
-      ENV.append "LDFLAGS", "#{llvm.opt_lib}/c++/#{shared_library("libc++")}"
-    end
 
     # make sure subprocesses spawned by make are using our Python 3
     ENV["PYTHON"] = which("python3.13")

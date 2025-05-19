@@ -25,7 +25,7 @@ Since Homebrew no longer accepts pull requests for unsupported macOS versions, I
   ```diff
   --- HostInfoMacOSX.mm
   +++ HostInfoMacOSX.mm
-  @@ -53,6 +53,11 @@
+  @@ -56,6 +56,10 @@
   #define CPU_TYPE_ARM64 (CPU_TYPE_ARM | CPU_ARCH_ABI64)
   #endif
 
@@ -113,7 +113,7 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
  endif()
 +endif()
 ```
-.
+. It seems this patch is always needed to use cmake later on High Sierra although building succeeded whitout it.
 
 ### [z3](https://formulae.brew.sh/formula/z3)
 
@@ -307,7 +307,7 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 * **Issue:** `missing os/signpost.h'`, `zlib issue` and `linking issue` etc.
 * **Solution:** Just use the rb files in the [Formula](./Formula) diretory.
 > [!NOTE]
-> Seems only llvm <= 18 can used to build node due to the deprecated `std::char_traits` api. see [release notes](https://releases.llvm.org/18.1.0/projects/libcxx/docs/ReleaseNotes.html#llvm-19)
+> Seems only llvm <= 18 can used on deprecated macOS to build node due to the deprecated `std::char_traits` api. see [release notes](https://releases.llvm.org/18.1.0/projects/libcxx/docs/ReleaseNotes.html#llvm-19)
 
 
 ### [tesseract](https://formulae.brew.sh/formula/tesseract)
