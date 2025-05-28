@@ -54,8 +54,11 @@ Since Homebrew no longer accepts pull requests for unsupported macOS versions, I
 
 ### [gcc](https://formulae.brew.sh/formula/gcc)
 
-- **Issue:** Any buiding errors
-- **Solution:** Use a specific version of gcc for compilation. `brew install gcc --debug --cc=gcc-14`
+- **Issue:** Linking error (>=14)
+- **Solution:** Use a specific version of gcc for compilation. `brew install gcc --debug --cc=gcc-14`. If you want to use llvm to build, add `ENV.append "LDFLAGS", "-L#{Formula["llvm"].opt_lib}/c++"` to the `args` list in the rb file.
+- **Issue2:** `makeinfo` error (>=15)
+- **Solution:** Install `texinfo` by `brew install texinfo` and add `depends_on "texinfo" => :build` in the rb file.
+
 
 ### [ruby](https://formulae.brew.sh/formula/ruby)
 
@@ -275,7 +278,7 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 
 ### [netpbm](https://formulae.brew.sh/formula/netpbm)
 
-* **Issue:** 
+* **Issue:** `make: python3: No such file or directory`
 * **Solution:** Add `depends_on "python"` into the local rb file.
 
 ### [pango](https://formulae.brew.sh/formula/pango)
