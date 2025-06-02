@@ -214,6 +214,11 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
   * @title: hb-coretext
 ```
 
+### [jq](https://formulae.brew.sh/formula/jq)
+
+* **Issue:** `unknown type name 'x23define'`
+* **Solution:** Add `inreplace "Makefile.in","\\x23","\\#"` into the install block of the local rb file.
+
 ### [librsvg](https://formulae.brew.sh/formula/librsvg)
 * **Issue:** `Command `/private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/meson/makedef.py --regex '^rsvg_.' --os darwin --prefix _ --list /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg.symbols /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg-pixbuf.symbols ` failed with status 127.`
 * **Solution:** Add `depends_on "python"` into the local rb file.
