@@ -522,6 +522,38 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
   Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command
   `cmake -S . -B balabala...` to avoid the linking error.
 
+### [sdl3](https://formulae.brew.sh/formula/sdl2)
+
+* **Issue1:** `error: use of undeclared identifier 'kAudioChannelLayoutTag_WAVE_6_1' 'kAudioChannelLayoutTag_WAVE_7_1'`
+* **Solution2:** Modify `/private/tmp/sdl2-balabala.../src/audio/coreaudio/SDL_coreaudio.m` by this patch:
+
+  ```diff
+  --- SDL_coreaudio.m
+  +++ SDL_coreaudio.m
+  @@ -23,6 +23,14 @@
+  #ifdef SDL_AUDIO_DRIVER_COREAUDIO
+
+  /* !!! FIXME: clean out some of the macro salsa in here. */
+  +#ifndef kAudioChannelLayoutTag_WAVE_6_1
+  +#define kAudioChannelLayoutTag_WAVE_6_1 ((188U << 16) | 7)                     ///< 7 channels, L R C LFE Cs Ls Rs
+  +#endif
+  +
+  +#ifndef kAudioChannelLayoutTag_WAVE_7_1
+  +#define kAudioChannelLayoutTag_WAVE_7_1 ((188U << 16) | 8)                   ///< 8 channels, L R C LFE Rls Rrs Ls Rs
+  +#endif
+  +
+
+  #include "SDL_audio.h"
+  #include "SDL_hints.h"
+  ```
+
+* **Issue2:** Undefined symbols for architecture x86_64:
+* **Solution2:** Add these parameters `-DSDL_CAMERA=OFF -DSDL_JOYSTICK=OFF -DSDL_HAPTIC=OFF -DSDL_DIALOG=OFF -DSDL_GPU=OFF -DSDL_METAL=OFF -DSDL_RENDER_METAL=OFF -DSDL_COCOA=OFF` to the `cmake -S . -B build` command.
+
+* **Issue3:** Framework `UniformTypeIdentifiers` not found.
+* **Solution3:** Comment out the line of `sdl_link_dependency(uniformtypeidentifiers` in `CMakeLists.txt`.
+
+
 ### [sdl2](https://formulae.brew.sh/formula/sdl2)
 
 * **Issue:** `error: use of undeclared identifier 'kAudioChannelLayoutTag_WAVE_6_1' 'kAudioChannelLayoutTag_WAVE_7_1'`
@@ -591,14 +623,15 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
   + Add `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command `cmake -S . -B build/static balabala...` to avoid the linking error.
 
 ### [freerdp](https://formulae.brew.sh/formula/freerdp)
-
-- **Issue 1:** Dependency missing `SDL3`, which is only supported to be built on macOS 11+. See [Bumped deployment requirements](https://github.com/libsdl-org/SDL/commit/cdde6dd7bb182a430f82c5e059122b350df7f1dd). However, it seems it can be deployed to 10.13 with the build on newer macOS.
-- **Solution:** Continue using `SDL2`. Modify the [rb](https://github.com/Homebrew/homebrew-core/blob/9040bc413622ff58d9df25e2f8735b062c58eeb5/Formula/f/freerdp.rb) file with the latest FreeRDP tarball.
-- **Issue 2:** Linker error
+- **Issue:** Linker error
 - **Solution:** Use LLVM by running `brew install ./freerdp.rb --cc=llvm_clang`.
   Additionally, add the following flags to the CMake command `cmake -S . -B build/shared ...` to avoid the linking error:
   - `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}`
   - `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}`
+
+> [!NOTE]
+> `sdl2` maybe more compatible with `freerdp` on deprecated macOS.
+
 
 ### [pandoc](https://formulae.brew.sh/formula/pandoc)
 
