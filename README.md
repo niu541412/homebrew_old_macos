@@ -223,7 +223,7 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 * **Issue:** `Command `/private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/meson/makedef.py --regex '^rsvg_.' --os darwin --prefix _ --list /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg.symbols /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg-pixbuf.symbols ` failed with status 127.`
 * **Solution:** Add `depends_on "python"` into the local rb file.
 
-### [openjdk@17](https://formulae.brew.sh/formula/openjdk@17)
+### [openjdk@21](https://formulae.brew.sh/formula/openjdk@21), [openjdk@17](https://formulae.brew.sh/formula/openjdk@17)
 
 - **Issue:** `cuse of undeclared identifier 'NSBundleExecutableArchitectureARM64'`
 - **Solution:**patch `jdk17u-jdk-17.balabala-ga/src/java.desktop/macosx/native/libawt_lwawt/awt/CGraphicsDevice.m` with
@@ -244,7 +244,8 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
     */
   ```
 
-  And use llvm 16 to compile `brew install openjdk@17 --cc=llvm_clang`. It seems it's to due to llvm (>=17) use the dynamic library cache of macOS which is not compatible with the old version. See 2nd Kernel issue of [Release Note](https://developer.apple.com/documentation/macos-release-notes/macos-big-sur-11_0_1-release-notes#Kernel).
+  For openjdk@17 use llvm 16 to compile `brew install openjdk@17 --cc=llvm_clang`. It seems it's to due to llvm (>=17) use the dynamic library cache of macOS which is not compatible with the old version. See 2nd Kernel issue of [Release Note](https://developer.apple.com/documentation/macos-release-notes/macos-big-sur-11_0_1-release-notes#Kernel).
+  For openjdk@21, remove `depends_on macos: :catalina` from the rb file.
 
 ### [ghc](https://formulae.brew.sh/formula/ghc)
 
@@ -617,7 +618,7 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
 
 ### [poppler](https://formulae.brew.sh/formula/poppler)
 
-- **Issue2:**  Linker error
+- **Issue:**  Linker error
 - **Solution:** Use llvm `brew install poppler --cc=llvm_clang`.
   + Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command `cmake -S . -B build/shared balabala...` to avoid the linking error.
   + Add `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command `cmake -S . -B build/static balabala...` to avoid the linking error.
