@@ -495,7 +495,7 @@ Undefined symbols for architecture x86_64:
 
 ### [openexr](https://formulae.brew.sh/formula/openexr)
 
-* **Solution:** Use a higher version of gcc for compilation. `brew install openexr --cc=gcc-14`
+* **Solution:** Use gcc or llvm(<=17) for compilation. `brew install openexr --cc=gcc-14`
 
 ### [gdk-pixbuf](https://formulae.brew.sh/formula/gdk-pixbuf)
 
