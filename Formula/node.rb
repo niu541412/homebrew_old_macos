@@ -1,8 +1,8 @@
 class Node < Formula
   desc "Platform built on V8 to build network applications"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v24.1.0/node-v24.1.0.tar.xz"
-  sha256 "c8171b2aeccb28c8c5347f273a25adae172fb2a65bc8c975bc22ec58949d0eaf"
+  url "https://nodejs.org/dist/v24.3.0/node-v24.3.0.tar.xz"
+  sha256 "eb688ef8a63fda9ebc0b5f907609a46e26db6d9aceefc0832009a98371e992ed"
   license "MIT"
   head "https://github.com/nodejs/node.git", branch: "main"
 
@@ -35,6 +35,8 @@ class Node < Formula
     depends_on "gcc@12" => :build if DevelopmentTools.gcc_version("/usr/bin/gcc") < 12
   end
 
+  link_overwrite "bin/npm", "bin/npx"
+
   # https://github.com/swiftlang/llvm-project/commit/078651b6de4b767b91e3e6a51e5df11a06d7bc4f
   fails_with :clang do
     build 1699
@@ -51,8 +53,8 @@ class Node < Formula
   # We track major/minor from upstream Node releases.
   # We will accept *important* npm patch releases when necessary.
   resource "npm" do
-    url "https://registry.npmjs.org/npm/-/npm-11.3.0.tgz"
-    sha256 "1c2dd63f96799ed4bf92b7806d8509302a0f8da68ca452aae27f24388bb41df4"
+    url "https://registry.npmjs.org/npm/-/npm-11.4.2.tgz"
+    sha256 "8b469a56d85a61abd846e78690623ce956b4d49ae56f15ac76dea0dce3bd4b2b"
   end
 
   patch :DATA

@@ -1,8 +1,8 @@
 class NodeAT22 < Formula
   desc "Platform built on V8 to build network applications"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v22.15.0/node-v22.15.0.tar.xz"
-  sha256 "e7c4226d1d92f33ad854d6da4f7e519e77690b8e73f93496881f8c539174d9df"
+  url "https://nodejs.org/dist/v22.17.0/node-v22.17.0.tar.xz"
+  sha256 "7a3ef2aedb905ea7926e5209157266e2376a5db619d9ac0cba3c967f6f5db4f9"
   license "MIT"
 
   livecheck do
@@ -11,13 +11,6 @@ class NodeAT22 < Formula
   end
 
   bottle do
-    sha256 arm64_sequoia: "e862f6bf567ffee63d3be4dd949ba09dec5a2697faf2e45a13fef3ca0c58b1db"
-    sha256 arm64_sonoma:  "9a1d15587c1f4a7c028f1539763c2dd3c0b0aa4443092703d18ce7ec207cc615"
-    sha256 arm64_ventura: "250b83bdcd4dca982ada197b7f5c1d52cbcbb01dc6b133e2e75854123400fc8c"
-    sha256 sonoma:        "486c49a5480739d774dae1385ccf40e3e7433775903674ee4a8e261c84e7f055"
-    sha256 ventura:       "3c543d9dcadbac56915fa32516a22a9d3f65708d25034f0a28932e7beaf3db51"
-    sha256 arm64_linux:   "1d261576792106888ae8c94d359f4826e9319a7181b5eb4eae833169afc182e4"
-    sha256 x86_64_linux:  "3582cefbc7725e7c6c66cd5af0d0a44422ec32811fb6e606e53c6cd34c2ef32f"
   end
 
   keg_only :versioned_formula
@@ -39,7 +32,7 @@ class NodeAT22 < Formula
   uses_from_macos "zlib"
 
   on_macos do
-    depends_on "llvm@18" => [:build, :test] if DevelopmentTools.clang_build_version <= 1100
+    depends_on "llvm" => [:build, :test] if DevelopmentTools.clang_build_version <= 1100
   end
 
   fails_with :clang do
@@ -59,7 +52,7 @@ class NodeAT22 < Formula
     if OS.mac? && DevelopmentTools.clang_build_version <= 1100
       inreplace "common.gypi", /'MACOSX_DEPLOYMENT_TARGET': '\d+\.\d+'/, "'MACOSX_DEPLOYMENT_TARGET': '#{MacOS.version}'"
       
-      llvm = Formula["llvm@18"]
+      llvm = Formula["llvm"]
       ENV["CC"] = "#{llvm.opt_bin}/clang"
       ENV["CXX"] = "#{llvm.opt_bin}/clang++"
       ENV.append_to_cflags "-isysroot #{MacOS.sdk_path}" if OS.mac?
