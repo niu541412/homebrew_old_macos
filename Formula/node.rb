@@ -1,8 +1,8 @@
 class Node < Formula
   desc "Platform built on V8 to build network applications"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v24.3.0/node-v24.3.0.tar.xz"
-  sha256 "eb688ef8a63fda9ebc0b5f907609a46e26db6d9aceefc0832009a98371e992ed"
+  url "https://nodejs.org/dist/v24.5.0/node-v24.5.0.tar.xz"
+  sha256 "f1ba96204724bd1c6de7758e08b3718ba0b45d87fb3bebd7e30097874ccc8130"
   license "MIT"
   head "https://github.com/nodejs/node.git", branch: "main"
 
@@ -20,8 +20,13 @@ class Node < Formula
   depends_on "c-ares"
   depends_on "icu4c@77"
   depends_on "libnghttp2"
+  depends_on "libnghttp3"
+  depends_on "libngtcp2"
   depends_on "libuv"
   depends_on "openssl@3"
+  depends_on "simdjson"
+  depends_on "sqlite" # Fails with macOS sqlite.
+  depends_on "zstd"
 
   uses_from_macos "python", since: :catalina
   uses_from_macos "zlib"
@@ -53,8 +58,8 @@ class Node < Formula
   # We track major/minor from upstream Node releases.
   # We will accept *important* npm patch releases when necessary.
   resource "npm" do
-    url "https://registry.npmjs.org/npm/-/npm-11.4.2.tgz"
-    sha256 "8b469a56d85a61abd846e78690623ce956b4d49ae56f15ac76dea0dce3bd4b2b"
+    url "https://registry.npmjs.org/npm/-/npm-11.5.1.tgz"
+    sha256 "f4c82fbff74154f73bd5ce5a2b749700d55eaddebda97b16076bf7033040de34"
   end
 
   patch :DATA
@@ -64,7 +69,7 @@ class Node < Formula
     # The new linker crashed during LTO due to high memory usage.
     ENV.append "LDFLAGS", "-Wl,-ld_classic" if DevelopmentTools.clang_build_version >= 1500
 
-    if OS.mac? && DevelopmentTools.clang_build_version <= 1100
+    if OS.mac? && DevelopmentTools.clang_build_version <= 1400
       inreplace "common.gypi", /'MACOSX_DEPLOYMENT_TARGET': '\d+\.\d+'/, "'MACOSX_DEPLOYMENT_TARGET': '#{MacOS.version}'"
       
       llvm = Formula["llvm"]
@@ -83,25 +88,66 @@ class Node < Formula
       --prefix=#{prefix}
       --without-npm
       --with-intl=system-icu
-      --shared-libuv
-      --shared-nghttp2
-      --shared-openssl
-      --shared-zlib
       --shared-brotli
       --shared-cares
-      --shared-libuv-includes=#{Formula["libuv"].include}
-      --shared-libuv-libpath=#{Formula["libuv"].lib}
-      --shared-nghttp2-includes=#{Formula["libnghttp2"].include}
-      --shared-nghttp2-libpath=#{Formula["libnghttp2"].lib}
-      --shared-openssl-includes=#{Formula["openssl@3"].include}
-      --shared-openssl-libpath=#{Formula["openssl@3"].lib}
+      --shared-libuv
+      --shared-nghttp2
+      --shared-nghttp3
+      --shared-ngtcp2
+      --shared-openssl
+      --shared-simdjson
+      --shared-sqlite
+      --shared-zlib
+      --shared-zstd
       --shared-brotli-includes=#{Formula["brotli"].include}
       --shared-brotli-libpath=#{Formula["brotli"].lib}
       --shared-cares-includes=#{Formula["c-ares"].include}
       --shared-cares-libpath=#{Formula["c-ares"].lib}
+      --shared-libuv-includes=#{Formula["libuv"].include}
+      --shared-libuv-libpath=#{Formula["libuv"].lib}
+      --shared-nghttp2-includes=#{Formula["libnghttp2"].include}
+      --shared-nghttp2-libpath=#{Formula["libnghttp2"].lib}
+      --shared-nghttp3-includes=#{Formula["libnghttp3"].include}
+      --shared-nghttp3-libpath=#{Formula["libnghttp3"].lib}
+      --shared-ngtcp2-includes=#{Formula["libngtcp2"].include}
+      --shared-ngtcp2-libpath=#{Formula["libngtcp2"].lib}
+      --shared-openssl-includes=#{Formula["openssl@3"].include}
+      --shared-openssl-libpath=#{Formula["openssl@3"].lib}
+      --shared-simdjson-includes=#{Formula["simdjson"].include}
+      --shared-simdjson-libpath=#{Formula["simdjson"].lib}
+      --shared-sqlite-includes=#{Formula["sqlite"].include}
+      --shared-sqlite-libpath=#{Formula["sqlite"].lib}
+      --shared-zstd-includes=#{Formula["zstd"].include}
+      --shared-zstd-libpath=#{Formula["zstd"].lib}
       --openssl-use-def-ca-store
     ]
     args << "--tag=head" if build.head?
+
+    # TODO: Try to devendor these libraries.
+    # - `--shared-ada` needs the `ada-url` formula, but requires C++20
+    # - `--shared-simdutf` seems to result in build failures.
+    # - `--shared-http-parser` and `--shared-uvwasi` are not available as dependencies in Homebrew.
+    ignored_shared_flags = %w[
+      ada
+      http-parser
+      simdutf
+      uvwasi
+    ].map { |library| "--shared-#{library}" }
+
+    configure_help = Utils.safe_popen_read("./configure", "--help")
+    shared_flag_regex = /\[(--shared-[^ \]]+)\]/
+    configure_help.scan(shared_flag_regex) do |matches|
+      matches.each do |flag|
+        next if args.include?(flag) || ignored_shared_flags.include?(flag)
+
+        message = "Unused `--shared-*` flag: #{flag}"
+        if build.head?
+          opoo message
+        else
+          odie message
+        end
+      end
+    end
 
     # Enabling LTO errors on Linux with:
     # terminate called after throwing an instance of 'std::out_of_range'

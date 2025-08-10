@@ -518,11 +518,18 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
 
 * **Solution2:** do not pre-install gdk-pixbuf package, or uninstall it then reinstall it again.
 
-### [snappy](https://formulae.brew.sh/formula/snappy), [abseil](https://formulae.brew.sh/formula/abseil), [protobuf](https://formulae.brew.sh/formula/protobuf)
+### [snappy](https://formulae.brew.sh/formula/snappy), [abseil](https://formulae.brew.sh/formula/abseil)
 
 - **Issue:** Linking error.
-- **Solution1:** Use llvm `brew install formula --cc=llvm_clang`.
+- **Solution:** Use llvm `brew install formula --cc=llvm_clang`.
   Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command
+  `cmake -S . -B balabala...` to avoid the linking error.
+
+### [protobuf](https://formulae.brew.sh/formula/protobuf)
+
+- **Issue:** Linking error.
+- **Solution:** Use llvm `brew install formula --cc=llvm_clang`.
+  Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command
   `cmake -S . -B balabala...` to avoid the linking error.
 
 ### [sdl3](https://formulae.brew.sh/formula/sdl2)
@@ -635,6 +642,11 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
 > [!NOTE]
 > `sdl2` maybe more compatible with `freerdp` on deprecated macOS.
 
+### [simdutf](https://formulae.brew.sh/formula/simdutf)
+- **Issue:** Linker error
+- **Solution:** Use LLVM by running `brew install ./simdutf.rb --cc=llvm_clang`.
+  Additionally, add the following flags to the CMake command `cmake -S . -B build ...` to avoid the linking error:
+  - `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}`
 
 ### [pandoc](https://formulae.brew.sh/formula/pandoc)
 

@@ -1,8 +1,8 @@
 class NodeAT22 < Formula
   desc "Platform built on V8 to build network applications"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v22.17.0/node-v22.17.0.tar.xz"
-  sha256 "7a3ef2aedb905ea7926e5209157266e2376a5db619d9ac0cba3c967f6f5db4f9"
+  url "https://nodejs.org/dist/v22.18.0/node-v22.18.0.tar.xz"
+  sha256 "120e0f74419097a9fafae1fd80b9de7791a587e6f1c48c22b193239ccd0f7084"
   license "MIT"
 
   livecheck do
@@ -25,8 +25,14 @@ class NodeAT22 < Formula
   depends_on "c-ares"
   depends_on "icu4c@77"
   depends_on "libnghttp2"
+  depends_on "libnghttp3"
+  depends_on "libngtcp2"
   depends_on "libuv"
   depends_on "openssl@3"
+  depends_on "simdjson"
+  depends_on "simdutf"
+  depends_on "sqlite"
+  depends_on "zstd"
 
   uses_from_macos "python", since: :catalina
   uses_from_macos "zlib"
@@ -65,22 +71,40 @@ class NodeAT22 < Formula
     args = %W[
       --prefix=#{prefix}
       --with-intl=system-icu
-      --shared-libuv
-      --shared-nghttp2
-      --shared-openssl
-      --shared-zlib
       --shared-brotli
       --shared-cares
-      --shared-libuv-includes=#{Formula["libuv"].include}
-      --shared-libuv-libpath=#{Formula["libuv"].lib}
-      --shared-nghttp2-includes=#{Formula["libnghttp2"].include}
-      --shared-nghttp2-libpath=#{Formula["libnghttp2"].lib}
-      --shared-openssl-includes=#{Formula["openssl@3"].include}
-      --shared-openssl-libpath=#{Formula["openssl@3"].lib}
+      --shared-libuv
+      --shared-nghttp2
+      --shared-nghttp3
+      --shared-ngtcp2
+      --shared-openssl
+      --shared-simdjson
+      --shared-simdutf
+      --shared-sqlite
+      --shared-zlib
+      --shared-zstd
       --shared-brotli-includes=#{Formula["brotli"].include}
       --shared-brotli-libpath=#{Formula["brotli"].lib}
       --shared-cares-includes=#{Formula["c-ares"].include}
       --shared-cares-libpath=#{Formula["c-ares"].lib}
+      --shared-libuv-includes=#{Formula["libuv"].include}
+      --shared-libuv-libpath=#{Formula["libuv"].lib}
+      --shared-nghttp2-includes=#{Formula["libnghttp2"].include}
+      --shared-nghttp2-libpath=#{Formula["libnghttp2"].lib}
+      --shared-nghttp3-includes=#{Formula["libnghttp3"].include}
+      --shared-nghttp3-libpath=#{Formula["libnghttp3"].lib}
+      --shared-ngtcp2-includes=#{Formula["libngtcp2"].include}
+      --shared-ngtcp2-libpath=#{Formula["libngtcp2"].lib}
+      --shared-openssl-includes=#{Formula["openssl@3"].include}
+      --shared-openssl-libpath=#{Formula["openssl@3"].lib}
+      --shared-simdjson-includes=#{Formula["simdjson"].include}
+      --shared-simdjson-libpath=#{Formula["simdjson"].lib}
+      --shared-simdutf-includes=#{Formula["simdutf"].include}
+      --shared-simdutf-libpath=#{Formula["simdutf"].lib}
+      --shared-sqlite-includes=#{Formula["sqlite"].include}
+      --shared-sqlite-libpath=#{Formula["sqlite"].lib}
+      --shared-zstd-includes=#{Formula["zstd"].include}
+      --shared-zstd-libpath=#{Formula["zstd"].lib}
       --openssl-use-def-ca-store
     ]
 
@@ -89,6 +113,25 @@ class NodeAT22 < Formula
     # Pre-Catalina macOS also can't build with LTO
     # LTO is unpleasant if you have to build from source.
     args << "--enable-lto" if OS.mac? && MacOS.version >= :catalina && build.bottle?
+
+    # TODO: Try to devendor these libraries.
+    # - `--shared-ada` needs the `ada-url` formula, but requires C++20
+    # - `--shared-http-parser` and `--shared-uvwasi` are not available as dependencies in Homebrew.
+    ignored_shared_flags = %w[
+      ada
+      http-parser
+      uvwasi
+    ].map { |library| "--shared-#{library}" }
+
+    configure_help = Utils.safe_popen_read("./configure", "--help")
+    shared_flag_regex = /\[(--shared-[^ \]]+)\]/
+    configure_help.scan(shared_flag_regex) do |matches|
+      matches.each do |flag|
+        next if args.include?(flag) || ignored_shared_flags.include?(flag)
+
+        odie "Unused `--shared-*` flag: #{flag}"
+      end
+    end
 
     system "./configure", *args
     system "make", "install"
