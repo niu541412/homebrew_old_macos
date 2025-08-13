@@ -15,6 +15,9 @@ Since Homebrew no longer accepts pull requests for unsupported macOS versions, I
 > 3. **Dependencies:** Ensure all dependencies are correctly installed. Sometimes, manual installation of dependencies is required.
 > 4. **Environment Variables:** Setting environment variables like `SDKROOT`, `MACOSX_DEPLOYMENT_TARGET`, and `CFLAGS` can help in building some formulae.
 
+> [!IMPORTANT]  
+> From brew v4.6.3, brew install from source must set `HOMEBREW_DEVELOPER=1`, see [Don't allow installing formulae from paths without HOMEBREW_DEVELOPER](https://github.com/Homebrew/brew/pull/20414)
+
 ## Formulae with solution
 
 ### [llvm](https://formulae.brew.sh/formula/llvm)
