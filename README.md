@@ -75,6 +75,105 @@ ld: 8 duplicate symbols for architecture x86_64
 - **Issuse2:** `Errno::ENOENT: No such file or directory @ apply2files...`
 - **Solution:** Replace tar as following this [link](https://github.com/koekeishiya/yabai/issues/1208#issuecomment-1171165126).
 
+
+### [go](https://formulae.brew.sh/formula/go)
+
+- **Issue:**
+
+```log
+Building packages and commands for darwin/amd64.
+dyld: Symbol not found: _SecTrustCopyCertificateChain
+  Referenced from: /usr/local/Cellar/go/1.25.0/libexec/bin/go (which was built for Mac OS X 12.0)
+  Expected in: /System/Library/Frameworks/Security.framework/Versions/A/Security
+ in /usr/local/Cellar/go/1.25.0/libexec/bin/go
+ ```
+
+- **Solution:** Go>=1.25.0 use the SecTrustCopyCertificateChain method, see [Commit 937368f](https://github.com/golang/go/commit/937368f84e545db15d3f39c2b33a267ba8ead4a4), thus use the reversed patch:
+```diff
+--- a/src/crypto/x509/internal/macos/security.go
++++ b/src/crypto/x509/internal/macos/security.go
+@@ -122,6 +122,25 @@
+ }
+ func x509_SecTrustEvaluateWithError_trampoline()
+ 
++//go:cgo_import_dynamic x509_SecTrustGetCertificateCount SecTrustGetCertificateCount "/System/Library/Frameworks/Security.framework/Versions/A/Security"
++
++func SecTrustGetCertificateCount(trustObj CFRef) int {
++	ret := syscall(abi.FuncPCABI0(x509_SecTrustGetCertificateCount_trampoline), uintptr(trustObj), 0, 0, 0, 0, 0)
++	return int(ret)
++}
++func x509_SecTrustGetCertificateCount_trampoline()
++
++//go:cgo_import_dynamic x509_SecTrustGetCertificateAtIndex SecTrustGetCertificateAtIndex "/System/Library/Frameworks/Security.framework/Versions/A/Security"
++
++func SecTrustGetCertificateAtIndex(trustObj CFRef, i int) (CFRef, error) {
++	ret := syscall(abi.FuncPCABI0(x509_SecTrustGetCertificateAtIndex_trampoline), uintptr(trustObj), uintptr(i), 0, 0, 0, 0)
++	if ret == 0 {
++		return 0, OSStatus{"SecTrustGetCertificateAtIndex", int32(ret)}
++	}
++	return CFRef(ret), nil
++}
++func x509_SecTrustGetCertificateAtIndex_trampoline()
++
+ //go:cgo_import_dynamic x509_SecCertificateCopyData SecCertificateCopyData "/System/Library/Frameworks/Security.framework/Versions/A/Security"
+ 
+ func SecCertificateCopyData(cert CFRef) ([]byte, error) {
+@@ -134,14 +153,3 @@
+ 	return b, nil
+ }
+ func x509_SecCertificateCopyData_trampoline()
+-
+-//go:cgo_import_dynamic x509_SecTrustCopyCertificateChain SecTrustCopyCertificateChain "/System/Library/Frameworks/Security.framework/Versions/A/Security"
+-
+-func SecTrustCopyCertificateChain(trustObj CFRef) (CFRef, error) {
+-	ret := syscall(abi.FuncPCABI0(x509_SecTrustCopyCertificateChain_trampoline), uintptr(trustObj), 0, 0, 0, 0, 0)
+-	if ret == 0 {
+-		return 0, OSStatus{"SecTrustCopyCertificateChain", int32(ret)}
+-	}
+-	return CFRef(ret), nil
+-}
+-func x509_SecTrustCopyCertificateChain_trampoline()
+
+--- a/src/crypto/x509/internal/macos/security.s
++++ b/src/crypto/x509/internal/macos/security.s
+@@ -21,7 +21,9 @@
+ 	JMP x509_SecTrustEvaluate(SB)
+ TEXT ·x509_SecTrustEvaluateWithError_trampoline(SB),NOSPLIT,$0-0
+ 	JMP x509_SecTrustEvaluateWithError(SB)
++TEXT ·x509_SecTrustGetCertificateCount_trampoline(SB),NOSPLIT,$0-0
++	JMP x509_SecTrustGetCertificateCount(SB)
++TEXT ·x509_SecTrustGetCertificateAtIndex_trampoline(SB),NOSPLIT,$0-0
++	JMP x509_SecTrustGetCertificateAtIndex(SB)
+ TEXT ·x509_SecCertificateCopyData_trampoline(SB),NOSPLIT,$0-0
+ 	JMP x509_SecCertificateCopyData(SB)
+-TEXT ·x509_SecTrustCopyCertificateChain_trampoline(SB),NOSPLIT,$0-0
+-	JMP x509_SecTrustCopyCertificateChain(SB)
+
+--- a/src/crypto/x509/root_darwin.go
++++ b/src/crypto/x509/root_darwin.go
+@@ -73,13 +73,12 @@
+ 	}
+ 
+ 	chain := [][]*Certificate{{}}
+-	chainRef, err := macOS.SecTrustCopyCertificateChain(trustObj)
+-	if err != nil {
+-		return nil, err
+-	}
+-	defer macOS.CFRelease(chainRef)
+-	for i := 0; i < macOS.CFArrayGetCount(chainRef); i++ {
+-		certRef := macOS.CFArrayGetValueAtIndex(chainRef, i)
++	numCerts := macOS.SecTrustGetCertificateCount(trustObj)
++	for i := 0; i < numCerts; i++ {
++		certRef, err := macOS.SecTrustGetCertificateAtIndex(trustObj, i)
++		if err != nil {
++			return nil, err
++		}
+ 		cert, err := exportCertificate(certRef)
+ 		if err != nil {
+ 			return nil, err
+```
+
+
 ### [php](https://formulae.brew.sh/formula/php)
 
 - **Issue:**
