@@ -16,7 +16,7 @@ Since Homebrew no longer accepts pull requests for unsupported macOS versions, I
 > 4. **Environment Variables:** Setting environment variables like `SDKROOT`, `MACOSX_DEPLOYMENT_TARGET`, and `CFLAGS` can help in building some formulae.
 
 > [!IMPORTANT]  
-> From brew v4.6.3, brew install from source must set `HOMEBREW_DEVELOPER=1`, see [Don't allow installing formulae from paths without HOMEBREW_DEVELOPER](https://github.com/Homebrew/brew/pull/20414)
+> Since brew v4.6.4, `brew install` from source must set `HOMEBREW_DEVELOPER=1`, see [Don't allow installing formulae from paths without HOMEBREW_DEVELOPER](https://github.com/Homebrew/brew/pull/20414)
 
 ## Formulae with solution
 
@@ -278,8 +278,10 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 
   And add `ENV.prepend_path "PATH", Formula["llvm"].opt_bin` to the rb file.
 
-  - **Issue3:** `couldn't find required command: "llvm_ar"`
-  - **Solution:** patch `rustc-balabala-src/src/bootstrap/src/utils/cc_detect.rs` with
+  ~~- **Issue3:** `couldn't find required command: "llvm_ar"`~~
+  ~~- **Solution:** Seems solved since [v1.89.0](https://github.com/rust-lang/rust/commit/8a70219a38487a59de2449e920302d900506118d).~~
+  
+  ~~patch `rustc-balabala-src/src/bootstrap/src/utils/cc_detect.rs` with~~
 
   ```diff
   --- cc_detect.rs
@@ -296,9 +298,9 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
             }
   ```
 
-  - **Issue4:** `ld: symbol(s) not found for architecture x86_64`
-  - **Solution:** add configure parameter `--llvm-ldflags=-L#{Formula["llvm"].opt_lib}/c++` to the rb file. If
-    still not work, try to temporally hide `/usr/lib/libc++.dylib`.
+  ~~- **Issue4:** `ld: symbol(s) not found for architecture x86_64`~~
+  ~~- **Solution:** add configure parameter `--llvm-ldflags=-L#{Formula["llvm"].opt_lib}/c++` to the rb file. If~~
+    ~~still not work, try to temporally hide `/usr/lib/libc++.dylib`.~~
 
 ### [harfbuzz](https://formulae.brew.sh/formula/harfbuzz)
 
@@ -324,8 +326,16 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 * **Solution:** Add `inreplace "Makefile.in","\\x23","\\#"` into the install block of the local rb file.
 
 ### [librsvg](https://formulae.brew.sh/formula/librsvg)
-* **Issue:** `Command `/private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/meson/makedef.py --regex '^rsvg_.' --os darwin --prefix _ --list /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg.symbols /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg-pixbuf.symbols ` failed with status 127.`
-* **Solution:** Add `depends_on "python"` into the local rb file.
+* **Issue1:** `Command `/private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/meson/makedef.py --regex '^rsvg_.' --os darwin --prefix _ --list /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg.symbols /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg-pixbuf.symbols ` failed with status 127.`
+* **Solution1:** Add `depends_on "python"` into the local rb file.
+* **Issue2:** 
+```log
+  File "/usr/local/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-only', '-g', 'rsvg/librsvg_2.a']' returned non-zero exit status 1.
+```
+* **Solution2:** Add `ENV.append_path "PATH", Formula["llvm"].opt_bin` into the local rb file.
 
 ### [openjdk@21](https://formulae.brew.sh/formula/openjdk@21), [openjdk@17](https://formulae.brew.sh/formula/openjdk@17)
 
@@ -566,8 +576,8 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 
 ### [jpeg-xl](https://formulae.brew.sh/formula/jpeg-xl)
 
-* **Solution:** Use a specific version (maybe <14) of gcc for compilation. `brew install jpeg-xl --cc=gcc-xx`
-* **Reference:** [MacOS brew install jpeg-xl error](https://github.com/libjxl/libjxl/issues/2461)
+~~* **Solution:** Use a specific version (maybe <14) of gcc for compilation. `brew install jpeg-xl --cc=gcc-xx`~~
+~~* **Reference:** [MacOS brew install jpeg-xl error](https://github.com/libjxl/libjxl/issues/2461)~~
 
 ### [libavif](https://formulae.brew.sh/formula/libavif)
 
@@ -578,7 +588,6 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 include(GNUInstallDirs)
 install(TARGETS libargparse...
 ```
-
 .
 
 ### [chafa](https://formulae.brew.sh/formula/chafa)
