@@ -8,15 +8,15 @@ Below is a list of packages that can still be installed via `brew`, based on my 
 
 Since Homebrew no longer accepts pull requests for unsupported macOS versions, I am simply sharing these tips here.
 
+> [!IMPORTANT]  
+> Since brew v4.6.4, `brew install` from source must set `HOMEBREW_DEVELOPER=1`, see [Don't allow installing formulae from paths without HOMEBREW_DEVELOPER](https://github.com/Homebrew/brew/pull/20414)
+
 > [!TIP]
 >
-> 1. **Use Older Compilers:** Sometimes, modern compilers are not compatible with older macOS versions. Consider using older versions of gcc or Clang.
+> 1. **Use Other Compilers:** Sometimes, modern codes are not compatible with built-in macOS versions. Consider using other compilers, e.g. gcc-14 or llvm_clang.
 > 2. **Patching:** Some formulae might require patching to work correctly on older macOS versions. Check the formula's issues or pull requests for patches or create your own if needed.
 > 3. **Dependencies:** Ensure all dependencies are correctly installed. Sometimes, manual installation of dependencies is required.
 > 4. **Environment Variables:** Setting environment variables like `SDKROOT`, `MACOSX_DEPLOYMENT_TARGET`, and `CFLAGS` can help in building some formulae.
-
-> [!IMPORTANT]  
-> Since brew v4.6.4, `brew install` from source must set `HOMEBREW_DEVELOPER=1`, see [Don't allow installing formulae from paths without HOMEBREW_DEVELOPER](https://github.com/Homebrew/brew/pull/20414)
 
 ## Formulae with solution
 
@@ -548,6 +548,17 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
   `make test TESTS='-test_cmp_http'`
   If additional errors occur, append them similarly to `-test_cmp_http`.
 * **Reference:** [OpenSSL Issue on GitHub](https://github.com/openssl/openssl/issues/22467#issuecomment-1779402143)
+
+### [opencv](https://formulae.brew.sh/formula/opencv)
+
+* **Solution1:** Remove `depends_on "vtk"` and `-DWITH_VTK=ON` from the rb file because [molten-vk](https://formulae.brew.sh/formula/molten-vk) is not supported in deprecated macOS.
+* **Solution2:**  Use llvm `brew install opencv --cc=llvm_clang`. Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to args to avoid the linking error.
+
+### [tbb](https://formulae.brew.sh/formula/tbb)
+
+* **Issue:** `clangclang: : errorerror: : unknown argument: '-ffile-prefix-map=../..//='unknown argument: '-ffile-prefix-map=../..//='`
+* **Solution:** Build with `--cc=llvm_clang`.
+
 
 ### [difftastic](https://formulae.brew.sh/formula/difftastic)
 
