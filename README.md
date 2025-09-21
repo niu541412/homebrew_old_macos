@@ -419,7 +419,7 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
 ### [btop](https://formulae.brew.sh/formula/btop)
 
 * **Issue:** linking errors, Undefined symbols for architecture x86_64:
-* **Solution1:** Use llvm. Add `ENV.append "LDFLAGS", "-L#{Formula["llvm"].opt_lib}/c++"` before the make command to avoid the linking error, but do **not** add `--cc=llvm_clang` to the end.
+* **Solution1:** Use llvm. Add `ENV.append "LDFLAGS", "#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}"` before the make command to avoid the linking error, but do **not** add `--cc=llvm_clang` to the end.
 * **Solution2:** Use gcc to build it. However the formula [.rb file](https://github.com/Homebrew/homebrew-core/blob/master/Formula/b/btop.rb) is mandatory to use llvm, so need to modify it and install from local. `depends_on "llvm"...` => `depends_on "gcc"...`; `ENV.llvm_clang if OS.mac?...` => `ENV.cxx if OS.mac?...`
 
 ### [node](https://formulae.brew.sh/formula/node), [node@22](https://formulae.brew.sh/formula/node@22), [node@20](https://formulae.brew.sh/formula/node@20), [node@18](https://formulae.brew.sh/formula/node@18)
@@ -554,9 +554,9 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
 * **Solution1:** Remove `depends_on "vtk"` and `-DWITH_VTK=ON` from the rb file because [molten-vk](https://formulae.brew.sh/formula/molten-vk) is not supported in deprecated macOS.
 * **Solution2:**  Use llvm `brew install opencv --cc=llvm_clang`. Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to args to avoid the linking error.
 
-### [tbb](https://formulae.brew.sh/formula/tbb)
+### [openjph](https://formulae.brew.sh/formula/openjph), [tbb](https://formulae.brew.sh/formula/tbb), [blake3](https://formulae.brew.sh/formula/blake3)
 
-* **Issue:** `clangclang: : errorerror: : unknown argument: '-ffile-prefix-map=../..//='unknown argument: '-ffile-prefix-map=../..//='`
+<!-- * **Issue:** `clangclang: : errorerror: : unknown argument: '-ffile-prefix-map=../..//='unknown argument: '-ffile-prefix-map=../..//='` -->
 * **Solution:** Build with `--cc=llvm_clang`.
 
 
@@ -662,9 +662,9 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
   ```diff
   --- SDL_coreaudio.m
   +++ SDL_coreaudio.m
-  @@ -23,6 +23,14 @@
+  @@ -23,6 +23,13 @@
   #ifdef SDL_AUDIO_DRIVER_COREAUDIO
-
+  
   /* !!! FIXME: clean out some of the macro salsa in here. */
   +#ifndef kAudioChannelLayoutTag_WAVE_6_1
   +#define kAudioChannelLayoutTag_WAVE_6_1 ((188U << 16) | 7)                     ///< 7 channels, L R C LFE Cs Ls Rs
@@ -673,8 +673,7 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
   +#ifndef kAudioChannelLayoutTag_WAVE_7_1
   +#define kAudioChannelLayoutTag_WAVE_7_1 ((188U << 16) | 8)                   ///< 8 channels, L R C LFE Rls Rrs Ls Rs
   +#endif
-  +
-
+  
   #include "SDL_audio.h"
   #include "SDL_hints.h"
   ```
@@ -772,7 +771,7 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
 
 ### [pandoc](https://formulae.brew.sh/formula/pandoc)
 
-- **Issue:**
+- **Issue1:**
 
 ```
 Error: [Cabal-7107]
@@ -785,5 +784,8 @@ Could not resolve dependencies:
 [__3] skipping: base-4.21.0.0 (has the same characteristics that caused the previous version to fail: excluded by constraint '>=4.11 && <4.21' from 'serialise')
 ```
 
-- **Solution:** Add `--allow-newer` to the `cabal v2-install balabala...` command and use LLVM 18 `brew install pandoc --cc=llvm_clang`.
+- **Solution1:** Add `--allow-newer` to the `cabal v2-install balabala...` command and use LLVM 18 `brew install pandoc --cc=llvm_clang`.
 - **Reference:** [Running into depdency conflicts when running cabal test](https://github.com/jgm/pandoc/issues/10597)
+
+- **Issue2:** `folly-2025.09.15.00/folly/concurrency/CacheLocality.cpp:223:35: error: 'path' is unavailable: introduced in macOS 10.15`
+- **Solution2:** Recent homebrew has added  missing symbols checking, see [inject __config_site](https://github.com/Homebrew/brew/commit/4077e8e38d9ca9316797e9a12a21bfa292dcb7e6). You can temporarily change the macro `_LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS` to `0` in `Library/Homebrew/shims/mac/shared/include/llvm/__config_site`.

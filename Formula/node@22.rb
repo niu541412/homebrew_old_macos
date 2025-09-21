@@ -1,8 +1,8 @@
 class NodeAT22 < Formula
   desc "Platform built on V8 to build network applications"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v22.18.0/node-v22.18.0.tar.xz"
-  sha256 "120e0f74419097a9fafae1fd80b9de7791a587e6f1c48c22b193239ccd0f7084"
+  url "https://nodejs.org/dist/v22.19.0/node-v22.19.0.tar.xz"
+  sha256 "0272acfce50ce9ad060288321b1092719a7f19966f81419835410c59c09daa46"
   license "MIT"
 
   livecheck do
@@ -32,6 +32,7 @@ class NodeAT22 < Formula
   depends_on "simdjson"
   depends_on "simdutf"
   depends_on "sqlite"
+  depends_on "uvwasi"
   depends_on "zstd"
 
   uses_from_macos "python", since: :catalina
@@ -81,6 +82,7 @@ class NodeAT22 < Formula
       --shared-simdjson
       --shared-simdutf
       --shared-sqlite
+      --shared-uvwasi
       --shared-zlib
       --shared-zstd
       --shared-brotli-includes=#{Formula["brotli"].include}
@@ -103,6 +105,8 @@ class NodeAT22 < Formula
       --shared-simdutf-libpath=#{Formula["simdutf"].lib}
       --shared-sqlite-includes=#{Formula["sqlite"].include}
       --shared-sqlite-libpath=#{Formula["sqlite"].lib}
+      --shared-uvwasi-includes=#{Formula["uvwasi"].include}/uvwasi
+      --shared-uvwasi-libpath=#{Formula["uvwasi"].lib}
       --shared-zstd-includes=#{Formula["zstd"].include}
       --shared-zstd-libpath=#{Formula["zstd"].lib}
       --openssl-use-def-ca-store
@@ -120,7 +124,6 @@ class NodeAT22 < Formula
     ignored_shared_flags = %w[
       ada
       http-parser
-      uvwasi
     ].map { |library| "--shared-#{library}" }
 
     configure_help = Utils.safe_popen_read("./configure", "--help")
