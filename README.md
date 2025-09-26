@@ -554,10 +554,33 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
 * **Solution1:** Remove `depends_on "vtk"` and `-DWITH_VTK=ON` from the rb file because [molten-vk](https://formulae.brew.sh/formula/molten-vk) is not supported in deprecated macOS.
 * **Solution2:**  Use llvm `brew install opencv --cc=llvm_clang`. Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to args to avoid the linking error.
 
-### [openjph](https://formulae.brew.sh/formula/openjph), [tbb](https://formulae.brew.sh/formula/tbb), [blake3](https://formulae.brew.sh/formula/blake3)
+### [tbb](https://formulae.brew.sh/formula/tbb), [blake3](https://formulae.brew.sh/formula/blake3)
 
 <!-- * **Issue:** `clangclang: : errorerror: : unknown argument: '-ffile-prefix-map=../..//='unknown argument: '-ffile-prefix-map=../..//='` -->
 * **Solution:** Build with `--cc=llvm_clang`.
+
+### [openjph](https://formulae.brew.sh/formula/openjph)
+* **Solution:** Modify `src/core/common/ojph_mem.h` with this patch:
+```diff
+--- a/src/core/common/ojph_mem.h
++++ b/src/core/common/ojph_mem.h
+@@ -62,7 +62,14 @@
+ #else
+   inline void* ojph_aligned_malloc(size_t alignment, size_t size)
+   {
++  #if defined(__APPLE__) || defined(__MACH__)
++    void* ptr = NULL;
++    if (posix_memalign(&ptr, alignment, size) != 0)
++      return NULL;
++    return ptr;
++  #else
+     return aligned_alloc(alignment, size);
++  #endif 
+   }
+ 
+   inline void ojph_aligned_free(void* pointer)
+```
+Then build with `--cc=llvm_clang`.
 
 
 ### [difftastic](https://formulae.brew.sh/formula/difftastic)
@@ -623,8 +646,12 @@ Undefined symbols for architecture x86_64:
 
 ### [gdk-pixbuf](https://formulae.brew.sh/formula/gdk-pixbuf)
 
-* **Issue:** `Dependency lookup for libtiff-4 with method 'pkgconfig' failed: Could not generate cflags for libtiff-4: Package libdeflate was not found in the pkg-config search path.`
-* **Solution:** Reinstall `libtiff` because it add useless dependence in pkgconfig file.
+* **Issue1:** `Dependency lookup for libtiff-4 with method 'pkgconfig' failed: Could not generate cflags for libtiff-4: Package libdeflate was not found in the pkg-config search path.`
+* **Solution1:** One of following two options should be correct,
+  1. Reinstall `libtiff` because it add useless dependence in pkgconfig file.
+  2. Add `depends_on "libdeflate"` to the rb file.
+* **Issue2:** `env: python3: No such file or directory`
+* **Solution2:**Add `depends_on "python" => :build` to the rb file.
 
 ### [libheif](https://formulae.brew.sh/formula/libheif)
 
