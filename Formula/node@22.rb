@@ -1,9 +1,10 @@
 class NodeAT22 < Formula
   desc "Platform built on V8 to build network applications"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v22.19.0/node-v22.19.0.tar.xz"
-  sha256 "0272acfce50ce9ad060288321b1092719a7f19966f81419835410c59c09daa46"
+  url "https://nodejs.org/dist/v22.20.0/node-v22.20.0.tar.xz"
+  sha256 "ff7a6a6e8a1312af5875e40058351c4f890d28ab64c32f12b2cc199afa22002d"
   license "MIT"
+  revision 1
 
   livecheck do
     url "https://nodejs.org/dist/"
@@ -39,7 +40,7 @@ class NodeAT22 < Formula
   uses_from_macos "zlib"
 
   on_macos do
-    depends_on "llvm" => [:build, :test] if DevelopmentTools.clang_build_version <= 1100
+    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
   end
 
   fails_with :clang do
@@ -52,9 +53,6 @@ class NodeAT22 < Formula
   patch :DATA
   def install
     # ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
-
-    # The new linker crashed during LTO due to high memory usage.
-    ENV.append "LDFLAGS", "-Wl,-ld_classic" if DevelopmentTools.clang_build_version >= 1500
 
     if OS.mac? && DevelopmentTools.clang_build_version <= 1100
       inreplace "common.gypi", /'MACOSX_DEPLOYMENT_TARGET': '\d+\.\d+'/, "'MACOSX_DEPLOYMENT_TARGET': '#{MacOS.version}'"
@@ -105,7 +103,7 @@ class NodeAT22 < Formula
       --shared-simdutf-libpath=#{Formula["simdutf"].lib}
       --shared-sqlite-includes=#{Formula["sqlite"].include}
       --shared-sqlite-libpath=#{Formula["sqlite"].lib}
-      --shared-uvwasi-includes=#{Formula["uvwasi"].include}/uvwasi
+      --shared-uvwasi-includes=#{Formula["uvwasi"].include}
       --shared-uvwasi-libpath=#{Formula["uvwasi"].lib}
       --shared-zstd-includes=#{Formula["zstd"].include}
       --shared-zstd-libpath=#{Formula["zstd"].lib}
@@ -114,9 +112,8 @@ class NodeAT22 < Formula
 
     # Enabling LTO errors on Linux with:
     # terminate called after throwing an instance of 'std::out_of_range'
-    # Pre-Catalina macOS also can't build with LTO
     # LTO is unpleasant if you have to build from source.
-    args << "--enable-lto" if OS.mac? && MacOS.version >= :catalina && build.bottle?
+    args << "--enable-lto" if OS.mac? && build.bottle?
 
     # TODO: Try to devendor these libraries.
     # - `--shared-ada` needs the `ada-url` formula, but requires C++20

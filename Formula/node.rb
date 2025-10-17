@@ -1,8 +1,8 @@
 class Node < Formula
   desc "Platform built on V8 to build network applications"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v24.8.0/node-v24.8.0.tar.xz"
-  sha256 "1c03b362ebf4740d4758b9a3d3087e3de989f54823650ec80b47090ef414b2e0"
+  url "https://nodejs.org/dist/v24.10.0/node-v24.10.0.tar.xz"
+  sha256 "f17e36cb2cc8c34a9215ba57b55ce791b102e293432ed47ad63cbaf15f78678f"
   license "MIT"
   head "https://github.com/nodejs/node.git", branch: "main"
 
@@ -60,8 +60,6 @@ class Node < Formula
 
   patch :DATA
   def install
-    # ENV.llvm_clang if OS.mac? && DevelopmentTools.clang_build_version <= 1699
-
     if OS.mac? && DevelopmentTools.clang_build_version <= 1400
       inreplace "common.gypi", /'MACOSX_DEPLOYMENT_TARGET': '\d+\.\d+'/, "'MACOSX_DEPLOYMENT_TARGET': '#{MacOS.version}'"
       
@@ -214,9 +212,6 @@ class Node < Formula
   end
 
   test do
-    # Make sure Mojave does not have `CC=llvm_clang`.
-    ENV.clang if OS.mac?
-
     path = testpath/"test.js"
     path.write "console.log('hello');"
 

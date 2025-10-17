@@ -779,6 +779,7 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
 - **Solution:** Use llvm `brew install poppler --cc=llvm_clang`.
   + Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command `cmake -S . -B build/shared balabala...` to avoid the linking error.
   + Add `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command `cmake -S . -B build/static balabala...` to avoid the linking error.
+  + Add `depends_on "python" => :build` to the rb file
 
 ### [freerdp](https://formulae.brew.sh/formula/freerdp)
 - **Issue:** Linker error
