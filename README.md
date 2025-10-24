@@ -184,8 +184,10 @@ Zend/zend_atomic.h:85:9: error: address argument to atomic operation must be a p
                ^                 ~~~~~~~~~~~
 ```
 
-- **Solution:** Use a specific version of llvm for compilation. `brew install php --debug --cc=llvm_clang` or modify the `Zend/zend_atomic.h` file as the following reference url.
+- **Solution1:** Use a specific version of llvm for compilation. `brew install php --debug --cc=llvm_clang` or modify the `Zend/zend_atomic.h` file as the following reference url.
 - **Reference:** [#8881](https://github.com/php/php-src/issues/8881)
+- **Solution2:** Replace `uses_from_macos "libffi"` with `depends_on "libffi"`.
+
 
 ### [cmake](https://formulae.brew.sh/formula/cmake)(>=4.0)
 
@@ -596,7 +598,9 @@ Then build with `--cc=llvm_clang`.
 
 ### [doxygen](https://formulae.brew.sh/formula/doxygen)
 
-* **Solution:** Use a higher version of gcc for compilation. `brew install doxygen --cc=gcc-14`
+* **Solution:** Use a gcc for compilation. `brew install doxygen --cc=gcc-14`.
+~~* **Solution2:** Use a llvm for compilation. Add `-DCMAKE_AR=#{llvm.opt_bin}/llvm-ar` and `-DCMAKE_STATIC_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the `"cmake", "-S", ".", "-B", "build", balabala`, Disable `CMAKE_INTERPROCEDURAL_OPTIMIZATION` in CMakeLists.txt, then `brew install doxygen --cc=llvm_clang`.~~
+
 
 ### [wget](https://formulae.brew.sh/formula/wget)
 
@@ -607,6 +611,10 @@ Then build with `--cc=llvm_clang`.
 
 * **Issue:** `Undefined symbols for architecture x86_64: "_aom_codec_av1_cx", referenced from: _aomCodecEncodeImage in libavif.a(codec_aom.c.o)`
 * **Solution:** Add `depends_on "aom"` and `ENV.append "LDFLAGS", "-L#{Formula["aom"].lib} -laom"` to the rb file.
+
+### [glib](https://formulae.brew.sh/formula/glib)
+
+* **Solution:** Replace `uses_from_macos "libffi"` with `depends_on "libffi"`. You may need to uninstall it before upgrade it.
 
 ### [jpeg-xl](https://formulae.brew.sh/formula/jpeg-xl)
 
