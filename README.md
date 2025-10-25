@@ -524,7 +524,7 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
   ```shell
   # uninstall old version
   brew uninstall ncdu
-  tarball=$(brew fetch --os ventura ncdu | grep Downloading | grep -o ncdu.*tar\.gz)
+  tarball=$(brew fetch --os sonoma ncdu --verbose | grep -o ncdu.*tar\.gz)
   tar xzf $HOME/Library/Caches/Homebrew/downloads/*${tarball} -C .
   # if you want homebrew to register it
   HOMEBREW_PREFIX=$(brew --prefix)
