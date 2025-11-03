@@ -184,8 +184,10 @@ Zend/zend_atomic.h:85:9: error: address argument to atomic operation must be a p
                ^                 ~~~~~~~~~~~
 ```
 
-- **Solution:** Use a specific version of llvm for compilation. `brew install php --debug --cc=llvm_clang` or modify the `Zend/zend_atomic.h` file as the following reference url.
+- **Solution1:** Use a specific version of llvm for compilation. `brew install php --debug --cc=llvm_clang` or modify the `Zend/zend_atomic.h` file as the following reference url.
 - **Reference:** [#8881](https://github.com/php/php-src/issues/8881)
+- **Solution2:** Replace `uses_from_macos "libffi"` with `depends_on "libffi"`.
+
 
 ### [cmake](https://formulae.brew.sh/formula/cmake)(>=4.0)
 
@@ -223,10 +225,8 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 > It seems this patch is always needed to use cmake later on High Sierra although building succeeded whitout it.
 
 ### [z3](https://formulae.brew.sh/formula/z3)
-
-- **Issue:** Undefined symbols: "__ZN12rewriter_tplI17elim_term_ite_cfgEC2ER11ast_managerbRS0_"
-- **Solution:** Install the head version. `brew install z3 --HEAD `
-- **Reference:** [#6869](https://github.com/Z3Prover/z3/issues/6869).
+- **Issue:** Linking error.
+- **Solution:** Use llvm `brew install z3 --cc=llvm_clang`. Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to args to avoid the linking error.
 
 ### [gsl](https://formulae.brew.sh/formula/gsl)(>=2.8)
 
@@ -248,59 +248,8 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
   ```
 
 ### [rust](https://formulae.brew.sh/formula/rust)
-
-- ~~<= 1.82.0~~
-  ~~* **Issue1:** Python dependency. Recent rust will use "python" to build libaray. However, in deprecated macOS, "python" is python2.~~
-  ~~* **Solution:** Change PATH in debug mode or modify the `configure` file.~~
-  ~~* **Issue2:** /usr/local/Cellar/llvm/19.1.2/include/llvm/CodeGen/MachineFunction.h:440:39: error: call to unavailable function 'get': introduced in macOS 10.14~~
-  ~~* **Solution:** use llvm 17, you can temporarily change the symlink `/usr/local/opt/llvm` to the desired version. llvm is mandatory to compile in rust formula.~~
-- \>=1.83.0
-
-  - **Issue1:** `TypeError: split() takes no keyword arguments`
-  - **Solution:** The builtin python in macOS is python2, which doesn't support the `split` function with keyword arguments.
-    add `depends_on "python" => :build` to the rb file and comment out `uses_from_macos "python" => :build` in the rb fike.
-  - **Issue2:** `call to unavailable member function 'value': introduced in macOS 10.14`
-  - **Solution:** patch `rustc-balabala-src/compiler/rustc_llvm/llvm-wrapper/RustWrapper.cpp` with
-
-  ```diff
-  --- RustWrapper.cpp
-  +++ RustWrapper.cpp
-  @@ -1387,7 +1387,7 @@ llvmRustDILocationCloneWithBaseDiscriminator(llvmMetad
-                                                unsigned BD) {
-    DILocation *Loc = unwrapDIPtr<DILocation>(Location);
-    auto NewLoc = Loc->cloneWithBaseDiscriminator(BD);
-  -  return wrap(NewLoc.has_value() ? NewLoc.value() : nullptr);
-  +  return wrap(NewLoc.has_value() ? *NewLoc : nullptr);
-  }
-
-  extern "C" uint64_t llvmRustDIBuilderCreateOpDeref() {
-  ```
-
-  And add `ENV.prepend_path "PATH", Formula["llvm"].opt_bin` to the rb file.
-
-  ~~- **Issue3:** `couldn't find required command: "llvm_ar"`~~
-  ~~- **Solution:** Seems solved since [v1.89.0](https://github.com/rust-lang/rust/commit/8a70219a38487a59de2449e920302d900506118d).~~
-  
-  ~~patch `rustc-balabala-src/src/bootstrap/src/utils/cc_detect.rs` with~~
-
-  ```diff
-  --- cc_detect.rs
-  +++ cc_detect.rs
-  @@ -62,7 +62,8 @@ fn cc2ar(cc: &Path, target: TargetSelect
-            for suffix in &["gcc", "cc", "clang"] {
-                if let Some(idx) = file.rfind(suffix) {
-                    let mut file = file[..idx].to_owned();
-  -                file.push_str("ar");
-  +                file.pop();
-  +                file.push_str("-ar");
-                    return Some(parent.join(&file));
-                }
-            }
-  ```
-
-  ~~- **Issue4:** `ld: symbol(s) not found for architecture x86_64`~~
-  ~~- **Solution:** add configure parameter `--llvm-ldflags=-L#{Formula["llvm"].opt_lib}/c++` to the rb file. If~~
-    ~~still not work, try to temporally hide `/usr/lib/libc++.dylib`.~~
+- **Issue:** `TypeError: split() takes no keyword arguments`
+- **Solution:** The builtin python in macOS is python2, which doesn't support the `split` function with keyword arguments. Add `depends_on "python" => :build` to the rb file and comment out `uses_from_macos "python" => :build` in the rb fike. Furthermore, do **not** add '--cc=llvm_clang' to the args.
 
 ### [harfbuzz](https://formulae.brew.sh/formula/harfbuzz)
 
@@ -423,10 +372,6 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
 * **Solution2:** Use gcc to build it. However the formula [.rb file](https://github.com/Homebrew/homebrew-core/blob/master/Formula/b/btop.rb) is mandatory to use llvm, so need to modify it and install from local. `depends_on "llvm"...` => `depends_on "gcc"...`; `ENV.llvm_clang if OS.mac?...` => `ENV.cxx if OS.mac?...`
 
 ### [node](https://formulae.brew.sh/formula/node), [node@22](https://formulae.brew.sh/formula/node@22), [node@20](https://formulae.brew.sh/formula/node@20), [node@18](https://formulae.brew.sh/formula/node@18)
-
-~~> [!IMPORTANT]~~
-~~> node>=23.9 only suppport in macOS Catalina and later. See [Build error on MacOs 10.15](https://github.com/nodejs/node/issues/52847).~~
-
 * **Issue:** `missing os/signpost.h'`, `zlib issue` and `linking issue` etc.
 * **Solution:** Just use the rb files in the [Formula](./Formula) diretory.
 > [!NOTE]
@@ -522,7 +467,7 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
   ```shell
   # uninstall old version
   brew uninstall ncdu
-  tarball=$(brew fetch --os ventura ncdu | grep Downloading | grep -o ncdu.*tar\.gz)
+  tarball=$(brew fetch --os sonoma ncdu --verbose | grep -o ncdu.*tar\.gz)
   tar xzf $HOME/Library/Caches/Homebrew/downloads/*${tarball} -C .
   # if you want homebrew to register it
   HOMEBREW_PREFIX=$(brew --prefix)
@@ -554,19 +499,21 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
 * **Solution1:** Remove `depends_on "vtk"` and `-DWITH_VTK=ON` from the rb file because [molten-vk](https://formulae.brew.sh/formula/molten-vk) is not supported in deprecated macOS.
 * **Solution2:**  Use llvm `brew install opencv --cc=llvm_clang`. Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to args to avoid the linking error.
 
-### [tbb](https://formulae.brew.sh/formula/tbb), [blake3](https://formulae.brew.sh/formula/blake3)
+### [tbb](https://formulae.brew.sh/formula/tbb), 
+* **Solution:**  Use llvm `brew install tbb --cc=llvm_clang`. Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to args to avoid the linking error.
 
-<!-- * **Issue:** `clangclang: : errorerror: : unknown argument: '-ffile-prefix-map=../..//='unknown argument: '-ffile-prefix-map=../..//='` -->
+
+### [blake3](https://formulae.brew.sh/formula/blake3)
 * **Solution:** Build with `--cc=llvm_clang`.
 
 ### [openjph](https://formulae.brew.sh/formula/openjph)
-* **Solution:** Modify `src/core/common/ojph_mem.h` with this patch:
+* **Solution:** Modify `src/core/others/ojph_mem.c` with this patch:
 ```diff
---- a/src/core/common/ojph_mem.h
-+++ b/src/core/common/ojph_mem.h
-@@ -62,7 +62,14 @@
+--- a/src/core/others/ojph_mem.c
++++ b/src/core/others/ojph_mem.c
+@@ -73,7 +73,14 @@
  #else
-   inline void* ojph_aligned_malloc(size_t alignment, size_t size)
+   void* ojph_aligned_malloc(size_t alignment, size_t size)
    {
 +  #if defined(__APPLE__) || defined(__MACH__)
 +    void* ptr = NULL;
@@ -577,8 +524,8 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
      return aligned_alloc(alignment, size);
 +  #endif 
    }
- 
-   inline void ojph_aligned_free(void* pointer)
+
+   void ojph_aligned_free(void* pointer)
 ```
 Then build with `--cc=llvm_clang`.
 
@@ -589,14 +536,11 @@ Then build with `--cc=llvm_clang`.
 * **Solution:** Add header in system file `/usr/include/CommonCrypto/CommonRandom.h`. I think this issue maybe fixed by author later.
 
   `#include <CommonCrypto/CommonCryptoError.h>`
-
-  ~~Then compile with llvm~~
-  ~~`brew install difftastic --cc=llvm_clang`~~
 * **Reference:** [can not build mimalloc](https://github.com/microsoft/mimalloc/issues/549)
 
 ### [doxygen](https://formulae.brew.sh/formula/doxygen)
 
-* **Solution:** Use a higher version of gcc for compilation. `brew install doxygen --cc=gcc-14`
+* **Solution:** Use a gcc for compilation. `brew install doxygen --cc=gcc-14`.
 
 ### [wget](https://formulae.brew.sh/formula/wget)
 
@@ -608,10 +552,9 @@ Then build with `--cc=llvm_clang`.
 * **Issue:** `Undefined symbols for architecture x86_64: "_aom_codec_av1_cx", referenced from: _aomCodecEncodeImage in libavif.a(codec_aom.c.o)`
 * **Solution:** Add `depends_on "aom"` and `ENV.append "LDFLAGS", "-L#{Formula["aom"].lib} -laom"` to the rb file.
 
-### [jpeg-xl](https://formulae.brew.sh/formula/jpeg-xl)
+### [glib](https://formulae.brew.sh/formula/glib)
 
-~~* **Solution:** Use a specific version (maybe <14) of gcc for compilation. `brew install jpeg-xl --cc=gcc-xx`~~
-~~* **Reference:** [MacOS brew install jpeg-xl error](https://github.com/libjxl/libjxl/issues/2461)~~
+* **Solution:** Replace `uses_from_macos "libffi"` with `depends_on "libffi"`. You may need to uninstall it before upgrade it.
 
 ### [libavif](https://formulae.brew.sh/formula/libavif)
 
@@ -779,6 +722,7 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
 - **Solution:** Use llvm `brew install poppler --cc=llvm_clang`.
   + Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command `cmake -S . -B build/shared balabala...` to avoid the linking error.
   + Add `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the cmake command `cmake -S . -B build/static balabala...` to avoid the linking error.
+  + Add `depends_on "python" => :build` to the rb file
 
 ### [freerdp](https://formulae.brew.sh/formula/freerdp)
 - **Issue:** Linker error
