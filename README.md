@@ -8,8 +8,101 @@ Below is a list of packages that can still be installed via `brew`, based on my 
 
 Since Homebrew no longer accepts pull requests for unsupported macOS versions, I am simply sharing these tips here.
 
-> [!IMPORTANT]  
-> Since brew v4.6.4, `brew install` from source must set `HOMEBREW_DEVELOPER=1`, see [Don't allow installing formulae from paths without HOMEBREW_DEVELOPER](https://github.com/Homebrew/brew/pull/20414)
+> [!IMPORTANT]
+> Since brew v4.6.4, `brew install` from source must set `HOMEBREW_DEVELOPER=1`, see [Don&#39;t allow installing formulae from paths without HOMEBREW_DEVELOPER](https://github.com/Homebrew/brew/pull/20414)
+> Since brew v4.7.0, Homebrew has dropped support for macOS versions under Catalina, see [Homebrew 4.7.0 deprecations/disables/removals](https://github.com/Homebrew/brew/pull/20973). Patch the Homebrew directory to force brew to work again.
+
+```diff
+--- a/Library/Homebrew/macos_version.rb
++++ b/Library/Homebrew/macos_version.rb
+@@ -30,6 +30,10 @@
+     big_sur:  "11",
+     # odisabled: remove support for Catalina September (or later) 2026
+     catalina: "10.15",
++    mojave:      "10.14",
++    high_sierra: "10.13",
++    sierra:      "10.12",
++    el_capitan:  "10.11",
+   }.freeze, T::Hash[Symbol, String])
+ 
+   sig { params(macos_version: MacOSVersion).returns(Version) }
+
+--- a/Library/Homebrew/os/mac/xcode.rb
++++ b/Library/Homebrew/os/mac/xcode.rb
+@@ -24,6 +24,10 @@
+         when "12" then "14.2"
+         when "11" then "13.2.1"
+         when "10.15" then "12.4"
++        when "10.14" then "11.3.1"
++        when "10.13" then "10.1"
++        when "10.12" then "9.2"
++        when "10.11" then "8.2.1"
+         else
+           raise "macOS '#{macos}' is invalid" unless macos.prerelease?
+ 
+@@ -47,6 +51,10 @@
+         when "12" then "13.1"
+         when "11" then "12.2"
+         when "10.15" then "11.0"
++        when "10.14" then "10.2"
++        when "10.13" then "9.0"
++        when "10.12" then "8.0"
++        when "10.11" then "7.3"
+         else
+           "#{macos}.0"
+         end
+@@ -359,7 +367,12 @@
+         when "13" then "1500.1.0.2.5"
+         when "12"    then "1400.0.29.202"
+         when "11"    then "1300.0.29.30"
+-        else              "1200.0.32.29"
++        #else              "1200.0.32.29"
++        when "10.15" then "1200.0.32.29"
++        when "10.14" then "1100.0.33.17"
++        when "10.13" then "1000.10.44.2"
++        when "10.12" then "900.0.39.2"
++        else              "800.0.42.1"
+         end
+       end
+ 
+@@ -376,6 +389,10 @@
+         when "12" then "13.0.0"
+         when "11" then "12.5.0"
+         when "10.15" then "11.0.0"
++        when "10.14" then "10.0.0"
++        when "10.13" then "9.0.0"
++        when "10.12" then "8.0.0"
++        when "10.11" then "7.3.0"
+         else
+           "#{macos}.0.0"
+         end
+
+--- a/Library/Homebrew/extend/os/mac/extend/ENV/super.rb
++++ b/Library/Homebrew/extend/os/mac/extend/ENV/super.rb
+@@ -136,7 +136,7 @@
+         self["HOMEBREW_PREFER_CLT_PROXIES"] = "1"
+ 
+         # Deterministic timestamping.
+-        self["ZERO_AR_DATE"] = "1"
++        self["ZERO_AR_DATE"] = "1" if MacOS::Xcode.version >= "11.0" || MacOS::CLT.version >= "11.0"
+ 
+         # Pass `-no_fixup_chains` whenever the linker is invoked with `-undefined dynamic_lookup`.
+         # See: https://github.com/python/cpython/issues/97524
+@@ -144,7 +144,7 @@
+         no_fixup_chains
+ 
+         # Strip build prefixes from linker where supported, for deterministic builds.
+-        append_to_cccfg "o"
++        append_to_cccfg "o" if ::DevelopmentTools.ld64_version >= 512
+ 
+         # Pass `-ld_classic` whenever the linker is invoked with `-dead_strip_dylibs`
+         # on `ld` versions that don't properly handle that option.
+```
+
+
+> [!IMPORTANT]
+>
+> Restore some pkg-config files for older macOS versions, i.e. [10.13 pkg-config files](https://github.com/Homebrew/brew/tree/0236b2fc2d5556c9913822c4a4f02ec108de8a4e/Library/Homebrew/os/mac/pkgconfig/10.13).
 
 > [!TIP]
 >
@@ -43,13 +136,16 @@ Since Homebrew no longer accepts pull requests for unsupported macOS versions, I
 - **Reference:** [Stack Overflow: How to install llvm@13 on macOS High Sierra](https://stackoverflow.com/questions/69906053/how-to-install-llvm13-with-homerew-on-macos-high-sierra-10-13-6-got-built-tar)
 - **Issue2:** Undefined symbols "std::__1::__libcpp_verbose_abort(char const*, ...)" or something like this
 - **Solution:** Use llvm for compilation. `brew install llvm --debug --cc=llvm_clang`
+
   + Add `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to the `args` list to avoid the linking error.
-- **Issue3:** Undefined symbols 
+- **Issue3:** Undefined symbols
+
 ```
 "__availability_version_check", referenced from:
       ___isPlatformVersionAtLeast in libclang_rt.osx.a(os_version_check.c.o)
       __initializeAvailabilityCheck in libclang_rt.osx.a(os_version_check.c.o)
 ```
+
 - **Solution:** patch `compiler-rt/lib/builtins/os_version_check.c` with this [patch](https://github.com/macports/macports-ports/blob/master/lang/llvm-20/files/0130-10.14-and-less-availability.patch) file. Then in debug mode, modify `llvm/build/build.ninja` file : add `lib/clang/20/lib/darwin/libclang_rt.osx.a` to the `LINK_LIBRARIES` variable of failed command, e.g. `Link the shared library lib/liblldb.20.1.2.dylib` and `Link the executable bin/lldb-server`.
 
 > [!NOTE]
@@ -61,7 +157,6 @@ Since Homebrew no longer accepts pull requests for unsupported macOS versions, I
 - **Solution:** Use a specific version of gcc for compilation. `brew install gcc --debug --cc=gcc-14`. If you want to use llvm to build, add `ENV.append "LDFLAGS", "-L#{Formula["llvm"].opt_lib}/c++"` to the `args` list in the rb file.
 - **Issue2:** `makeinfo` error (>=15)
 - **Solution:** Install `texinfo` by `brew install texinfo` and add `depends_on "texinfo" => :build` in the rb file.
-
 
 ### [ruby](https://formulae.brew.sh/formula/ruby)
 
@@ -75,7 +170,6 @@ ld: 8 duplicate symbols for architecture x86_64
 - **Issuse2:** `Errno::ENOENT: No such file or directory @ apply2files...`
 - **Solution:** Replace tar as following this [link](https://github.com/koekeishiya/yabai/issues/1208#issuecomment-1171165126).
 
-
 ### [go](https://formulae.brew.sh/formula/go)
 
 - **Issue:**
@@ -86,9 +180,10 @@ dyld: Symbol not found: _SecTrustCopyCertificateChain
   Referenced from: /usr/local/Cellar/go/1.25.0/libexec/bin/go (which was built for Mac OS X 12.0)
   Expected in: /System/Library/Frameworks/Security.framework/Versions/A/Security
  in /usr/local/Cellar/go/1.25.0/libexec/bin/go
- ```
+```
 
 - **Solution:** Go>=1.25.0 use the SecTrustCopyCertificateChain method, see [Commit 937368f](https://github.com/golang/go/commit/937368f84e545db15d3f39c2b33a267ba8ead4a4), thus use the reversed patch:
+
 ```diff
 --- a/src/crypto/x509/internal/macos/security.go
 +++ b/src/crypto/x509/internal/macos/security.go
@@ -173,7 +268,6 @@ dyld: Symbol not found: _SecTrustCopyCertificateChain
  			return nil, err
 ```
 
-
 ### [php](https://formulae.brew.sh/formula/php)
 
 - **Issue:**
@@ -188,7 +282,6 @@ Zend/zend_atomic.h:85:9: error: address argument to atomic operation must be a p
 - **Reference:** [#8881](https://github.com/php/php-src/issues/8881)
 - **Solution2:** Replace `uses_from_macos "libffi"` with `depends_on "libffi"`.
 
-
 ### [cmake](https://formulae.brew.sh/formula/cmake)(>=4.0)
 
 - **Issue:**
@@ -201,7 +294,9 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 //Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/cmath:313:9: error: no member named 'signbit' in the global
       namespace
 ```
+
 - **Solution:** patch file `Modules/Platform/Darwin-Initialize.cmake` with
+
 ```diff
 --- Darwin-Initialize.cmake
 +++ Darwin-Initialize.cmake
@@ -220,11 +315,14 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
  endif()
 +endif()
 ```
-. 
-> [!IMPORTANT]  
+
+.
+
+> [!IMPORTANT]
 > It seems this patch is always needed to use cmake later on High Sierra although building succeeded whitout it.
 
 ### [z3](https://formulae.brew.sh/formula/z3)
+
 - **Issue:** Linking error.
 - **Solution:** Use llvm `brew install z3 --cc=llvm_clang`. Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to args to avoid the linking error.
 
@@ -247,14 +345,13 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
          esac
   ```
 
-### [rust](https://formulae.brew.sh/formula/rust)
-- **Issue:** `TypeError: split() takes no keyword arguments`
-- **Solution:** The builtin python in macOS is python2, which doesn't support the `split` function with keyword arguments. Add `depends_on "python" => :build` to the rb file and comment out `uses_from_macos "python" => :build` in the rb fike. Furthermore, do **not** add '--cc=llvm_clang' to the args.
+<!-- ### [rust](https://formulae.brew.sh/formula/rust) -->
 
 ### [harfbuzz](https://formulae.brew.sh/formula/harfbuzz)
 
 - **Issue:** `../src/hb-coretext.cc:210:31: error: use of undeclared identifier 'CTFontManagerCreateFontDescriptorsFromData'; did you mean 'CTFontManagerCreateFontDescriptorFromData'?`
 - **Solution:** patch `src/hb-coretext.cc` with:
+
 ```diff
 --- a/src/hb-coretext.cc
 +++ b/src/hb-coretext.cc
@@ -275,15 +372,18 @@ In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/Xco
 * **Solution:** Add `inreplace "Makefile.in","\\x23","\\#"` into the install block of the local rb file.
 
 ### [librsvg](https://formulae.brew.sh/formula/librsvg)
+
 * **Issue1:** `Command `/private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/meson/makedef.py --regex '^rsvg_.' --os darwin --prefix _ --list /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg.symbols /private/tmp/librsvg-20250319-26233-r4tyc1/librsvg-2.60.0/rsvg/../win32/librsvg-pixbuf.symbols ` failed with status 127.`
 * **Solution1:** Add `depends_on "python"` into the local rb file.
-* **Issue2:** 
+* **Issue2:**
+
 ```log
   File "/usr/local/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/subprocess.py", line 577, in run
     raise CalledProcessError(retcode, process.args,
                              output=stdout, stderr=stderr)
 subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-only', '-g', 'rsvg/librsvg_2.a']' returned non-zero exit status 1.
 ```
+
 * **Solution2:** Add `ENV.append_path "PATH", Formula["llvm"].opt_bin` into the local rb file.
 
 ### [openjdk@21](https://formulae.brew.sh/formula/openjdk@21), [openjdk@17](https://formulae.brew.sh/formula/openjdk@17)
@@ -345,6 +445,8 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
               return 0;
           }
 
+  ```
+
 ### [netpbm](https://formulae.brew.sh/formula/netpbm)
 
 * **Issue:** `make: python3: No such file or directory`
@@ -372,23 +474,26 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
 * **Solution2:** Use gcc to build it. However the formula [.rb file](https://github.com/Homebrew/homebrew-core/blob/master/Formula/b/btop.rb) is mandatory to use llvm, so need to modify it and install from local. `depends_on "llvm"...` => `depends_on "gcc"...`; `ENV.llvm_clang if OS.mac?...` => `ENV.cxx if OS.mac?...`
 
 ### [node](https://formulae.brew.sh/formula/node), [node@22](https://formulae.brew.sh/formula/node@22), [node@20](https://formulae.brew.sh/formula/node@20), [node@18](https://formulae.brew.sh/formula/node@18)
+
 * **Issue:** `missing os/signpost.h'`, `zlib issue` and `linking issue` etc.
 * **Solution:** Just use the rb files in the [Formula](./Formula) diretory.
+
 > [!NOTE]
 > Seems only llvm <= 18 can used on deprecated macOS to build node@20 and node@18 due to the deprecated `std::char_traits` api. see [release notes](https://releases.llvm.org/18.1.0/projects/libcxx/docs/ReleaseNotes.html#llvm-19)
-
 
 ### [tesseract](https://formulae.brew.sh/formula/tesseract)
 
 * **Issue:** fatal error: `filesystem` file not found and linker error.
-* **Solution:** 
+* **Solution:**
+
   1. patch `src/training/unicharset_extractor.cpp` with
+
   ```diff
   --- unicharset_extractor.cpp
   +++ unicharset_extractor.cpp
   @@ -21,7 +21,6 @@
   // a unicharset.
-  
+
   #include <cstdlib>
   -#include <filesystem>
   #include "boxread.h"
@@ -412,6 +517,7 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
         bool res = ReadMemBoxes(-1, /*skip_blanks*/ true, &file_data[0],
                       /*continue_on_failure*/ false, /*boxes*/ nullptr, &texts,
   ```
+
   2. add `ENV.append "LDFLAGS", "#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}"` to the rb file.
 
 ### [ghostscript](https://formulae.brew.sh/formula/ghostscript)
@@ -499,15 +605,18 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
 * **Solution1:** Remove `depends_on "vtk"` and `-DWITH_VTK=ON` from the rb file because [molten-vk](https://formulae.brew.sh/formula/molten-vk) is not supported in deprecated macOS.
 * **Solution2:**  Use llvm `brew install opencv --cc=llvm_clang`. Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` and `-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to args to avoid the linking error.
 
-### [tbb](https://formulae.brew.sh/formula/tbb), 
+### [tbb](https://formulae.brew.sh/formula/tbb),
+
 * **Solution:**  Use llvm `brew install tbb --cc=llvm_clang`. Add `-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}` to args to avoid the linking error.
 
-
 ### [blake3](https://formulae.brew.sh/formula/blake3)
+
 * **Solution:** Build with `--cc=llvm_clang`.
 
 ### [openjph](https://formulae.brew.sh/formula/openjph)
+
 * **Solution:** Modify `src/core/others/ojph_mem.c` with this patch:
+
 ```diff
 --- a/src/core/others/ojph_mem.c
 +++ b/src/core/others/ojph_mem.c
@@ -527,8 +636,8 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
 
    void ojph_aligned_free(void* pointer)
 ```
-Then build with `--cc=llvm_clang`.
 
+Then build with `--cc=llvm_clang`.
 
 ### [difftastic](https://formulae.brew.sh/formula/difftastic)
 
@@ -565,6 +674,7 @@ Then build with `--cc=llvm_clang`.
 include(GNUInstallDirs)
 install(TARGETS libargparse...
 ```
+
 .
 
 ### [chafa](https://formulae.brew.sh/formula/chafa)
@@ -634,7 +744,7 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
   +++ SDL_coreaudio.m
   @@ -23,6 +23,13 @@
   #ifdef SDL_AUDIO_DRIVER_COREAUDIO
-  
+
   /* !!! FIXME: clean out some of the macro salsa in here. */
   +#ifndef kAudioChannelLayoutTag_WAVE_6_1
   +#define kAudioChannelLayoutTag_WAVE_6_1 ((188U << 16) | 7)                     ///< 7 channels, L R C LFE Cs Ls Rs
@@ -643,17 +753,14 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
   +#ifndef kAudioChannelLayoutTag_WAVE_7_1
   +#define kAudioChannelLayoutTag_WAVE_7_1 ((188U << 16) | 8)                   ///< 8 channels, L R C LFE Rls Rrs Ls Rs
   +#endif
-  
+
   #include "SDL_audio.h"
   #include "SDL_hints.h"
   ```
-
 * **Issue2:** Undefined symbols for architecture x86_64:
 * **Solution2:** Add these parameters `-DSDL_CAMERA=OFF -DSDL_JOYSTICK=OFF -DSDL_HAPTIC=OFF -DSDL_DIALOG=OFF -DSDL_GPU=OFF -DSDL_METAL=OFF -DSDL_RENDER_METAL=OFF -DSDL_COCOA=OFF` to the `cmake -S . -B build` command.
-
 * **Issue3:** Framework `UniformTypeIdentifiers` not found.
 * **Solution3:** Comment out the line of `sdl_link_dependency(uniformtypeidentifiers` in `CMakeLists.txt`.
-
 
 ### [sdl2](https://formulae.brew.sh/formula/sdl2)
 
@@ -725,6 +832,7 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
   + Add `depends_on "python" => :build` to the rb file
 
 ### [freerdp](https://formulae.brew.sh/formula/freerdp)
+
 - **Issue:** Linker error
 - **Solution:** Use LLVM by running `brew install ./freerdp.rb --cc=llvm_clang`.
   Additionally, add the following flags to the CMake command `cmake -S . -B build/shared ...` to avoid the linking error:
@@ -735,6 +843,7 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
 > `sdl2` maybe more compatible with `freerdp` on deprecated macOS.
 
 ### [simdutf](https://formulae.brew.sh/formula/simdutf)
+
 - **Issue:** Linker error
 - **Solution:** Use LLVM by running `brew install ./simdutf.rb --cc=llvm_clang`.
   Additionally, add the following flags to the CMake command `cmake -S . -B build ...` to avoid the linking error:
@@ -757,6 +866,11 @@ Could not resolve dependencies:
 
 - **Solution1:** Add `--allow-newer` to the `cabal v2-install balabala...` command and use LLVM 18 `brew install pandoc --cc=llvm_clang`.
 - **Reference:** [Running into depdency conflicts when running cabal test](https://github.com/jgm/pandoc/issues/10597)
-
 - **Issue2:** `folly-2025.09.15.00/folly/concurrency/CacheLocality.cpp:223:35: error: 'path' is unavailable: introduced in macOS 10.15`
 - **Solution2:** Recent homebrew has added  missing symbols checking, see [inject __config_site](https://github.com/Homebrew/brew/commit/4077e8e38d9ca9316797e9a12a21bfa292dcb7e6). You can temporarily change the macro `_LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS` to `0` in `Library/Homebrew/shims/mac/shared/include/llvm/__config_site`.
+
+### [suite-sparse](https://formulae.brew.sh/formula/suite-sparse)
+
+- **Issue:** Build error
+- **Solution:** Not use gcc to build, revert the patch in the following link.
+- **Reference:** [forcing it to gcc-15](https://github.com/Homebrew/homebrew-core/pull/253109)
