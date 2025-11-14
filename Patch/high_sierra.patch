@@ -1,0 +1,104 @@
+--- a/Library/Homebrew/extend/os/mac/dev-cmd/bottle.rb
++++ b/Library/Homebrew/extend/os/mac/dev-cmd/bottle.rb
+@@ -7,7 +7,11 @@
+       module Bottle
+         sig { returns(T::Array[String]) }
+         def tar_args
+-          ["--no-mac-metadata", "--no-acls", "--no-xattrs"].freeze
++          if MacOS.version >= :catalina
++            ["--no-mac-metadata", "--no-acls", "--no-xattrs"].freeze
++          else
++            [].freeze
++          end
+         end
+ 
+         sig { params(gnu_tar_formula: Formula).returns(String) }
+--- a/Library/Homebrew/extend/os/mac/extend/ENV/super.rb
++++ b/Library/Homebrew/extend/os/mac/extend/ENV/super.rb
+@@ -134,7 +134,7 @@
+         self["HOMEBREW_PREFER_CLT_PROXIES"] = "1"
+ 
+         # Deterministic timestamping.
+-        self["ZERO_AR_DATE"] = "1"
++        self["ZERO_AR_DATE"] = "1" if MacOS::Xcode.version >= "11.0" || MacOS::CLT.version >= "11.0"
+ 
+         # Pass `-no_fixup_chains` whenever the linker is invoked with `-undefined dynamic_lookup`.
+         # See: https://github.com/python/cpython/issues/97524
+@@ -142,7 +142,7 @@
+         no_fixup_chains
+ 
+         # Strip build prefixes from linker where supported, for deterministic builds.
+-        append_to_cccfg "o"
++        append_to_cccfg "o" if ::DevelopmentTools.ld64_version >= 512
+ 
+         # Pass `-ld_classic` whenever the linker is invoked with `-dead_strip_dylibs`
+         # on `ld` versions that don't properly handle that option.
+--- a/Library/Homebrew/macos_version.rb
++++ b/Library/Homebrew/macos_version.rb
+@@ -30,6 +30,10 @@
+     big_sur:  "11",
+     # odisabled: remove support for Catalina September (or later) 2026
+     catalina: "10.15",
++    mojave:      "10.14",
++    high_sierra: "10.13",
++    sierra:      "10.12",
++    el_capitan:  "10.11",
+   }.freeze, T::Hash[Symbol, String])
+ 
+   sig { params(macos_version: MacOSVersion).returns(Version) }
+--- a/Library/Homebrew/os/mac/xcode.rb
++++ b/Library/Homebrew/os/mac/xcode.rb
+@@ -24,6 +24,10 @@
+         when "12" then "14.2"
+         when "11" then "13.2.1"
+         when "10.15" then "12.4"
++        when "10.14" then "11.3.1"
++        when "10.13" then "10.1"
++        when "10.12" then "9.2"
++        when "10.11" then "8.2.1"
+         else
+           raise "macOS '#{macos}' is invalid" unless macos.prerelease?
+ 
+@@ -47,6 +51,10 @@
+         when "12" then "13.1"
+         when "11" then "12.2"
+         when "10.15" then "11.0"
++        when "10.14" then "10.2"
++        when "10.13" then "9.0"
++        when "10.12" then "8.0"
++        when "10.11" then "7.3"
+         else
+           "#{macos}.0"
+         end
+@@ -340,7 +348,12 @@
+         when "13" then "1500.1.0.2.5"
+         when "12"    then "1400.0.29.202"
+         when "11"    then "1300.0.29.30"
+-        else              "1200.0.32.29"
++        #else              "1200.0.32.29"
++        when "10.15" then "1200.0.32.29"
++        when "10.14" then "1100.0.33.17"
++        when "10.13" then "1000.10.44.2"
++        when "10.12" then "900.0.39.2"
++        else              "800.0.42.1"
+         end
+       end
+ 
+@@ -357,6 +370,10 @@
+         when "12" then "13.0.0"
+         when "11" then "12.5.0"
+         when "10.15" then "11.0.0"
++        when "10.14" then "10.0.0"
++        when "10.13" then "9.0.0"
++        when "10.12" then "8.0.0"
++        when "10.11" then "7.3.0"
+         else
+           "#{macos}.0.0"
+         end
+--- a/Library/Homebrew/vendor/portable-ruby-x86_64-darwin
++++ b/Library/Homebrew/vendor/portable-ruby-x86_64-darwin
+@@ -1,2 +1,2 @@
+-ruby_TAG=catalina
+-ruby_SHA=b48c918b7693c6d27e8027dc803a18cf64ddce49552fb45d88f3cabb9eead0fd
++ruby_TAG=high_sierra
++ruby_SHA=dbc879bdea14218ee5f767d00fdf1febcbeeb60d2a2266f74960c391eb7a77e9

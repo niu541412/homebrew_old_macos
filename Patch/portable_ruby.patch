@@ -1,0 +1,37 @@
+--- a/Library/Homebrew/cmd/vendor-install.sh
++++ b/Library/Homebrew/cmd/vendor-install.sh
+@@ -60,6 +60,7 @@
+     fi
+     ruby_URLs+=(
+       "https://ghcr.io/v2/homebrew/core/portable-ruby/blobs/sha256:${ruby_SHA}"
++      "https://github.com/niu541412/homebrew_old_macos/releases/download/${HOMEBREW_PORTABLE_RUBY_VERSION}/${ruby_FILENAME}"
+     )
+     ruby_URL="${ruby_URLs[0]}"
+   fi
+--- a/Library/Homebrew/extend/os/mac/dev-cmd/bottle.rb
++++ b/Library/Homebrew/extend/os/mac/dev-cmd/bottle.rb
+@@ -7,7 +7,11 @@
+       module Bottle
+         sig { returns(T::Array[String]) }
+         def tar_args
+-          ["--no-mac-metadata", "--no-acls", "--no-xattrs"].freeze
++          if MacOS.version >= :catalina
++            ["--no-mac-metadata", "--no-acls", "--no-xattrs"].freeze
++          else
++            [].freeze
++          end
+         end
+ 
+         sig { params(gnu_tar_formula: Formula).returns(String) }
+--- a/Library/Homebrew/vendor/portable-ruby-version
++++ b/Library/Homebrew/vendor/portable-ruby-version
+@@ -1 +1 @@
+-3.4.6
++3.4.7
+--- a/Library/Homebrew/vendor/portable-ruby-x86_64-darwin
++++ b/Library/Homebrew/vendor/portable-ruby-x86_64-darwin
+@@ -1,2 +1,2 @@
+-ruby_TAG=catalina
+-ruby_SHA=b48c918b7693c6d27e8027dc803a18cf64ddce49552fb45d88f3cabb9eead0fd
++ruby_TAG=high_sierra
++ruby_SHA=dbc879bdea14218ee5f767d00fdf1febcbeeb60d2a2266f74960c391eb7a77e9

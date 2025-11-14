@@ -9,100 +9,12 @@ Below is a list of packages that can still be installed via `brew`, based on my 
 Since Homebrew no longer accepts pull requests for unsupported macOS versions, I am simply sharing these tips here.
 
 > [!IMPORTANT]
-> Since brew v4.6.4, `brew install` from source must set `HOMEBREW_DEVELOPER=1`, see [Don&#39;t allow installing formulae from paths without HOMEBREW_DEVELOPER](https://github.com/Homebrew/brew/pull/20414)
-> Since brew v4.7.0, Homebrew has dropped support for macOS versions under Catalina, see [Homebrew 4.7.0 deprecations/disables/removals](https://github.com/Homebrew/brew/pull/20973). Patch the Homebrew directory to force brew to work again.
+> - Since brew v4.6.4, `brew install` from source must set `HOMEBREW_DEVELOPER=1`, see [Don&#39;t allow installing formulae from paths without HOMEBREW_DEVELOPER](https://github.com/Homebrew/brew/pull/20414)
+> - Since brew v4.7.0, Homebrew has dropped support for macOS versions under Catalina, see [Homebrew 4.7.0 deprecations/disables/removals](https://github.com/Homebrew/brew/pull/20973). Patch the Homebrew directory `/usr/local/Homebrew` to with this [file](Patch/high_sierra.patch) force brew to work again.
+> - Restore some pkg-config files for older macOS versions, i.e. [10.13 pkg-config files](https://github.com/Homebrew/brew/tree/0236b2fc2d5556c9913822c4a4f02ec108de8a4e/Library/Homebrew/os/mac/pkgconfig/10.13).
+> - Since brew v5.0.0, Homebrew portable ruby no longer supports macOS versions under Catalina, see [Portable Ruby 3.4.7](https://github.com/Homebrew/brew/commit/58a6c827f682e8d5bd0cc23d594ad63e7711c520). You need manually set the `RUBY_URL` to my self-built ruby bottle with this [patch](Patch/portable_ruby.patch).
+You need to carefully check the patch file and my repo. So it should be much easier that if you just manaully untar the [bottle](https://github.com/niu541412/homebrew_old_macos/releases) to the directory `/usr/local/Homebrew/Library/Homebrew/vendor/portable-ruby` and set the soft link.
 
-```diff
---- a/Library/Homebrew/macos_version.rb
-+++ b/Library/Homebrew/macos_version.rb
-@@ -30,6 +30,10 @@
-     big_sur:  "11",
-     # odisabled: remove support for Catalina September (or later) 2026
-     catalina: "10.15",
-+    mojave:      "10.14",
-+    high_sierra: "10.13",
-+    sierra:      "10.12",
-+    el_capitan:  "10.11",
-   }.freeze, T::Hash[Symbol, String])
- 
-   sig { params(macos_version: MacOSVersion).returns(Version) }
-
---- a/Library/Homebrew/os/mac/xcode.rb
-+++ b/Library/Homebrew/os/mac/xcode.rb
-@@ -24,6 +24,10 @@
-         when "12" then "14.2"
-         when "11" then "13.2.1"
-         when "10.15" then "12.4"
-+        when "10.14" then "11.3.1"
-+        when "10.13" then "10.1"
-+        when "10.12" then "9.2"
-+        when "10.11" then "8.2.1"
-         else
-           raise "macOS '#{macos}' is invalid" unless macos.prerelease?
- 
-@@ -47,6 +51,10 @@
-         when "12" then "13.1"
-         when "11" then "12.2"
-         when "10.15" then "11.0"
-+        when "10.14" then "10.2"
-+        when "10.13" then "9.0"
-+        when "10.12" then "8.0"
-+        when "10.11" then "7.3"
-         else
-           "#{macos}.0"
-         end
-@@ -359,7 +367,12 @@
-         when "13" then "1500.1.0.2.5"
-         when "12"    then "1400.0.29.202"
-         when "11"    then "1300.0.29.30"
--        else              "1200.0.32.29"
-+        #else              "1200.0.32.29"
-+        when "10.15" then "1200.0.32.29"
-+        when "10.14" then "1100.0.33.17"
-+        when "10.13" then "1000.10.44.2"
-+        when "10.12" then "900.0.39.2"
-+        else              "800.0.42.1"
-         end
-       end
- 
-@@ -376,6 +389,10 @@
-         when "12" then "13.0.0"
-         when "11" then "12.5.0"
-         when "10.15" then "11.0.0"
-+        when "10.14" then "10.0.0"
-+        when "10.13" then "9.0.0"
-+        when "10.12" then "8.0.0"
-+        when "10.11" then "7.3.0"
-         else
-           "#{macos}.0.0"
-         end
-
---- a/Library/Homebrew/extend/os/mac/extend/ENV/super.rb
-+++ b/Library/Homebrew/extend/os/mac/extend/ENV/super.rb
-@@ -136,7 +136,7 @@
-         self["HOMEBREW_PREFER_CLT_PROXIES"] = "1"
- 
-         # Deterministic timestamping.
--        self["ZERO_AR_DATE"] = "1"
-+        self["ZERO_AR_DATE"] = "1" if MacOS::Xcode.version >= "11.0" || MacOS::CLT.version >= "11.0"
- 
-         # Pass `-no_fixup_chains` whenever the linker is invoked with `-undefined dynamic_lookup`.
-         # See: https://github.com/python/cpython/issues/97524
-@@ -144,7 +144,7 @@
-         no_fixup_chains
- 
-         # Strip build prefixes from linker where supported, for deterministic builds.
--        append_to_cccfg "o"
-+        append_to_cccfg "o" if ::DevelopmentTools.ld64_version >= 512
- 
-         # Pass `-ld_classic` whenever the linker is invoked with `-dead_strip_dylibs`
-         # on `ld` versions that don't properly handle that option.
-```
-
-
-> [!IMPORTANT]
->
-> Restore some pkg-config files for older macOS versions, i.e. [10.13 pkg-config files](https://github.com/Homebrew/brew/tree/0236b2fc2d5556c9913822c4a4f02ec108de8a4e/Library/Homebrew/os/mac/pkgconfig/10.13).
 
 > [!TIP]
 >
