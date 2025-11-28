@@ -436,8 +436,8 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
 
 * **Issue1:** Linking error caused by `tesseract`
 * **Solution:** Remove the `tesseract` dependence in the rb file. Or add `ENV.append_to_cflags "-stdlib=libc++" if OS.mac?` to the rb file.
-* **Issue2:**  Can't build with llvm or recent gcc.
-* **Solution:** Use gcc compile with specific version. `brew install ghostscript --cc=llvm_clang`
+* **Issue2:**  Can't build with recent llvm or gcc.
+* **Solution:** Use gcc compile with specific version, e.g. llvm-18. `brew install ghostscript --cc=llvm_clang`
 
 ### [numpy](https://formulae.brew.sh/formula/numpy), [lftp](https://formulae.brew.sh/formula/lftp)
 
@@ -753,6 +753,10 @@ CMake Error at gdk-pixbuf/CMakeLists.txt:19 (install):
 
 > [!NOTE]
 > `sdl2` maybe more compatible with `freerdp` on deprecated macOS.
+
+### [itstool](https://formulae.brew.sh/formula/itstool)
+- **Solution:** Add "depends_on "icu4c" => :build" to the rb file. This dependency is missing due to the libxml2 bindings, see [itstool: revision bump](https://github.com/Homebrew/homebrew-core/commit/b2570f8cb7d14fd61d6d2f4b9dd149c60b39129a).
+
 
 ### [simdutf](https://formulae.brew.sh/formula/simdutf)
 

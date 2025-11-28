@@ -95,6 +95,16 @@
          else
            "#{macos}.0.0"
          end
+--- a/Library/Homebrew/shims/mac/shared/include/llvm/__config_site
++++ b/Library/Homebrew/shims/mac/shared/include/llvm/__config_site
+@@ -2,6 +2,6 @@
+ #define _HOMEBREW_LIBCPP___CONFIG_SITE
+ 
+ #include_next <__config_site>
+-#define _LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS 1
++#define _LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS 0
+ 
+ #endif // _HOMEBREW_LIBCPP___CONFIG_SITE
 --- a/Library/Homebrew/vendor/portable-ruby-x86_64-darwin
 +++ b/Library/Homebrew/vendor/portable-ruby-x86_64-darwin
 @@ -1,2 +1,2 @@
