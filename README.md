@@ -194,44 +194,9 @@ Zend/zend_atomic.h:85:9: error: address argument to atomic operation must be a p
 - **Reference:** [#8881](https://github.com/php/php-src/issues/8881)
 - **Solution2:** Replace `uses_from_macos "libffi"` with `depends_on "libffi"`.
 
-### [cmake](https://formulae.brew.sh/formula/cmake)(>=4.0)
+### [cmake](https://formulae.brew.sh/formula/cmake)
 
-- **Issue:**
-
-```log
-In file included from /private/tmp/cmake-20250403-51275-k5zrwe/cmake-4.0.0/Source/cmArgumentParser.cxx:8:
-In file included from /private/tmp/cmake-20250403-51275-k5zrwe/cmake-4.0.0/Source/cmMakefile.h:15:
-In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/unordered_map:369:
-In file included from //Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/__hash_table:19:
-//Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/cmath:313:9: error: no member named 'signbit' in the global
-      namespace
-```
-
-- **Solution:** patch file `Modules/Platform/Darwin-Initialize.cmake` with
-
-```diff
---- Darwin-Initialize.cmake
-+++ Darwin-Initialize.cmake
-@@ -276,6 +276,8 @@ elseif(CMAKE_OSX_SYSROOT)
-     set(CMAKE_OSX_SYSROOT "${_CMAKE_OSX_SYSROOT_PATH}")
-   endif()
- endif()
-+
-+if(APPLE AND CMAKE_HOST_SYSTEM_VERSION VERSION_GREATER_EQUAL "19.0.0")
- if(NOT CMAKE_OSX_SYSROOT)
-   # Without any explicit SDK we rely on the toolchain default,
-   # which we assume to be what wrappers like /usr/bin/cc use.
-@@ -293,3 +295,4 @@ if(NOT CMAKE_OSX_SYSROOT)
-   )
-   unset(_sdk_macosx)
- endif()
-+endif()
-```
-
-.
-
-> [!IMPORTANT]
-> It seems this patch is always needed to use cmake later on High Sierra although building succeeded whitout it.
+- **Solution:** Add `ENV["SDKROOT"] = MacOS.sdk_path if OS.mac? && MacOS.version == :high_sierra` to the rb file before `args balabali...` line.
 
 ### [z3](https://formulae.brew.sh/formula/z3)
 
