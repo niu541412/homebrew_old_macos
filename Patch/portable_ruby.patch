@@ -8,21 +8,6 @@
      )
      ruby_URL="${ruby_URLs[0]}"
    fi
---- a/Library/Homebrew/extend/os/mac/dev-cmd/bottle.rb
-+++ b/Library/Homebrew/extend/os/mac/dev-cmd/bottle.rb
-@@ -7,7 +7,11 @@
-       module Bottle
-         sig { returns(T::Array[String]) }
-         def tar_args
--          ["--no-mac-metadata", "--no-acls", "--no-xattrs"].freeze
-+          if MacOS.version >= :catalina
-+            ["--no-mac-metadata", "--no-acls", "--no-xattrs"].freeze
-+          else
-+            [].freeze
-+          end
-         end
- 
-         sig { params(gnu_tar_formula: Formula).returns(String) }
 --- a/Library/Homebrew/vendor/portable-ruby-version
 +++ b/Library/Homebrew/vendor/portable-ruby-version
 @@ -1 +1 @@

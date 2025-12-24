@@ -1,3 +1,14 @@
+--- a/Library/Homebrew/brew.sh
++++ b/Library/Homebrew/brew.sh
+@@ -600,7 +600,7 @@ HOMEBREW_MACOS_NEWEST_SUPPORTED="26"
+ # - `os-version min` in package/Distribution.xml
+ # - https://github.com/Homebrew/install/blob/HEAD/install.sh
+ HOMEBREW_MACOS_OLDEST_SUPPORTED="14"
+-HOMEBREW_MACOS_OLDEST_ALLOWED="10.15"
++HOMEBREW_MACOS_OLDEST_ALLOWED="10.13"
+ 
+ if [[ -n "${HOMEBREW_MACOS}" ]]
+ then
 --- a/Library/Homebrew/extend/os/mac/dev-cmd/bottle.rb
 +++ b/Library/Homebrew/extend/os/mac/dev-cmd/bottle.rb
 @@ -7,7 +7,11 @@
@@ -105,10 +116,3 @@
 +#define _LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS 0
  
  #endif // _HOMEBREW_LIBCPP___CONFIG_SITE
---- a/Library/Homebrew/vendor/portable-ruby-x86_64-darwin
-+++ b/Library/Homebrew/vendor/portable-ruby-x86_64-darwin
-@@ -1,2 +1,2 @@
--ruby_TAG=catalina
--ruby_SHA=b48c918b7693c6d27e8027dc803a18cf64ddce49552fb45d88f3cabb9eead0fd
-+ruby_TAG=high_sierra
-+ruby_SHA=dbc879bdea14218ee5f767d00fdf1febcbeeb60d2a2266f74960c391eb7a77e9
