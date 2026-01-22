@@ -1,8 +1,8 @@
 class Node < Formula
-  desc "Platform built on V8 to build network applications"
+  desc "Open-source, cross-platform JavaScript runtime environment"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v24.10.0/node-v24.10.0.tar.xz"
-  sha256 "f17e36cb2cc8c34a9215ba57b55ce791b102e293432ed47ad63cbaf15f78678f"
+  url "https://nodejs.org/dist/v25.4.0/node-v25.4.0.tar.xz"
+  sha256 "04e365aadcd7bf4cf1a6001723ea41035bfb118d78f8a8ee2054b37fc5cb67d6"
   license "MIT"
   head "https://github.com/nodejs/node.git", branch: "main"
 
@@ -15,10 +15,10 @@ class Node < Formula
   end
 
   depends_on "pkgconf" => :build
-  depends_on "python@3.13" => :build
+  depends_on "python@3.14" => :build
   depends_on "brotli"
   depends_on "c-ares"
-  depends_on "icu4c@77"
+  depends_on "icu4c@78"
   depends_on "libnghttp2"
   depends_on "libnghttp3"
   depends_on "libngtcp2"
@@ -29,8 +29,8 @@ class Node < Formula
   depends_on "uvwasi"
   depends_on "zstd"
 
-  uses_from_macos "python", since: :catalina
-  uses_from_macos "zlib"
+  uses_from_macos "python"
+  uses_from_macos "zlib", since: :catalina
 
   on_macos do
     depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1699
@@ -54,8 +54,8 @@ class Node < Formula
   # We track major/minor from upstream Node releases.
   # We will accept *important* npm patch releases when necessary.
   resource "npm" do
-    url "https://registry.npmjs.org/npm/-/npm-11.6.0.tgz"
-    sha256 "ddf7e6e42ae5b9e28d84945d1c37188f9a741af492507b513b3e80af5aeba4f1"
+    url "https://registry.npmjs.org/npm/-/npm-11.7.0.tgz"
+    sha256 "292f142dc1a8c01199ba34a07e57cf016c260ea2c59b64f3eee8aaae7a2e7504"
   end
 
   patch :DATA
@@ -71,7 +71,7 @@ class Node < Formula
     end
 
     # make sure subprocesses spawned by make are using our Python 3
-    ENV["PYTHON"] = which("python3.13")
+    ENV["PYTHON"] = which("python3.14")
 
     # Ensure Homebrew deps are used
     %w[brotli icu-small nghttp2 ngtcp2 npm simdjson sqlite uvwasi zstd].each do |dep|
@@ -84,6 +84,7 @@ class Node < Formula
       --prefix=#{prefix}
       --without-npm
       --with-intl=system-icu
+      --shared
       --shared-brotli
       --shared-cares
       --shared-libuv
@@ -124,12 +125,18 @@ class Node < Formula
 
     # TODO: Try to devendor these libraries.
     # - `--shared-ada` needs the `ada-url` formula, but requires C++20
+    # - `--shared-gtest` is only used for building the test suite, which we don't run here.
+    # - `--shared-hdr-histogram` is not currently a dependency we track.
     # - `--shared-simdutf` seems to result in build failures.
     # - `--shared-http-parser` and `--shared-uvwasi` are not available as dependencies in Homebrew.
+    # - `--shared-temporal_capi` is not packaged as an external dependency in Homebrew, so we keep it vendored.
     ignored_shared_flags = %w[
       ada
+      gtest
+      hdr-histogram
       http-parser
       simdutf
+      temporal_capi
     ].map { |library| "--shared-#{library}" }
 
     configure_help = Utils.safe_popen_read("./configure", "--help")
@@ -179,7 +186,9 @@ class Node < Formula
     ln_s libexec/"lib/node_modules/npm/bin/npm-cli.js", bin/"npm"
     ln_s libexec/"lib/node_modules/npm/bin/npx-cli.js", bin/"npx"
 
-    bash_completion.install bootstrap/"lib/utils/completion.sh" => "npm"
+    generate_completions_from_executable(bin/"npm", "completion",
+                                         shells:                 [:bash, :zsh],
+                                         shell_parameter_format: :none)
   end
 
   def post_install

@@ -3,17 +3,34 @@ class Llvm < Formula
   homepage "https://llvm.org/"
   # The LLVM Project is under the Apache License v2.0 with LLVM Exceptions
   license "Apache-2.0" => { with: "LLVM-exception" }
+  revision 1
   head "https://github.com/llvm/llvm-project.git", branch: "main"
 
   stable do
-    url "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.8/llvm-project-21.1.8.src.tar.xz"
-    sha256 "4633a23617fa31a3ea51242586ea7fb1da7140e426bd62fc164261fe036aa142"
+    url "https://github.com/llvm/llvm-project/releases/download/llvmorg-19.1.7/llvm-project-19.1.7.src.tar.xz"
+    sha256 "82401fea7b79d0078043f7598b835284d6650a75b93e64b6f761ea7b63097501"
+
+    # Remove the following patches in LLVM 20.
+
+    # Backport relative `CLANG_CONFIG_FILE_SYSTEM_DIR` patch.
+    # https://github.com/llvm/llvm-project/pull/110962
+    patch do
+      url "https://github.com/llvm/llvm-project/commit/1682c99a8877364f1d847395cef501e813804caa.patch?full_index=1"
+      sha256 "2d0a185e27ff2bc46531fc2c18c61ffab521ae8ece2db5b5bed498a15f3f3758"
+    end
+
+    # Support simplified triples in version config files.
+    # https://github.com/llvm/llvm-project/pull/111387
+    patch do
+      url "https://github.com/llvm/llvm-project/commit/88dd0d33147a7f46a3c9df4aed28ad4e47ef597c.patch?full_index=1"
+      sha256 "0acaa80042055ad194306abb9843a94da24f53ee2bb819583d624391a6329b90"
+    end
 
     # Fix triple config loading for clang-cl
     # https://github.com/llvm/llvm-project/pull/111397
     patch do
-      url "https://github.com/llvm/llvm-project/compare/1381ad497b9a6d3da630cbef53cbfa9ddf117bb6...40a8c7c0ff3f688b690e4c74db734de67f0f89e9.diff"
-      sha256 "f6dafd762737eb79761ab7ef814a9fc802ec4bb8d20f46691f07178053b0eb36"
+      url "https://github.com/llvm/llvm-project/commit/a3e8b860788934d7cc1489f850f00dcfd9d8b595.patch?full_index=1"
+      sha256 "6d8403fec7be55004e94de90b074c2c166811903ad4921fd76274498c5a60a23"
     end
   end
 
@@ -23,6 +40,13 @@ class Llvm < Formula
   end
 
   bottle do
+    sha256 cellar: :any,                 arm64_sequoia: "2bfa1ded659b3a1647e9718af2e8baa895da228af148d3c0d5f55273dca50b54"
+    sha256 cellar: :any,                 arm64_sonoma:  "59fccc302e31b030a3ffa6ba75441a902dea8e1c2d069f3fc1e38445187ab335"
+    sha256 cellar: :any,                 arm64_ventura: "4c471348ebb70d36a8840f36aeadf5fe5f229ed23ef49e99778054b6bdc6ea56"
+    sha256 cellar: :any,                 sonoma:        "eab56bb7092bb23a667808915dc4aad048140395194b955bbc743cb65ef65697"
+    sha256 cellar: :any,                 ventura:       "f33aecd068fcdc3c8c646ddef416942cf29f66277372cd32e22565d90356113b"
+    sha256 cellar: :any_skip_relocation, arm64_linux:   "cf008643cf539c960aa62896d4ac780b7c4bbb89b644349063221b05a62b63de"
+    sha256 cellar: :any_skip_relocation, x86_64_linux:  "a4eb62edbba509c7cf907647f91f50367a5cdfff48c50a13d2109ea773cfceed"
   end
 
   keg_only :provided_by_macos
@@ -31,13 +55,13 @@ class Llvm < Formula
   depends_on "cmake" => :build
   depends_on "ninja" => :build
   depends_on "swig" => :build
-  depends_on "python@3.14"
+  depends_on "python@3.13"
   depends_on "xz"
   depends_on "z3"
   depends_on "zstd"
 
   uses_from_macos "libedit"
-  uses_from_macos "libffi"
+  uses_from_macos "libffi", since: :catalina
   uses_from_macos "ncurses"
   uses_from_macos "zlib"
 
@@ -48,7 +72,7 @@ class Llvm < Formula
   end
 
   def python3
-    "python3.14"
+    "python3.13"
   end
 
   def clang_config_file_dir
@@ -57,14 +81,6 @@ class Llvm < Formula
 
   patch :DATA
   def install
-    # Work around OOM error on arm64 linux runner by reducing number of jobs
-    github_arm64_linux = OS.linux? && Hardware::CPU.arm? &&
-                         ENV["HOMEBREW_GITHUB_ACTIONS"].present? &&
-                         ENV["GITHUB_ACTIONS_HOMEBREW_SELF_HOSTED"].blank?
-    if github_arm64_linux && (jobs = ENV.make_jobs - 1).positive?
-      ENV["CMAKE_BUILD_PARALLEL_LEVEL"] = ENV["HOMEBREW_MAKE_JOBS"] = jobs.to_s
-    end
-
     # The clang bindings need a little help finding our libclang.
     inreplace "clang/bindings/python/clang/cindex.py",
               /^(\s*library_path\s*=\s*)None$/,
@@ -81,6 +97,7 @@ class Llvm < Formula
       libcxx
       libcxxabi
       libunwind
+      pstl
     ]
 
     unless versioned_formula?
@@ -97,11 +114,6 @@ class Llvm < Formula
                              .select { |name| name.start_with? "python@" }
                              .map { |py| py.delete_prefix("python@") }
     site_packages = Language::Python.site_packages(python3).delete_prefix("lib/")
-
-    # Work around build failure (maybe from CMake 4 update) by using environment
-    # variable for https://cmake.org/cmake/help/latest/variable/CMAKE_OSX_SYSROOT.html
-    # TODO: Consider if this should be handled in superenv as impacts other formulae
-    ENV["SDKROOT"] = MacOS.sdk_for_formula(self).path if OS.mac?
 
     # Apple's libstdc++ is too old to build LLVM
     ENV.libcxx if ENV.compiler == :clang
@@ -122,7 +134,7 @@ class Llvm < Formula
       -DLLVM_POLLY_LINK_INTO_TOOLS=ON
       -DLLVM_BUILD_EXTERNAL_COMPILER_RT=ON
       -DLLVM_LINK_LLVM_DYLIB=ON
-      -DLLVM_ENABLE_EH=OFF
+      -DLLVM_ENABLE_EH=ON
       -DLLVM_ENABLE_FFI=ON
       -DLLVM_ENABLE_RTTI=ON
       -DLLVM_INCLUDE_DOCS=OFF
@@ -145,8 +157,6 @@ class Llvm < Formula
       -DCLANG_FORCE_MATCHING_LIBCLANG_SOVERSION=OFF
       -DCLANG_CONFIG_FILE_SYSTEM_DIR=#{clang_config_file_dir.relative_path_from(bin)}
       -DCLANG_CONFIG_FILE_USER_DIR=~/.config/clang
-      -DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}
-      -DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}
     ]
 
     if tap.present?
@@ -162,8 +172,10 @@ class Llvm < Formula
 
     if OS.mac?
       macos_sdk = MacOS.sdk_path_if_needed
-      args << "-DFFI_INCLUDE_DIR=#{macos_sdk}/usr/include/ffi"
-      args << "-DFFI_LIBRARY_DIR=#{macos_sdk}/usr/lib"
+      if MacOS.version >= :catalina
+        args << "-DFFI_INCLUDE_DIR=#{macos_sdk}/usr/include/ffi"
+        args << "-DFFI_LIBRARY_DIR=#{macos_sdk}/usr/lib"
+      end
 
       libcxx_install_libdir = lib/"c++"
       libunwind_install_libdir = lib/"unwind"
@@ -483,10 +495,12 @@ class Llvm < Formula
     arches = Set.new([:arm64, :x86_64, :aarch64])
     arches << arch
 
-    sysroot = if macos_version.blank? || MacOS.version > macos_version || MacOS.version < :catalina
+    sysroot = if macos_version.blank? || (MacOS.version > macos_version && MacOS::CLT.separate_header_package?)
       "#{MacOS::CLT::PKG_PATH}/SDKs/MacOSX.sdk"
-    else
+    elsif macos_version >= "10.14"
       "#{MacOS::CLT::PKG_PATH}/SDKs/MacOSX#{macos_version}.sdk"
+    else
+      "/"
     end
 
     {
@@ -523,6 +537,9 @@ class Llvm < Formula
 
       LLD is now provided in a separate formula:
         brew install lld
+
+      We plan to build LLVM 20 with `LLVM_ENABLE_EH=OFF`. Please see:
+        https://github.com/orgs/Homebrew/discussions/5654
     EOS
 
     on_macos do
@@ -850,47 +867,9 @@ __END__
  #endif
 
 +#ifndef CPU_SUBTYPE_ARM64E
-+#define CPU_SUBTYPE_ARM64E ((cpu_subtype_t) 2)
++#define CPU_SUBTYPE_ARM64E        ((cpu_subtype_t) 2)
 +#endif
 +
  #ifndef CPU_TYPE_ARM64_32
  #define CPU_ARCH_ABI64_32 0x02000000
  #define CPU_TYPE_ARM64_32 (CPU_TYPE_ARM | CPU_ARCH_ABI64_32)
-
---- a/compiler-rt/lib/builtins/os_version_check.c
-+++ b/compiler-rt/lib/builtins/os_version_check.c
-@@ -13,6 +13,7 @@
- 
- #ifdef __APPLE__
- 
-+#include <AvailabilityMacros.h>
- #include <TargetConditionals.h>
- #include <dispatch/dispatch.h>
- #include <dlfcn.h>
-@@ -86,9 +87,11 @@
-                                             CFStringEncoding);
- typedef void (*CFReleaseFuncTy)(CFTypeRef);
- 
-+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 101500
- extern __attribute__((weak_import))
- bool _availability_version_check(uint32_t count,
-                                  dyld_build_version_t versions[]);
-+#endif
- 
- static void _initializeAvailabilityCheck(bool LoadPlist) {
-   if (AvailabilityVersionCheck && !LoadPlist) {
-@@ -98,8 +101,14 @@
-   }
- 
-   // Use the new API if it's is available.
-+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 101500
-   if (_availability_version_check)
-     AvailabilityVersionCheck = &_availability_version_check;
-+#else
-+  // __attribute__((weak_import)) does not prevent Undefined symbol error on 10.14
-+  AvailabilityVersionCheck = (AvailabilityVersionCheckFuncTy)dlsym(
-+      RTLD_DEFAULT, "_availability_version_check");
-+#endif
- 
-   if (AvailabilityVersionCheck && !LoadPlist) {
-     // New API is supported and we're not being asked to load the plist,

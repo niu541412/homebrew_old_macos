@@ -1,10 +1,9 @@
 class NodeAT22 < Formula
-  desc "Platform built on V8 to build network applications"
+  desc "Open-source, cross-platform JavaScript runtime environment"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v22.20.0/node-v22.20.0.tar.xz"
-  sha256 "ff7a6a6e8a1312af5875e40058351c4f890d28ab64c32f12b2cc199afa22002d"
+  url "https://nodejs.org/dist/v22.22.0/node-v22.22.0.tar.xz"
+  sha256 "4c138012bb5352f49822a8f3e6d1db71e00639d0c36d5b6756f91e4c6f30b683"
   license "MIT"
-  revision 1
 
   livecheck do
     url "https://nodejs.org/dist/"
@@ -24,7 +23,7 @@ class NodeAT22 < Formula
   depends_on "python@3.13" => :build
   depends_on "brotli"
   depends_on "c-ares"
-  depends_on "icu4c@77"
+  depends_on "icu4c@78"
   depends_on "libnghttp2"
   depends_on "libnghttp3"
   depends_on "libngtcp2"
@@ -36,8 +35,8 @@ class NodeAT22 < Formula
   depends_on "uvwasi"
   depends_on "zstd"
 
-  uses_from_macos "python", since: :catalina
-  uses_from_macos "zlib"
+  uses_from_macos "python"
+  uses_from_macos "zlib", since: :catalina
 
   on_macos do
     depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
@@ -52,8 +51,7 @@ class NodeAT22 < Formula
 
   patch :DATA
   def install
-    # ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
-
+    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     if OS.mac? && DevelopmentTools.clang_build_version <= 1100
       inreplace "common.gypi", /'MACOSX_DEPLOYMENT_TARGET': '\d+\.\d+'/, "'MACOSX_DEPLOYMENT_TARGET': '#{MacOS.version}'"
       
@@ -70,6 +68,7 @@ class NodeAT22 < Formula
     args = %W[
       --prefix=#{prefix}
       --with-intl=system-icu
+      --shared
       --shared-brotli
       --shared-cares
       --shared-libuv

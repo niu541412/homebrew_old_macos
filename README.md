@@ -15,6 +15,10 @@ Since Homebrew no longer accepts pull requests for unsupported macOS versions, I
 > - Since brew v5.0.0, Homebrew portable ruby no longer supports macOS versions under Catalina, see [Portable Ruby 3.4.7](https://github.com/Homebrew/brew/commit/58a6c827f682e8d5bd0cc23d594ad63e7711c520). You need manually set the `RUBY_URL` to my self-built ruby bottle with this [patch](Patch/portable_ruby.patch).
 You need to carefully check the patch file and my repo. So it should be much easier that if you just manaully untar the [bottle](https://github.com/niu541412/homebrew_old_macos/releases) to the directory `/usr/local/Homebrew/Library/Homebrew/vendor/portable-ruby` and set the soft link.
 
+> [!IMPORTANT]
+> **Homebrew's recent deprecation of older macOS versions has significantly increased the maintenance overhead for this project. To stay efficient, I will minimize text-based updates.**
+>
+> **For technical details, please check the Ruby files (.rb) in the [Formula](./Formula) directory. Comparing these with the upstream official repo will highlight my customizations.**
 
 > [!TIP]
 >
@@ -284,7 +288,7 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
     */
   ```
 
-  For openjdk@17 use llvm 16 to compile `brew install openjdk@17 --cc=llvm_clang`. It seems it's to due to llvm (>=17) use the dynamic library cache of macOS which is not compatible with the old version. See 2nd Kernel issue of [Release Note](https://developer.apple.com/documentation/macos-release-notes/macos-big-sur-11_0_1-release-notes#Kernel).
+  ~~For openjdk@17 use llvm 16 to compile `brew install openjdk@17 --cc=llvm_clang`. It seems it's to due to llvm (>=17) use the dynamic library cache of macOS which is not compatible with the old version. See 2nd Kernel issue of [Release Note](https://developer.apple.com/documentation/macos-release-notes/macos-big-sur-11_0_1-release-notes#Kernel).~~
   For openjdk@21, remove `depends_on macos: :catalina` from the rb file.
 
 ### [ghc](https://formulae.brew.sh/formula/ghc)

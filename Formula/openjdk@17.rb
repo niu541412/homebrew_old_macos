@@ -1,13 +1,13 @@
-class OpenjdkAT21 < Formula
+class OpenjdkAT17 < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  url "https://github.com/openjdk/jdk21u/archive/refs/tags/jdk-21.0.10-ga.tar.gz"
-  sha256 "133a864987b4732d46cca5084b7cde8ffef168bde4e4b0118ebd2b38c1fda2f1"
+  url "https://github.com/openjdk/jdk17u/archive/refs/tags/jdk-17.0.18-ga.tar.gz"
+  sha256 "15c4fbd1d69254d362c24e82f4e9ab7ed69c8ebc7daf996500210698c944230a"
   license "GPL-2.0-only" => { with: "Classpath-exception-2.0" }
 
   livecheck do
     url :stable
-    regex(/^jdk[._-]v?(21(?:\.\d+)*)-ga$/i)
+    regex(/^jdk[._-]v?(17(?:\.\d+)*)-ga$/i)
   end
 
   bottle do
@@ -18,6 +18,7 @@ class OpenjdkAT21 < Formula
   depends_on "autoconf" => :build
   depends_on "pkgconf" => :build
   depends_on xcode: :build # for metal
+
   depends_on "freetype"
   depends_on "giflib"
   depends_on "harfbuzz"
@@ -46,22 +47,22 @@ class OpenjdkAT21 < Formula
   resource "boot-jdk" do
     on_macos do
       on_arm do
-        url "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_macos-aarch64_bin.tar.gz"
-        sha256 "b3d588e16ec1e0ef9805d8a696591bd518a5cea62567da8f53b5ce32d11d22e4"
+        url "https://download.java.net/java/GA/jdk17.0.2/dfd4a8d0985749f896bed50d7138ee7f/8/GPL/openjdk-17.0.2_macos-aarch64_bin.tar.gz"
+        sha256 "602d7de72526368bb3f80d95c4427696ea639d2e0cc40455f53ff0bbb18c27c8"
       end
       on_intel do
-        url "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_macos-x64_bin.tar.gz"
-        sha256 "8fd09e15dc406387a0aba70bf5d99692874e999bf9cd9208b452b5d76ac922d3"
+        url "https://download.java.net/java/GA/jdk17.0.2/dfd4a8d0985749f896bed50d7138ee7f/8/GPL/openjdk-17.0.2_macos-x64_bin.tar.gz"
+        sha256 "b85c4aaf7b141825ad3a0ea34b965e45c15d5963677e9b27235aa05f65c6df06"
       end
     end
     on_linux do
       on_arm do
-        url "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-aarch64_bin.tar.gz"
-        sha256 "08db1392a48d4eb5ea5315cf8f18b89dbaf36cda663ba882cf03c704c9257ec2"
+        url "https://download.java.net/java/GA/jdk17.0.2/dfd4a8d0985749f896bed50d7138ee7f/8/GPL/openjdk-17.0.2_linux-aarch64_bin.tar.gz"
+        sha256 "13bfd976acf8803f862e82c7113fb0e9311ca5458b1decaef8a09ffd91119fa4"
       end
       on_intel do
-        url "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz"
-        sha256 "a2def047a73941e01a73739f92755f86b895811afb1f91243db214cff5bdac3f"
+        url "https://download.java.net/java/GA/jdk17.0.2/dfd4a8d0985749f896bed50d7138ee7f/8/GPL/openjdk-17.0.2_linux-x64_bin.tar.gz"
+        sha256 "0022753d0cceecacdd3a795dd4cea2bd7ffdf9dc06e22ffd1be98411742fbb44"
       end
     end
   end
@@ -122,7 +123,7 @@ class OpenjdkAT21 < Formula
     end
     args << "--with-extra-ldflags=#{ldflags.join(" ")}"
 
-    if DevelopmentTools.clang_build_version == 1600
+    if DevelopmentTools.clang_build_version == 1600 && MacOS::Xcode.version < "16.2"
       args << "--with-extra-cflags=-mllvm -enable-constraint-elimination=0"
     end
 
@@ -153,7 +154,7 @@ class OpenjdkAT21 < Formula
     on_macos do
       <<~EOS
         For the system Java wrappers to find this JDK, symlink it with
-          sudo ln -sfn #{opt_libexec}/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-21.jdk
+          sudo ln -sfn #{opt_libexec}/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-17.jdk
       EOS
     end
   end

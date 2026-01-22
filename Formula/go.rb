@@ -1,9 +1,9 @@
 class Go < Formula
   desc "Open source programming language to build simple/reliable/efficient software"
   homepage "https://go.dev/"
-  url "https://go.dev/dl/go1.25.1.src.tar.gz"
-  mirror "https://fossies.org/linux/misc/go1.25.1.src.tar.gz"
-  sha256 "d010c109cee94d80efe681eab46bdea491ac906bf46583c32e9f0dbb0bd1a594"
+  url "https://go.dev/dl/go1.25.6.src.tar.gz"
+  mirror "https://fossies.org/linux/misc/go1.25.6.src.tar.gz"
+  sha256 "58cbf771e44d76de6f56d19e33b77d745a1e489340922875e46585b975c2b059"
   license "BSD-3-Clause"
   head "https://go.googlesource.com/go.git", branch: "master"
 
@@ -36,21 +36,21 @@ class Go < Formula
 
     on_arm do
       on_macos do
-        url "https://storage.googleapis.com/golang/go#{version}.darwin-arm64.tar.gz"
+        url "https://go.dev/dl/go#{version}.darwin-arm64.tar.gz"
         sha256 checksums["darwin-arm64"]
       end
       on_linux do
-        url "https://storage.googleapis.com/golang/go#{version}.linux-arm64.tar.gz"
+        url "https://go.dev/dl/go#{version}.linux-arm64.tar.gz"
         sha256 checksums["linux-arm64"]
       end
     end
     on_intel do
       on_macos do
-        url "https://storage.googleapis.com/golang/go#{version}.darwin-amd64.tar.gz"
+        url "https://go.dev/dl/go#{version}.darwin-amd64.tar.gz"
         sha256 checksums["darwin-amd64"]
       end
       on_linux do
-        url "https://storage.googleapis.com/golang/go#{version}.linux-amd64.tar.gz"
+        url "https://go.dev/dl/go#{version}.linux-amd64.tar.gz"
         sha256 checksums["linux-amd64"]
       end
     end
@@ -115,7 +115,7 @@ class Go < Formula
 
     # Try running a sample using cgo without CC or CXX set to ensure that the
     # toolchain's default choice of compilers work
-    with_env(CC: nil, CXX: nil) do
+    with_env(CC: nil, CXX: nil, CGO_ENABLED: "1") do
       assert_equal "Hello from cgo!\n", shell_output("#{bin}/go run hello_cgo.go")
     end
   end
