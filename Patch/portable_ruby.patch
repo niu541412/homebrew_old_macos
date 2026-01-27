@@ -4,7 +4,7 @@
      fi
      ruby_URLs+=(
        "https://ghcr.io/v2/homebrew/core/portable-ruby/blobs/sha256:${ruby_SHA}"
-+      "https://github.com/niu541412/homebrew_old_macos/releases/download/${HOMEBREW_PORTABLE_RUBY_VERSION}/${ruby_FILENAME}"
++      "https://github.com/niu541412/homebrew_old_macos/releases/download/portable-ruby/${ruby_FILENAME}"
      )
      ruby_URL="${ruby_URLs[0]}"
    fi

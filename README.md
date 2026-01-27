@@ -289,7 +289,8 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
   ```
 
   ~~For openjdk@17 use llvm 16 to compile `brew install openjdk@17 --cc=llvm_clang`. It seems it's to due to llvm (>=17) use the dynamic library cache of macOS which is not compatible with the old version. See 2nd Kernel issue of [Release Note](https://developer.apple.com/documentation/macos-release-notes/macos-big-sur-11_0_1-release-notes#Kernel).~~
-  For openjdk@21, remove `depends_on macos: :catalina` from the rb file.
+  
+  For opendk >=22, please refer the rb file in [Formula](./Formula) directory. I also built my own [builds](./releases/tag/openjdk), use at your own risk.
 
 ### [ghc](https://formulae.brew.sh/formula/ghc)
 
