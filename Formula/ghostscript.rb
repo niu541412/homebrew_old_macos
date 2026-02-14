@@ -4,6 +4,7 @@ class Ghostscript < Formula
   url "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10060/ghostpdl-10.06.0.tar.xz"
   sha256 "3602056368cf649026231e2d65250b5860c023f3d4a0d9c35e6605e28e543ec1"
   license "AGPL-3.0-or-later"
+  revision 1
 
   # The GitHub tags omit delimiters (e.g. `gs9533` for version 9.53.3). The
   # `head` repository tags are formatted fine (e.g. `ghostpdl-9.53.3`) but a
@@ -15,6 +16,8 @@ class Ghostscript < Formula
       json["GS_VER"]
     end
   end
+
+  no_autobump! because: :incompatible_version_format
 
   bottle do
   end
@@ -42,7 +45,10 @@ class Ghostscript < Formula
   depends_on "tesseract"
 
   uses_from_macos "expat"
-  uses_from_macos "zlib"
+  
+  on_linux do
+    depends_on "zlib-ng-compat"
+  end
 
   conflicts_with "gambit-scheme", because: "both install `gsc` binary"
   conflicts_with "gerbil-scheme", because: "both install `gsc` binary"
