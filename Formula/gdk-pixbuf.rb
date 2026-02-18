@@ -1,8 +1,8 @@
 class GdkPixbuf < Formula
   desc "Toolkit for image loading and pixel buffer manipulation"
   homepage "https://gtk.org"
-  url "https://download.gnome.org/sources/gdk-pixbuf/2.44/gdk-pixbuf-2.44.4.tar.xz"
-  sha256 "93a1aac3f1427ae73457397582a2c38d049638a801788ccbd5f48ca607bdbd17"
+  url "https://download.gnome.org/sources/gdk-pixbuf/2.44/gdk-pixbuf-2.44.5.tar.xz"
+  sha256 "69b93e09139b80c0ee661503d60deb5a5874a31772b5184b9cd5462a4100ab68"
   license "LGPL-2.1-or-later"
 
   bottle do
@@ -20,6 +20,7 @@ class GdkPixbuf < Formula
   depends_on "libtiff"
   depends_on "libdeflate" => :build
   depends_on "python" => :build
+  uses_from_macos "libffi", since: :catalina
 
   on_macos do
     depends_on "gettext"

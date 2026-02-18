@@ -4,6 +4,7 @@ class Protobuf < Formula
   url "https://github.com/protocolbuffers/protobuf/releases/download/v33.4/protobuf-33.4.tar.gz"
   sha256 "bc670a4e34992c175137ddda24e76562bb928f849d712a0e3c2fb2e19249bea1"
   license "BSD-3-Clause"
+  revision 1
 
   livecheck do
     url :stable
@@ -17,6 +18,10 @@ class Protobuf < Formula
   depends_on "googletest" => :build
   depends_on "abseil"
   uses_from_macos "zlib"
+
+  on_linux do
+    depends_on "zlib-ng-compat"
+  end
 
   def install
     # Keep `CMAKE_CXX_STANDARD` in sync with the same variable in `abseil.rb`.

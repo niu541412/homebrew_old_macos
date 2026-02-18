@@ -1,11 +1,22 @@
 class Go < Formula
   desc "Open source programming language to build simple/reliable/efficient software"
   homepage "https://go.dev/"
-  url "https://go.dev/dl/go1.25.6.src.tar.gz"
-  mirror "https://fossies.org/linux/misc/go1.25.6.src.tar.gz"
-  sha256 "58cbf771e44d76de6f56d19e33b77d745a1e489340922875e46585b975c2b059"
   license "BSD-3-Clause"
+  compatibility_version 2
   head "https://go.googlesource.com/go.git", branch: "master"
+
+  stable do
+    url "https://go.dev/dl/go1.26.0.src.tar.gz"
+    mirror "https://fossies.org/linux/misc/go1.26.0.src.tar.gz"
+    sha256 "c9132a8a1f6bd2aa4aad1d74b8231d95274950483a4950657ee6c56e6e817790"
+
+    # patch to fix pkg-config flag sanitization
+    # Backport issue https://golang.org/issue/77474, should be included in 1.26.1+.
+    patch do
+      url "https://github.com/golang/go/commit/28fbdf7acb4146b5bc3d88128e407d1344691839.patch?full_index=1"
+      sha256 "2e05f7e16f2320685547a7ebb240163a8b7f1c7bf9d2f6dc4872ff8b27707a35"
+    end
+  end
 
   livecheck do
     url "https://go.dev/dl/?mode=json"
@@ -26,13 +37,13 @@ class Go < Formula
   # Don't update this unless this version cannot bootstrap the new version.
   resource "gobootstrap" do
     checksums = {
-      "darwin-arm64" => "416c35218edb9d20990b5d8fc87be655d8b39926f15524ea35c66ee70273050d",
-      "darwin-amd64" => "e7bbe07e96f0bd3df04225090fe1e7852ed33af37c43a23e16edbbb3b90a5b7c",
-      "linux-arm64"  => "fd017e647ec28525e86ae8203236e0653242722a7436929b1f775744e26278e7",
-      "linux-amd64"  => "4fa4f869b0f7fc6bb1eb2660e74657fbf04cdd290b5aef905585c86051b34d43",
+      "darwin-arm64" => "f282d882c3353485e2fc6c634606d85caf36e855167d59b996dbeae19fa7629a",
+      "darwin-amd64" => "6cc6549b06725220b342b740497ffd24e0ebdcef75781a77931ca199f46ad781",
+      "linux-arm64"  => "74d97be1cc3a474129590c67ebf748a96e72d9f3a2b6fef3ed3275de591d49b3",
+      "linux-amd64"  => "1fc94b57134d51669c72173ad5d49fd62afb0f1db9bf3f798fd98ee423f8d730",
     }
 
-    version "1.22.12"
+    version "1.24.13"
 
     on_arm do
       on_macos do
@@ -187,16 +198,16 @@ __END__
  	}
  
  	chain := [][]*Certificate{{}}
--	chainRef, err := macOS.SecTrustCopyCertificateChain(trustObj)
+-	chainRef, err := macos.SecTrustCopyCertificateChain(trustObj)
 -	if err != nil {
 -		return nil, err
 -	}
--	defer macOS.CFRelease(chainRef)
--	for i := 0; i < macOS.CFArrayGetCount(chainRef); i++ {
--		certRef := macOS.CFArrayGetValueAtIndex(chainRef, i)
-+	numCerts := macOS.SecTrustGetCertificateCount(trustObj)
+-	defer macos.CFRelease(chainRef)
+-	for i := 0; i < macos.CFArrayGetCount(chainRef); i++ {
+-		certRef := macos.CFArrayGetValueAtIndex(chainRef, i)
++	numCerts := macos.SecTrustGetCertificateCount(trustObj)
 +	for i := 0; i < numCerts; i++ {
-+		certRef, err := macOS.SecTrustGetCertificateAtIndex(trustObj, i)
++		certRef, err := macos.SecTrustGetCertificateAtIndex(trustObj, i)
 +		if err != nil {
 +			return nil, err
 +		}

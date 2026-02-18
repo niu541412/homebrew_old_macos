@@ -3,8 +3,8 @@ class Glib < Formula
 
   desc "Core application library for C"
   homepage "https://docs.gtk.org/glib/"
-  url "https://download.gnome.org/sources/glib/2.86/glib-2.86.3.tar.xz"
-  sha256 "b3211d8d34b9df5dca05787ef0ad5d7ca75dec998b970e1aab0001d229977c65"
+  url "https://download.gnome.org/sources/glib/2.86/glib-2.86.4.tar.xz"
+  sha256 "d4e2b5d791d5015ffd8c6971ad8e975a0a55c1a14926cdb25cf843ff00682260"
   license "LGPL-2.1-or-later"
 
   bottle do
@@ -20,9 +20,9 @@ class Glib < Formula
   depends_on "pcre2"
 
   uses_from_macos "flex" => :build # for gobject-introspection
-  depends_on "libffi"
+  uses_from_macos "libffi", since: :catalina
   uses_from_macos "python"
-  uses_from_macos "zlib"
+  #uses_from_macos "zlib"
 
   on_macos do
     depends_on "gettext"
@@ -31,6 +31,7 @@ class Glib < Formula
   on_linux do
     depends_on "dbus"
     depends_on "util-linux"
+    depends_on "zlib-ng-compat"
   end
 
   # These used to live in the now defunct `glib-utils`.
@@ -58,8 +59,6 @@ class Glib < Formula
   end
 
   def install
-    ENV.delete("HOMEBREW_SDKROOT")
-
     # Avoid the sandbox violation when an empty directory is created outside of the formula prefix.
     inreplace "gio/meson.build", "install_emptydir(glib_giomodulesdir)", ""
 

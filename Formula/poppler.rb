@@ -1,9 +1,11 @@
 class Poppler < Formula
   desc "PDF rendering library (based on the xpdf-3.0 code base)"
   homepage "https://poppler.freedesktop.org/"
-  url "https://poppler.freedesktop.org/poppler-26.01.0.tar.xz"
-  sha256 "1cb944a4b88847f5fb6551683bc799db59f04990f5d8be07aba2acbf38601089"
+  url "https://poppler.freedesktop.org/poppler-26.02.0.tar.xz"
+  sha256 "dded8621f7b2f695c91063aab1558691c8418374cd583501e89ed39487e7ab77"
   license "GPL-2.0-only"
+  revision 1
+  compatibility_version 1
   head "https://gitlab.freedesktop.org/poppler/poppler.git", branch: "master"
 
   livecheck do
@@ -15,15 +17,14 @@ class Poppler < Formula
   end
 
   depends_on "cmake" => :build
+  depends_on "gettext" => :build
   depends_on "gobject-introspection" => :build
   depends_on "pkgconf" => :build
 
   depends_on "cairo"
   depends_on "fontconfig"
   depends_on "freetype"
-  depends_on "gettext"
   depends_on "glib"
-  depends_on "gpgme"
   depends_on "gpgmepp"
   depends_on "jpeg-turbo"
   depends_on "libpng"
@@ -40,7 +41,13 @@ class Poppler < Formula
   uses_from_macos "zlib"
 
   on_macos do
+    depends_on "gettext"
+    depends_on "gpgme"
     depends_on "libassuan"
+  end
+
+  on_linux do
+    depends_on "zlib-ng-compat"
   end
 
   conflicts_with "pdftohtml", "pdf2image", "xpdf",
@@ -57,7 +64,7 @@ class Poppler < Formula
   end
 
   def install
-    ENV.cxx11
+    # ENV.cxx11
 
     args = std_cmake_args + %W[
       -DBUILD_GTK_TESTS=OFF

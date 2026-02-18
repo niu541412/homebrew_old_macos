@@ -1,8 +1,8 @@
 class Chafa < Formula
   desc "Versatile and fast Unicode/ASCII/ANSI graphics renderer"
   homepage "https://hpjansson.org/chafa/"
-  url "https://hpjansson.org/chafa/releases/chafa-1.18.0.tar.xz"
-  sha256 "cd7475441ab8042e89dad706124999dd0aa3dc64653cdc20d49338549b9fcadb"
+  url "https://hpjansson.org/chafa/releases/chafa-1.18.1.tar.xz"
+  sha256 "e75a9772444247a70178cdd238b522d35c613dfb6f3a3bf516457958109e9910"
   license "LGPL-3.0-or-later"
 
   livecheck do
@@ -11,6 +11,13 @@ class Chafa < Formula
   end
 
   bottle do
+  end
+
+  head do
+    url "https://github.com/hpjansson/chafa.git", branch: "master"
+    depends_on "autoconf" => :build
+    depends_on "automake" => :build
+    depends_on "libtool" => :build
   end
 
   depends_on "pkgconf" => :build
@@ -30,7 +37,6 @@ class Chafa < Formula
   end
 
   def install
-    # ENV["LIBS"] = "-laom"
     with_env(NOCONFIGURE: "1") { system "./autogen.sh" } if build.head?
     system "./configure", "--disable-silent-rules", *std_configure_args
     system "make", "install"

@@ -4,7 +4,7 @@ class Pango < Formula
   url "https://download.gnome.org/sources/pango/1.57/pango-1.57.0.tar.xz"
   sha256 "890640c841dae77d3ae3d8fe8953784b930fa241b17423e6120c7bfdf8b891e7"
   license "LGPL-2.0-or-later"
-  revision 1
+  revision 2
   head "https://gitlab.gnome.org/GNOME/pango.git", branch: "main"
 
   # Pango doesn't follow GNOME's "even-numbered minor is stable" version
@@ -29,6 +29,7 @@ class Pango < Formula
   depends_on "glib"
   depends_on "python"
   depends_on "harfbuzz"
+  depends_on "libthai"
   depends_on "libffi"
 
   # PR ref: https://gitlab.gnome.org/GNOME/pango/-/merge_requests/891
@@ -38,13 +39,13 @@ class Pango < Formula
   end
 
   def install
-    ENV.delete("HOMEBREW_SDKROOT")
     args = %w[
       -Ddefault_library=both
       -Dintrospection=enabled
       -Dfontconfig=enabled
       -Dcairo=enabled
       -Dfreetype=enabled
+      -Dlibthai=enabled
     ]
 
     system "meson", "setup", "build", *args, *std_meson_args

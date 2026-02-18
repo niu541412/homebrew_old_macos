@@ -495,6 +495,10 @@ subprocess.CalledProcessError: Command '[PosixPath('/usr/bin/nm'), '--defined-on
 
 * **Solution:** Build with `--cc=llvm_clang`.
 
+### [binutils](https://formulae.brew.sh/formula/binutils)
+
+* **Solution:** Build with `--cc=llvm_clang`.
+
 ### [openjph](https://formulae.brew.sh/formula/openjph)
 
 * **Solution:** Modify `src/core/others/ojph_mem.c` with this patch:

@@ -4,7 +4,7 @@ class Openexr < Formula
   url "https://github.com/AcademySoftwareFoundation/openexr/archive/refs/tags/v3.4.4.tar.gz"
   sha256 "7c663c3c41da9354b5af277bc2fd1d2360788050b4e0751a32bcd50e8abaef8f"
   license "BSD-3-Clause"
-  revision 1
+  revision 2
 
   bottle do
   end
@@ -16,8 +16,10 @@ class Openexr < Formula
   depends_on "libdeflate"
   depends_on "openjph"
   depends_on "llvm@17" => :build
-
-  uses_from_macos "zlib"
+  
+  on_linux do
+    depends_on "zlib-ng-compat"
+  end
 
   # These used to be provided by `ilmbase`
   link_overwrite "include/OpenEXR"
