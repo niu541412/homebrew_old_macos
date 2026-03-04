@@ -1,8 +1,8 @@
 class Sdl3 < Formula
   desc "Low-level access to audio, keyboard, mouse, joystick, and graphics"
   homepage "https://libsdl.org/"
-  url "https://github.com/libsdl-org/SDL/releases/download/release-3.4.0/SDL3-3.4.0.tar.gz"
-  sha256 "082cbf5f429e0d80820f68dc2b507a94d4cc1b4e70817b119bbb8ec6a69584b8"
+  url "https://github.com/libsdl-org/SDL/releases/download/release-3.4.2/SDL3-3.4.2.tar.gz"
+  sha256 "ef39a2e3f9a8a78296c40da701967dd1b0d0d6e267e483863ce70f8a03b4050c"
   license "Zlib"
   head "https://github.com/libsdl-org/SDL.git", branch: "main"
 
@@ -32,17 +32,18 @@ class Sdl3 < Formula
     inreplace "CMakeLists.txt", "sdl_link_dependency(uniformtypeidentifiers", "#sdl_link_dependency(uniformtypeidentifiers"
     inreplace "cmake/sdl3.pc.in", "@SDL_PKGCONFIG_PREFIX@", HOMEBREW_PREFIX
 
-    args = [
-      "-DSDL_HIDAPI=ON",
-      "-DSDL_WAYLAND=OFF",
-      "-DSDL_CAMERA=OFF",
-      "-DSDL_JOYSTICK=OFF",
-      "-DSDL_HAPTIC=OFF",
-      "-DSDL_DIALOG=OFF",
-      "-DSDL_GPU=OFF",
-      "-DSDL_METAL=OFF",
-      "-DSDL_RENDER_METAL=OFF",
-      "-DSDL_COCOA=OFF",
+    args = %w[
+      -DSDL_HIDAPI=ON
+      -DSDL_WAYLAND=OFF
+      -DSDL_X11_XTEST=OFF
+      -DSDL_CAMERA=OFF
+      -DSDL_JOYSTICK=OFF
+      -DSDL_HAPTIC=OFF
+      -DSDL_DIALOG=OFF
+      -DSDL_GPU=OFF
+      -DSDL_METAL=OFF
+      -DSDL_RENDER_METAL=OFF
+      -DSDL_COCOA=OFF
     ]
 
     args += if OS.mac?

@@ -1,8 +1,8 @@
 class Librsvg < Formula
   desc "Library to render SVG files using Cairo"
   homepage "https://wiki.gnome.org/Projects/LibRsvg"
-  url "https://download.gnome.org/sources/librsvg/2.61/librsvg-2.61.4.tar.xz"
-  sha256 "fca0ea28d1f28f95c8407d2579f4702dac085e7c758644daca8b40d1e072ca0c"
+  url "https://download.gnome.org/sources/librsvg/2.62/librsvg-2.62.0.tar.xz"
+  sha256 "4278ddc1195ab82f4fd834ac1f5aa75ac1685f3cc5484bb0eaebe03a790b8d82"
   license "LGPL-2.1-or-later"
 
   # librsvg doesn't use GNOME's "even-numbered minor is stable" version scheme.
@@ -40,7 +40,10 @@ class Librsvg < Formula
   end
 
   def install
-    ENV.append_path "PATH", Formula["llvm"].opt_bin
+    (buildpath/"config.ini").write <<~INI
+      [binaries]
+      llvm-nm = '#{Formula["llvm"].opt_bin}/llvm-nm'
+    INI
 
     # Set `RPATH` since `cargo-c` doesn't seem to.
     rpath_flags = [rpath, rpath(source: lib/"gdk-pixbuf-2.0/2.10.0/loaders")].map { |rp| "-rpath,#{rp}" }
@@ -53,6 +56,7 @@ class Librsvg < Formula
     system "meson", "setup", "build", "-Dintrospection=enabled",
                                       "-Dpixbuf=enabled",
                                       "-Dpixbuf-loader=enabled",
+                                      "--native-file", "config.ini",
                                       *std_meson_args
     system "meson", "compile", "-C", "build", "--verbose"
     system "meson", "install", "-C", "build"

@@ -2,7 +2,7 @@ class Opencv < Formula
   desc "Open source computer vision library"
   homepage "https://opencv.org/"
   license "Apache-2.0"
-  revision 3
+  revision 5
 
   stable do
     url "https://github.com/opencv/opencv/archive/refs/tags/4.13.0.tar.gz"
@@ -54,14 +54,13 @@ class Opencv < Formula
   depends_on "openexr"
   depends_on "openjpeg"
   #depends_on "openvino"
-  depends_on "protobuf"
+  depends_on "protobuf@33"
   depends_on "python@3.14"
   depends_on "tbb"
   depends_on "tesseract"
   # depends_on "vtk"
   depends_on "webp"
-
-  uses_from_macos "zlib"
+  #uses_from_macos "zlib"
 
   on_macos do
     depends_on "glew"
@@ -74,6 +73,7 @@ class Opencv < Formula
     depends_on "gdk-pixbuf"
     depends_on "glib"
     depends_on "gtk+3"
+    depends_on "zlib-ng-compat"
   end
 
   def python3
@@ -89,6 +89,11 @@ class Opencv < Formula
     # Remove bundled libraries to make sure formula dependencies are used
     libdirs = %w[ffmpeg libjasper libjpeg libjpeg-turbo libpng libtiff libwebp openexr openjpeg protobuf tbb zlib]
     libdirs.each { |l| rm_r(buildpath/"3rdparty"/l) }
+
+    # Fix OpenVINO 2026 Tensor::data() constness mismatch, upstream bug report, https://github.com/opencv/opencv/issues/28586
+    inreplace "modules/dnn/src/op_inf_engine.cpp",
+              "return Mat(size, type, blob.data());",
+              "return Mat(size, type, const_cast<void*>(blob.data()));"
 
     args = %W[
       -DCMAKE_CXX_STANDARD=17
@@ -144,9 +149,9 @@ class Opencv < Formula
         -DOPENEXR_ILMIMF_LIBRARY=#{Formula["openexr"].opt_lib}/libIlmImf.so
         -DOPENEXR_ILMTHREAD_LIBRARY=#{Formula["openexr"].opt_lib}/libIlmThread.so
         -DPNG_LIBRARY=#{Formula["libpng"].opt_lib}/libpng.so
-        -DPROTOBUF_LIBRARY=#{Formula["protobuf"].opt_lib}/libprotobuf.so
-        -DPROTOBUF_INCLUDE_DIR=#{Formula["protobuf"].include}
-        -DPROTOBUF_PROTOC_EXECUTABLE=#{Formula["protobuf"].bin}/protoc
+        -DPROTOBUF_LIBRARY=#{Formula["protobuf@33"].opt_lib}/libprotobuf.so
+        -DPROTOBUF_INCLUDE_DIR=#{Formula["protobuf@33"].include}
+        -DPROTOBUF_PROTOC_EXECUTABLE=#{Formula["protobuf@33"].bin}/protoc
         -DTIFF_LIBRARY=#{Formula["libtiff"].opt_lib}/libtiff.so
         -DWITH_V4L=OFF
         -DZLIB_LIBRARY=#{Formula["zlib"].opt_lib}/libz.so

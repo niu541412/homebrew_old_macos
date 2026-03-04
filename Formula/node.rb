@@ -1,8 +1,8 @@
 class Node < Formula
   desc "Open-source, cross-platform JavaScript runtime environment"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v25.6.1/node-v25.6.1.tar.xz"
-  sha256 "cf756781c8b4dc5ee030f87ddf9d51b8d5bf219ad56cbd9855c4a3bdc832c78e"
+  url "https://nodejs.org/dist/v25.7.0/node-v25.7.0.tar.xz"
+  sha256 "8f13df7e8f79c3e8f227ad713c754592293c98f70e9e29e8fcee974e62a000e1"
   license "MIT"
   head "https://github.com/nodejs/node.git", branch: "main"
 
@@ -39,6 +39,10 @@ class Node < Formula
     depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1699
   end
 
+  on_linux do
+    depends_on "zlib-ng-compat"
+  end
+
   link_overwrite "bin/npm", "bin/npx"
 
   # https://github.com/swiftlang/llvm-project/commit/078651b6de4b767b91e3e6a51e5df11a06d7bc4f
@@ -57,8 +61,8 @@ class Node < Formula
   # We track major/minor from upstream Node releases.
   # We will accept *important* npm patch releases when necessary.
   resource "npm" do
-    url "https://registry.npmjs.org/npm/-/npm-11.9.0.tgz"
-    sha256 "5a172e3228e59d44cb9f44d5e83977178323bba3cc506016cae8e40b92ad418f"
+    url "https://registry.npmjs.org/npm/-/npm-11.10.1.tgz"
+    sha256 "2190945151842685142f5085b3c5dd356b1021ab390d7d02c2bb2c580f0c4840"
 
     livecheck do
       url "https://raw.githubusercontent.com/nodejs/node/refs/tags/v#{LATEST_VERSION}/deps/npm/package.json"
@@ -122,7 +126,7 @@ class Node < Formula
       "simdjson"      => ["simdjson",        "simdjson"],
       "sqlite"        => ["sqlite",          "sqlite"],
       "uvwasi"        => ["uvwasi",          "uvwasi"],
-      "zlib"          => ["zlib",            ("zlib" unless OS.mac?)],
+      "zlib"          => ["zlib",            ("zlib-ng-compat" unless OS.mac?)],
       "zstd"          => ["zstd",            "zstd"],
     }.each do |flag, (subdir, formula)|
       rm_r(buildpath/"deps"/subdir)

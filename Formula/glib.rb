@@ -22,7 +22,6 @@ class Glib < Formula
   uses_from_macos "flex" => :build # for gobject-introspection
   uses_from_macos "libffi", since: :catalina
   uses_from_macos "python"
-  #uses_from_macos "zlib"
 
   on_macos do
     depends_on "gettext"

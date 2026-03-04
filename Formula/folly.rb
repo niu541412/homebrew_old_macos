@@ -1,10 +1,9 @@
 class Folly < Formula
   desc "Collection of reusable C++ library artifacts developed at Facebook"
   homepage "https://github.com/facebook/folly"
-  url "https://github.com/facebook/folly/archive/refs/tags/v2026.01.12.00.tar.gz"
-  sha256 "4b694698c773a3236d6379316f67872db77070d56ea256bec5759964712f9c34"
+  url "https://github.com/facebook/folly/archive/refs/tags/v2026.03.02.00.tar.gz"
+  sha256 "f2a9bbd4bd36256d4554f9917fcefa9ec356cec637d2a743e01a6a1d569224dc"
   license "Apache-2.0"
-  revision 1
   head "https://github.com/facebook/folly.git", branch: "main"
 
   bottle do
@@ -36,6 +35,10 @@ class Folly < Formula
     depends_on "llvm" if DevelopmentTools.clang_build_version <= 1100
   end
 
+  on_linux do
+    depends_on "zlib-ng-compat"
+  end
+
   fails_with :clang do
     build 1100
     # https://github.com/facebook/folly/issues/1545
@@ -45,17 +48,14 @@ class Folly < Formula
     EOS
   end
 
-  # Workaround to build with glog >= 0.7
-  # ref: https://github.com/facebook/folly/issues/2171
-  # ref: https://github.com/facebook/folly/pull/2320
-  # ref: https://github.com/facebook/folly/pull/2474
+  # Workaround for arm64 Linux error on duplicate symbols
+  # Based on https://github.com/facebook/folly/pull/2562
   patch :DATA
 
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
 
     args = %W[
-      -DCMAKE_LIBRARY_ARCHITECTURE=#{Hardware::CPU.arch}
       -DFOLLY_USE_JEMALLOC=OFF
     ]
 
@@ -77,9 +77,6 @@ class Folly < Formula
   end
 
   test do
-    # Force use of Clang rather than LLVM Clang
-    ENV.clang if OS.mac?
-
     (testpath/"test.cc").write <<~CPP
       #include <folly/FBVector.h>
       int main() {
@@ -92,39 +89,43 @@ class Folly < Formula
         return 0;
       }
     CPP
-    system ENV.cxx, "-std=c++17", "test.cc", "-I#{include}", "-L#{lib}",
-                    "-lfolly", "-o", "test"
+    system ENV.cxx, "-std=c++17", "test.cc", "-I#{include}", "-L#{lib}", "-lfolly", "-o", "test"
     system "./test"
   end
 end
 
 __END__
-diff --git a/CMake/folly-config.cmake.in b/CMake/folly-config.cmake.in
-index 957ae5c56..fe811d7d9 100644
---- a/CMake/folly-config.cmake.in
-+++ b/CMake/folly-config.cmake.in
-@@ -30,6 +30,7 @@ set(FOLLY_LIBRARIES Folly::folly)
+diff --git a/folly/external/aor/CMakeLists.txt b/folly/external/aor/CMakeLists.txt
+index e07e58745..1429f54e9 100644
+--- a/folly/external/aor/CMakeLists.txt
++++ b/folly/external/aor/CMakeLists.txt
+@@ -20,6 +20,10 @@
+ # Linux ELF directives (.size, etc.) that Darwin's assembler doesn't support
+ if(IS_AARCH64_ARCH)
  
- # Find folly's dependencies
- find_dependency(fmt)
-+find_dependency(glog CONFIG)
++if(BUILD_SHARED_LIBS)
++  set(CMAKE_ASM_CREATE_SHARED_LIBRARY ${CMAKE_C_CREATE_SHARED_LIBRARY})
++endif()
++
+ folly_add_library(
+   NAME memcpy_aarch64
+   SRCS
+@@ -34,6 +38,7 @@ folly_add_library(
  
- set(Boost_USE_STATIC_LIBS "@FOLLY_BOOST_LINK_STATIC@")
- find_package(Boost 1.69.0 REQUIRED
-diff --git a/CMake/folly-deps.cmake b/CMake/folly-deps.cmake
-index 2ca5cfec7..a284a91fe 100644
---- a/CMake/folly-deps.cmake
-+++ b/CMake/folly-deps.cmake
-@@ -62,7 +62,8 @@ if(LIBGFLAGS_FOUND)
-   set(FOLLY_LIBGFLAGS_INCLUDE ${LIBGFLAGS_INCLUDE_DIR})
- endif()
+ folly_add_library(
+   NAME memcpy_aarch64-use
++  EXCLUDE_FROM_MONOLITH
+   SRCS
+     memcpy-advsimd.S
+     memcpy-armv8.S
+@@ -58,6 +63,7 @@ folly_add_library(
  
--find_package(Glog MODULE)
-+find_package(GLOG NAMES glog CONFIG REQUIRED)
-+set(GLOG_LIBRARY glog::glog)
- set(FOLLY_HAVE_LIBGLOG ${GLOG_FOUND})
- list(APPEND FOLLY_LINK_LIBRARIES ${GLOG_LIBRARY})
- list(APPEND FOLLY_INCLUDE_DIRECTORIES ${GLOG_INCLUDE_DIR})
+ folly_add_library(
+   NAME memset_aarch64-use
++  EXCLUDE_FROM_MONOLITH
+   SRCS
+     memset-advsimd.S
+     memset-mops.S
 
 --- a/folly/io/async/fdsock/AsyncFdSocket.h
 +++ b/folly/io/async/fdsock/AsyncFdSocket.h

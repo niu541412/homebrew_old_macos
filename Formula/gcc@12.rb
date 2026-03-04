@@ -1,17 +1,24 @@
-class GccAT14 < Formula
+class GccAT12 < Formula
   desc "GNU compiler collection"
   homepage "https://gcc.gnu.org/"
-  url "https://ftp.gnu.org/gnu/gcc/gcc-14.3.0/gcc-14.3.0.tar.xz"
-  mirror "https://ftpmirror.gnu.org/gcc/gcc-14.3.0/gcc-14.3.0.tar.xz"
-  sha256 "e0dc77297625631ac8e50fa92fffefe899a4eb702592da5c32ef04e2293aca3a"
+  url "https://ftpmirror.gnu.org/gnu/gcc/gcc-12.5.0/gcc-12.5.0.tar.xz"
+  mirror "https://ftp.gnu.org/gnu/gcc/gcc-12.5.0/gcc-12.5.0.tar.xz"
+  sha256 "71cd373d0f04615e66c5b5b14d49c1a4c1a08efa7b30625cd240b11bab4062b3"
   license "GPL-3.0-or-later" => { with: "GCC-exception-3.1" }
 
+  # https://gcc.gnu.org/gcc-12/
   livecheck do
-    url :stable
-    regex(%r{href=["']?gcc[._-]v?(14(?:\.\d+)+)(?:/?["' >]|\.t)}i)
+    skip "No longer developed or maintained"
   end
 
   bottle do
+    sha256                               arm64_tahoe:  "d8adb7354a111d55e61c661379749d99cb6d0cbaac40b2552e471071cb38c1a6"
+    sha256                               arm64_sonoma: "ca7a9e949ae62998f413a0068cd3eba834297669f92043da35548766246ef6cf"
+    sha256                               tahoe:        "45b46f68b0f409889443043fdb529e484c858c2a9abfa165d97c6ec118089bfc"
+    sha256                               sequoia:      "93386ba3329d06cb4288e10f7fef54e606103bf940bf5be87dc099119364f22c"
+    sha256                               sonoma:       "60e80d01ab1801326bf3e3919f7c883109daa056a5d52d496707d2ce75280ab7"
+    sha256 cellar: :any_skip_relocation, arm64_linux:  "2b65fe2eb9ddd411fbaa0eae6d8470aca65d60d956843df26921b3e3619f6c89"
+    sha256 cellar: :any_skip_relocation, x86_64_linux: "9c1bcaa7819147a8539e81064d9f34d4cc9746d70e14b0ece9a80d81818ebec8"
   end
 
   # The bottles are built on systems with the CLT installed, and do not work
@@ -24,28 +31,29 @@ class GccAT14 < Formula
   depends_on "mpfr"
   depends_on "zstd"
 
-  uses_from_macos "flex" => :build
-  uses_from_macos "m4" => :build
-  uses_from_macos "zlib"
-
-  on_macos do
-    # macOS make is too old, has intermittent parallel build issue
-    depends_on "make" => :build
-  end
-
   on_linux do
     depends_on "binutils"
+    depends_on "zlib-ng-compat"
   end
 
-  # GCC bootstraps itself, so it is OK to have an incompatible C++ stdlib
-  cxxstdlib_check :skip
-
   # Branch from the Darwin maintainer of GCC, with a few generic fixes and
-  # Apple Silicon support, located at https://github.com/iains/gcc-14-branch
+  # Apple Silicon support, located at https://github.com/iains/gcc-12-branch
+  patch do
+    url "https://raw.githubusercontent.com/Homebrew/homebrew-core/8ce16876120a7c9b08682f6128e24aca41ebac60/Patches/gcc/gcc-12.4.0.diff"
+    sha256 "6178f6473bd2c225ed80745834d584e1c3beff9597f5afa982f249efb39ca084"
+  end
+  # Backport commits to build on Sonoma/Sequoia to allow rebottling.
+  # TODO: create merged patch if https://github.com/iains/gcc-12-branch is synced to 12.5.0
   patch do
     on_macos do
-      url "https://raw.githubusercontent.com/Homebrew/formula-patches/473d292cbbdfd318341cb6d4bcdf8de47879bab7/gcc/gcc-14.3.0.diff"
-      sha256 "b8611362ae43a5644ab908d6e4d9bfc90346a914c3ba851197086d54148b1289"
+      url "https://github.com/iains/gcc-12-branch/compare/e300c1337a48cf772b09e7136601fd7f9f09d6f1..914cec39148b1c8a697976275629aa8526ea1050.patch"
+      sha256 "f622b8fb9d36d679bed2c98adc47c46029d40923646410704eb8e04cd672de96"
+    end
+  end
+  patch do
+    on_macos do
+      url "https://github.com/iains/gcc-12-branch/compare/f0f9d56ffca2da2cab9af21c0c378ffe4d9cf908...99533d94172ed7a24c0e54c4ea97e6ae2260409e.patch"
+      sha256 "7aa45104e32a4fd288a8f3b931848dc5c306d0b295ca28c8bf60a048edd8d2a5"
     end
   end
 
@@ -58,10 +66,6 @@ class GccAT14 < Formula
     #  - Go, currently not supported on macOS
     #  - BRIG
     languages = %w[c c++ objc obj-c++ fortran]
-
-    # Modula-2 has problems with macOS 15 for now
-    # https://github.com/Homebrew/homebrew-core/pull/221029
-    languages << "m2" if !OS.mac? || MacOS.version < :sequoia
 
     pkgversion = "Homebrew GCC #{pkg_version} #{build.used_options*" "}".strip
 
@@ -79,12 +83,11 @@ class GccAT14 < Formula
       --with-isl=#{Formula["isl"].opt_prefix}
       --with-zstd=#{Formula["zstd"].opt_prefix}
       --with-pkgversion=#{pkgversion}
-      --with-bugurl="https://github.com/Homebrew/homebrew-core/issues"
+      --with-bugurl=https://github.com/Homebrew/homebrew-core/issues
       --with-system-zlib
     ]
 
     if OS.mac?
-      ENV.append "LDFLAGS", "#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}"
       cpu = Hardware::CPU.arm? ? "aarch64" : "x86_64"
       args << "--build=#{cpu}-apple-darwin#{OS.kernel_version.major}"
 
@@ -93,14 +96,12 @@ class GccAT14 < Formula
       sdk = MacOS.sdk_path_if_needed if MacOS.version > :high_sierra
       args << "--with-sysroot=#{sdk}" if sdk
 
-      # Avoid this semi-random failure:
-      # "Error: Failed changing install name"
-      # "Updated load commands do not fit in the header"
-      make_args = %w[BOOT_LDFLAGS=-Wl,-headerpad_max_install_names]
+      # Work around a bug in Xcode 15's new linker (FB13038083)
+      if DevelopmentTools.clang_build_version >= 1500
+        toolchain_path = "/Library/Developer/CommandLineTools"
+        args << "--with-ld=#{toolchain_path}/usr/bin/ld-classic"
+      end
     else
-      # Fix cc1: error while loading shared libraries: libisl.so.15
-      args << "--with-boot-ldflags=-static-libstdc++ -static-libgcc #{ENV.ldflags}"
-
       # Fix Linux error: gnu/stubs-32.h: No such file or directory.
       args << "--disable-multilib"
 
@@ -112,15 +113,13 @@ class GccAT14 < Formula
       inreplace "gcc/config/i386/t-linux64", "m64=../lib64", "m64="
       inreplace "gcc/config/aarch64/t-aarch64-linux", "lp64=../lib64", "lp64="
 
-      make_args = %W[
-        BOOT_CFLAGS=-I#{Formula["zlib"].opt_include}
-        BOOT_LDFLAGS=-L#{Formula["zlib"].opt_lib}
-      ]
+      ENV.append_path "CPATH", Formula["zlib-ng-compat"].opt_include
+      ENV.append_path "LIBRARY_PATH", Formula["zlib-ng-compat"].opt_lib
     end
 
     mkdir "build" do
       system "../configure", *args
-      system "gmake", *make_args
+      system "make"
 
       # Do not strip the binaries on macOS, it makes them unsuitable
       # for loading plugins
@@ -129,7 +128,7 @@ class GccAT14 < Formula
       # To make sure GCC does not record cellar paths, we configure it with
       # opt_prefix as the prefix. Then we use DESTDIR to install into a
       # temporary location, then move into the cellar path.
-      system "gmake", install_target, "DESTDIR=#{Pathname.pwd}/../instdir"
+      system "make", install_target, "DESTDIR=#{Pathname.pwd}/../instdir"
       mv Dir[Pathname.pwd/"../instdir/#{opt_prefix}/*"], prefix
     end
 
@@ -272,19 +271,5 @@ class GccAT14 < Formula
     FORTRAN
     system bin/"gfortran-#{version.major}", "-o", "test", "test.f90"
     assert_equal "Done\n", shell_output("./test")
-
-    # Modula-2 is temporarily disabled on macOS 15
-    return if OS.mac? && MacOS.version >= :sequoia
-
-    (testpath/"hello.mod").write <<~EOS
-      MODULE hello;
-      FROM InOut IMPORT WriteString, WriteLn;
-      BEGIN
-           WriteString("Hello, world!");
-           WriteLn;
-      END hello.
-    EOS
-    system bin/"gm2-#{version.major}", "-o", "hello-m2", "hello.mod"
-    assert_equal "Hello, world!\n", shell_output("./hello-m2")
   end
 end

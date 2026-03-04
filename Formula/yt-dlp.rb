@@ -3,8 +3,8 @@ class YtDlp < Formula
 
   desc "Feature-rich command-line audio/video downloader"
   homepage "https://github.com/yt-dlp/yt-dlp"
-  url "https://files.pythonhosted.org/packages/16/be/8e099f3f34bac6851490525fb1a8b62d525a95fcb5af082e8c52ba884fb5/yt_dlp-2026.2.4.tar.gz"
-  sha256 "24733ef081116f29d8ee6eae7a48127101e6c56eb7aa228dd604a60654760022"
+  url "https://files.pythonhosted.org/packages/66/6f/7427d23609353e5ef3470ff43ef551b8bd7b166dd4fef48957f0d0e040fe/yt_dlp-2026.3.3.tar.gz"
+  sha256 "3db7969e3a8964dc786bdebcffa2653f31123bf2a630f04a17bdafb7bbd39952"
   license "Unlicense"
 
   bottle do
@@ -14,10 +14,6 @@ class YtDlp < Formula
     url "https://github.com/yt-dlp/yt-dlp.git", branch: "master"
 
     depends_on "pandoc" => :build
-
-    on_macos do
-      depends_on "make" => :build
-    end
   end
 
   # depends_on "node" => :build # https://github.com/yt-dlp/ejs/issues/37
@@ -74,7 +70,7 @@ class YtDlp < Formula
   #end
 
   def install
-    system "gmake", "lazy-extractors", "pypi-files" if build.head?
+    system "make", "lazy-extractors", "pypi-files" if build.head?
     virtualenv_install_with_resources
     bash_completion.install libexec/"share/bash-completion/completions/yt-dlp"
     zsh_completion.install libexec/"share/zsh/site-functions/_yt-dlp"
