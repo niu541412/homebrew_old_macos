@@ -1,22 +1,12 @@
 class Go < Formula
   desc "Open source programming language to build simple/reliable/efficient software"
   homepage "https://go.dev/"
+  url "https://go.dev/dl/go1.26.1.src.tar.gz"
+  mirror "https://fossies.org/linux/misc/go1.26.1.src.tar.gz"
+  sha256 "3172293d04b209dc1144698e7ba13f0477f6ba8c5ffd0be66c20fdbc9785dfbb"
   license "BSD-3-Clause"
-  compatibility_version 2
+  compatibility_version 3
   head "https://go.googlesource.com/go.git", branch: "master"
-
-  stable do
-    url "https://go.dev/dl/go1.26.0.src.tar.gz"
-    mirror "https://fossies.org/linux/misc/go1.26.0.src.tar.gz"
-    sha256 "c9132a8a1f6bd2aa4aad1d74b8231d95274950483a4950657ee6c56e6e817790"
-
-    # patch to fix pkg-config flag sanitization
-    # Backport issue https://golang.org/issue/77474, should be included in 1.26.1+.
-    patch do
-      url "https://github.com/golang/go/commit/28fbdf7acb4146b5bc3d88128e407d1344691839.patch?full_index=1"
-      sha256 "2e05f7e16f2320685547a7ebb240163a8b7f1c7bf9d2f6dc4872ff8b27707a35"
-    end
-  end
 
   livecheck do
     url "https://go.dev/dl/?mode=json"

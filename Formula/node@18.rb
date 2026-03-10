@@ -1,44 +1,31 @@
 class NodeAT18 < Formula
-  desc "Platform built on V8 to build network applications"
+  desc "Open-source, cross-platform JavaScript runtime environment"
   homepage "https://nodejs.org/"
   url "https://nodejs.org/dist/v18.20.8/node-v18.20.8.tar.xz"
   sha256 "36a7bf1a76d62ce4badd881ee5974a323c70e1d8d19165732684e145632460d9"
   license "MIT"
 
-  # Remove livecheck on 2025-04-30
-  livecheck do
-    url "https://nodejs.org/dist/"
-    regex(%r{href=["']?v?(18(?:\.\d+)+)/?["' >]}i)
-  end
-
   bottle do
-    sha256 arm64_sequoia: "85339a0121bfd4eade3f70a49197c59fd1d0dee18511edf924d4acf4d81cc012"
-    sha256 arm64_sonoma:  "cce72f3a40cb31861f419e0ea364cf0581e6f59b28f3e5c00196ccdea6a9f295"
-    sha256 arm64_ventura: "abf275d5c731c19cc83cac346960ee3d53e845c35e1cb04278d31e26a9aad9ec"
-    sha256 sonoma:        "5d6cc20ba0c4f0e75534b961530c236222d2f11b8fb5dd890f0f2f7d71d778cb"
-    sha256 ventura:       "979121dc9e057de08c03b75690f3111b7d3bfb03974299bc340166441f0a3ce8"
-    sha256 arm64_linux:   "006629948d696eaebdc65531418f095b71e4f3fd66e966f594f61021137c771c"
-    sha256 x86_64_linux:  "47a91f8bf2f6c0915eebc7793c97ea3d980d292c0242e1cc376e621fbb9d18d5"
   end
 
   keg_only :versioned_formula
 
   # https://github.com/nodejs/release#release-schedule
-  # disable! date: "2025-04-30", because: :unsupported
   deprecate! date: "2024-10-29", because: :unsupported
+  disable! date: "2025-10-29", because: :unsupported
 
   depends_on "pkgconf" => :build
   depends_on "python-setuptools" => :build
   depends_on "python@3.13" => :build
   depends_on "brotli"
   depends_on "c-ares"
-  depends_on "icu4c@77"
+  depends_on "icu4c@78"
   depends_on "libnghttp2"
   depends_on "libuv"
   depends_on "openssl@3"
 
   uses_from_macos "python", since: :catalina
-  uses_from_macos "zlib"
+  uses_from_macos "zlib", since: :catalina
 
   on_macos do
     depends_on "llvm@18" => :build if DevelopmentTools.clang_build_version <= 1100
@@ -59,11 +46,8 @@ class NodeAT18 < Formula
 
   patch :DATA
   def install
-    # ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
-
     if OS.mac? && DevelopmentTools.clang_build_version <= 1100
       inreplace "common.gypi", /'MACOSX_DEPLOYMENT_TARGET': '\d+\.\d+'/, "'MACOSX_DEPLOYMENT_TARGET': '#{MacOS.version}'"
-      
       llvm = Formula["llvm@18"]
       ENV["CC"] = "#{llvm.opt_bin}/clang"
       ENV["CXX"] = "#{llvm.opt_bin}/clang++"

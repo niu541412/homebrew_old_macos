@@ -1,10 +1,9 @@
 class NodeAT20 < Formula
-  desc "Platform built on V8 to build network applications"
+  desc "Open-source, cross-platform JavaScript runtime environment"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v20.19.0/node-v20.19.0.tar.xz"
-  sha256 "5ac2516fc905b6a0bc1a33e7302937eac664a820b887cc86bd48c035fba392d7"
+  url "https://nodejs.org/dist/v20.20.1/node-v20.20.1.tar.xz"
+  sha256 "e540efdd6750f838e867daf9ab9d90ea195423f915613d05d87105f4d2ecd186"
   license "MIT"
-  revision 1
 
   livecheck do
     url "https://nodejs.org/dist/"
@@ -12,13 +11,6 @@ class NodeAT20 < Formula
   end
 
   bottle do
-    sha256 arm64_sequoia: "6dbede32ed7d323ceeed43a83789824ab7cdfaf9df92041a2486eb522ca6769e"
-    sha256 arm64_sonoma:  "055407d0f413c52142e700b193a4fac6b309e4e6bc90a14e6f7ee59d848d18d2"
-    sha256 arm64_ventura: "cd12c0e1b8d6bf21f683165fbaf5cf59826d9e9b153edd279e2903275bd7547c"
-    sha256 sonoma:        "a5d4e6820e57c3ffc0e18ca743d8b691e9c4767a8446fede3033bf0fe9c712f4"
-    sha256 ventura:       "27208e60a4e8c5efeb422ae6511e4a7e8136ab68e7c1d8b7122d41f386fac6b2"
-    sha256 arm64_linux:   "204ccf94c351e5d9b53cc06e3954f60afb4d1abfe623c5182cafd652bff9acef"
-    sha256 x86_64_linux:  "839975a075d3f16bf8d6cc47e229b8a3a0bbd43146356bba927de449135dcbb8"
   end
 
   keg_only :versioned_formula
@@ -31,16 +23,20 @@ class NodeAT20 < Formula
   depends_on "python@3.13" => :build
   depends_on "brotli"
   depends_on "c-ares"
-  depends_on "icu4c@77"
+  depends_on "icu4c@78"
   depends_on "libnghttp2"
   depends_on "libuv"
   depends_on "openssl@3"
 
   uses_from_macos "python", since: :catalina
-  uses_from_macos "zlib"
+  uses_from_macos "zlib", since: :catalina
 
   on_macos do
-    depends_on "llvm@18" => [:build, :test] if DevelopmentTools.clang_build_version <= 1100
+    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
+  end
+
+  on_linux do
+    depends_on "zlib-ng-compat"
   end
 
   fails_with :clang do
@@ -52,8 +48,6 @@ class NodeAT20 < Formula
 
   patch :DATA
   def install
-    # ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
-
     # The new linker crashed during LTO due to high memory usage.
     ENV.append "LDFLAGS", "-Wl,-ld_classic" if DevelopmentTools.clang_build_version >= 1500
 
@@ -94,7 +88,6 @@ class NodeAT20 < Formula
 
     # Enabling LTO errors on Linux with:
     # terminate called after throwing an instance of 'std::out_of_range'
-    # Pre-Catalina macOS also can't build with LTO
     # LTO is unpleasant if you have to build from source.
     args << "--enable-lto" if OS.mac? && MacOS.version >= :catalina && build.bottle?
 
@@ -107,9 +100,6 @@ class NodeAT20 < Formula
   end
 
   test do
-    # Make sure Mojave does not have `CC=llvm_clang`.
-    ENV.clang if OS.mac?
-
     path = testpath/"test.js"
     path.write "console.log('hello');"
 
@@ -152,25 +142,3 @@ __END__
  }
 
  }  // namespace tracing
-
---- a/deps/v8/third_party/zlib/zutil.h
-+++ b/deps/v8/third_party/zlib/zutil.h
-@@ -130,17 +130,8 @@
- #  endif
- #endif
- 
--#if defined(MACOS) || defined(TARGET_OS_MAC)
-+#if defined(MACOS)
- #  define OS_CODE  7
--#  ifndef Z_SOLO
--#    if defined(__MWERKS__) && __dest_os != __be_os && __dest_os != __win32_os
--#      include <unix.h> /* for fdopen */
--#    else
--#      ifndef fdopen
--#        define fdopen(fd,mode) NULL /* No fdopen() */
--#      endif
--#    endif
--#  endif
- #endif
- 
- #ifdef __acorn

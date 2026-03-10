@@ -6,7 +6,6 @@ class PortableRuby < PortableFormula
   url "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.1.tar.gz"
   sha256 "3924be2d05db30f4e35f859bf028be85f4b7dd01714142fd823e4af5de2faf9d"
   license "Ruby"
-  revision 1
 
   # This regex restricts matching to versions other than X.Y.0.
   livecheck do
@@ -15,10 +14,6 @@ class PortableRuby < PortableFormula
   end
 
   bottle do
-    sha256 cellar: :any_skip_relocation, arm64_big_sur: "318ced2abea09f36871a662504f1cbd3ffb8e9644a535ade926426d866c6b5be"
-    sha256 cellar: :any_skip_relocation, catalina:      "6c9e563047b31a2d5a5de4f183fba77a8cc5b4f32acb3a76238618d553d0669b"
-    sha256 cellar: :any_skip_relocation, arm64_linux:   "297f3999884fc58d269a0332a1a4684f92089643502d0487ebd859a262ea8468"
-    sha256 cellar: :any_skip_relocation, x86_64_linux:  "bc5d1cf7293f0b728c19d048fa2f3e70042a82e89ecc3d805fd5eed1ae6d0606"
   end
 
   depends_on "pkgconf" => :build
@@ -132,6 +127,13 @@ class PortableRuby < PortableFormula
 
     system "./configure", *args
     system "make", "extract-gems"
+    # 批量修复所有可能受影响的 Gem
+    Dir.glob(".bundle/gems/**/ext/**/Makefile").each do |makefile|
+      if File.read(makefile).include?("-fvisibility=hidden")
+        inreplace makefile, "-fvisibility=hidden", "-fvisibility=default"
+        ohai "已修复可见性: #{File.dirname(makefile).sub("#{buildpath}/", "")}"
+      end
+    end
     system "make", *make_args
 
     # Add a helper load path file so bundled gems can be easily used (used by brew's standalone/init.rb)

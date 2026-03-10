@@ -1,11 +1,10 @@
 class Poppler < Formula
   desc "PDF rendering library (based on the xpdf-3.0 code base)"
   homepage "https://poppler.freedesktop.org/"
-  url "https://poppler.freedesktop.org/poppler-26.02.0.tar.xz"
-  sha256 "dded8621f7b2f695c91063aab1558691c8418374cd583501e89ed39487e7ab77"
+  url "https://poppler.freedesktop.org/poppler-26.03.0.tar.xz"
+  sha256 "8b3c5e2a9f2ab4c3ec5029f28af1b433c6b71f0d1e7b3997aa561cf1c0ca4ebe"
   license "GPL-2.0-only"
-  revision 1
-  compatibility_version 1
+  compatibility_version 2
   head "https://gitlab.freedesktop.org/poppler/poppler.git", branch: "master"
 
   livecheck do
@@ -34,11 +33,10 @@ class Poppler < Formula
   depends_on "nss"
   depends_on "openjpeg"
   depends_on "python" => :build
-  depends_on "libffi"
+  depends_on "libffi" => :build, since: :catalina
 
   uses_from_macos "gperf" => :build
   uses_from_macos "curl", since: :monterey # 7.68.0 required by poppler as of https://gitlab.freedesktop.org/poppler/poppler/-/commit/8646a6aa2cb60644b56dc6e6e3b3af30ba920245
-  uses_from_macos "zlib"
 
   on_macos do
     depends_on "gettext"
@@ -64,8 +62,6 @@ class Poppler < Formula
   end
 
   def install
-    # ENV.cxx11
-
     args = std_cmake_args + %W[
       -DBUILD_GTK_TESTS=OFF
       -DENABLE_BOOST=OFF
@@ -84,7 +80,6 @@ class Poppler < Formula
 
     system "cmake", "-S", ".", "-B", "build_static", *args, "-DBUILD_SHARED_LIBS=OFF", "-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}"
     system "cmake", "--build", "build_static"
-    #puts "PWD: #{Pathname.pwd}"
     lib.install "build_static/libpoppler.a"
     lib.install "build_static/cpp/libpoppler-cpp.a"
     lib.install "build_static/glib/libpoppler-glib.a"
