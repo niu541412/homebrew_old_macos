@@ -18,7 +18,7 @@ You need to carefully check the patch file and my repo. So it should be much eas
 > [!IMPORTANT]
 > **Homebrew's recent deprecation of older macOS versions has significantly increased the maintenance overhead for this project. To stay efficient, I will minimize text-based updates.**
 >
-> **For technical details, please check the Ruby files (.rb) in the [Formula](./Formula) directory. Comparing these with the upstream official repo will highlight my customizations.**
+> **For technical details, please check the Ruby files (.rb) in the [Formula](./Formula) directory. Comparing these using `diff` tools with the upstream official [repo](https://github.com/Homebrew/homebrew-core/tree/main/Formula) will highlight my customizations.**
 
 > [!TIP]
 >
@@ -27,6 +27,9 @@ You need to carefully check the patch file and my repo. So it should be much eas
 > 3. **Dependencies:** Ensure all dependencies are correctly installed. Sometimes, manual installation of dependencies is required.
 > 4. **Environment Variables:** Setting environment variables like `SDKROOT`, `MACOSX_DEPLOYMENT_TARGET`, and `CFLAGS` can help in building some formulae.
 
+<details>
+
+<summary>Formulae with solution (Maybe outdated)</summary>
 ## Formulae with solution
 
 ### [llvm](https://formulae.brew.sh/formula/llvm)
@@ -764,3 +767,4 @@ Could not resolve dependencies:
 - **Issue:** Build error
 - **Solution:** Not use gcc to build, revert the patch in the following link.
 - **Reference:** [forcing it to gcc-15](https://github.com/Homebrew/homebrew-core/pull/253109)
+</details>
