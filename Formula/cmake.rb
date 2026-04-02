@@ -1,21 +1,13 @@
 class Cmake < Formula
   desc "Cross-platform make"
   homepage "https://www.cmake.org/"
+  url "https://github.com/Kitware/CMake/releases/download/v4.3.1/cmake-4.3.1.tar.gz"
+  mirror "http://fresh-center.net/linux/misc/cmake-4.3.1.tar.gz"
+  mirror "http://fresh-center.net/linux/misc/legacy/cmake-4.3.1.tar.gz"
+  sha256 "0798f4be7a1a406a419ac32db90c2956936fecbf50db3057d7af47d69a2d7edb"
   license "BSD-3-Clause"
+  compatibility_version 1
   head "https://gitlab.kitware.com/cmake/cmake.git", branch: "master"
-
-  stable do
-    url "https://github.com/Kitware/CMake/releases/download/v4.2.3/cmake-4.2.3.tar.gz"
-    mirror "http://fresh-center.net/linux/misc/cmake-4.2.3.tar.gz"
-    mirror "http://fresh-center.net/linux/misc/legacy/cmake-4.2.3.tar.gz"
-    sha256 "7efaccde8c5a6b2968bad6ce0fe60e19b6e10701a12fce948c2bf79bac8a11e9"
-
-    # Backport support for Lua 5.5
-    patch do
-      url "https://github.com/Kitware/CMake/commit/6347854fa279cda0682c72dffbb402a0ce29ba51.patch?full_index=1"
-      sha256 "d0c0b08826fc16468dba8672f8a6b77c56062bead4c5c501360e868e511ee91e"
-    end
-  end
 
   # The "latest" release on GitHub has been an unstable version before, and
   # there have been delays between the creation of a tag and the corresponding

@@ -15,12 +15,6 @@ class Ghc < Formula
   end
 
   bottle do
-    sha256 cellar: :any, arm64_tahoe:   "3aa7ca72a5dba98f0f1f0ed5273f7465dfb14d5a54d8d08ec33bbe2a388fe3bf"
-    sha256 cellar: :any, arm64_sequoia: "d3afc8f7d175aae4d4087eb760b981ffed1a47bcc7fed0d094d25d9926d251fc"
-    sha256 cellar: :any, arm64_sonoma:  "74f1eda05d5796e81eba49f0598e9dbed4d7757362bdd380dc3e690245353394"
-    sha256 cellar: :any, sonoma:        "ed24dd4a13fe0bf6eb58d72d2c0ea32644989cbaa47cc3e674345e06d2d012ce"
-    sha256               arm64_linux:   "f4d2e86164d8462309958ceaf78f10c0707ee9899653c7cf315af9ccdf8588a3"
-    sha256               x86_64_linux:  "ab8e3190b14771a1ab62d0fd003965a31efd6ae5ca42e3a02ebceb63e302c4fb"
   end
 
   depends_on "autoconf" => :build
@@ -60,6 +54,7 @@ class Ghc < Formula
         sha256 "4b61b933028c63ace950236ea3382d02e51a3d9cbd1ca3f6cf4fe14c71ff436c"
       end
       on_intel do
+        # Do NOT upgrade due to upstream support is break.
         url "https://downloads.haskell.org/~ghc/9.10.1/ghc-9.10.1-x86_64-apple-darwin.tar.xz"
         sha256 "8cf22188930e10d7ac5270d425e21a3dab606af73a655493639345200c650be9"
       end
@@ -83,6 +78,7 @@ class Ghc < Formula
         sha256 "e02f4561fbce72b198a3c6c81b9f211f9c7cbf40c073f8f2ee59f835dd1dd502"
       end
       on_intel do
+        # Do NOT upgrade due to upstream support is break.
         url "https://downloads.haskell.org/~cabal/cabal-install-3.14.1.1/cabal-install-3.14.1.1-x86_64-darwin.tar.xz"
         sha256 "3690d8f7aa368141574f9eaf8e75bc26932ed7b422f5ade107d6972b3b72532f"
       end

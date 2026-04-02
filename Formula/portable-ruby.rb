@@ -1,11 +1,13 @@
-require File.expand_path("../../Abstract/portable-formula", __dir__)
+#require File.expand_path("../../Abstract/portable-formula", __dir__)
+require File.expand_path("#{HOMEBREW_PREFIX}/Homebrew/Library/Taps/homebrew/homebrew-core/Abstract/portable-formula", __dir__)
 
 class PortableRuby < PortableFormula
   desc "Powerful, clean, object-oriented scripting language"
   homepage "https://www.ruby-lang.org/"
-  url "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.1.tar.gz"
-  sha256 "3924be2d05db30f4e35f859bf028be85f4b7dd01714142fd823e4af5de2faf9d"
+  url "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.2.tar.gz"
+  sha256 "51502b26b50b68df4963336ca41e368cde92c928faf91654de4c4c1791f82aac"
   license "Ruby"
+  revision 1
 
   # This regex restricts matching to versions other than X.Y.0.
   livecheck do
@@ -39,8 +41,8 @@ class PortableRuby < PortableFormula
   end
 
   resource "bootsnap" do
-    url "https://rubygems.org/downloads/bootsnap-1.21.1.gem"
-    sha256 "9373acfe732da35846623c337d3481af8ce77c7b3a927fb50e9aa92b46dbc4c4"
+    url "https://rubygems.org/downloads/bootsnap-1.23.0.gem"
+    sha256 "c1254f458d58558b58be0f8eb8f6eec2821456785b7cdd1e16248e2020d3f214"
 
     livecheck do
       url "https://rubygems.org/api/v1/versions/bootsnap.json"
@@ -50,10 +52,25 @@ class PortableRuby < PortableFormula
     end
   end
 
+  # Fix performance regression in GC sweeping of classes.
+  # https://github.com/Homebrew/brew/issues/21859
+  # Remove with Ruby 4.0.3.
+  patch do
+    url "https://github.com/ruby/ruby/commit/2b22593ac12d0e8cbcf8299f0fea14c6311715d8.patch?full_index=1"
+    sha256 "fb7efdd6ed383aacf4d2d2cc5aeb8bb180f47dc3930c4280c5e137963780411c"
+  end
+
   def install
     # Remove almost all bundled gems and replace with our own set.
     rm_r ".bundle"
-    allowed_gems = ["debug", "fiddle"]
+    # Allowed gem dependency tree:
+    # - debug
+    # - fiddle
+    # - irb
+    #   - reline
+    #   - rdoc
+    # - rake
+    allowed_gems = %w[debug fiddle irb rake reline rdoc]
     bundled_gems = File.foreach("gems/bundled_gems").select do |line|
       line.blank? || line.start_with?("#") || allowed_gems.any? { |gem| line.match?(/\A#{Regexp.escape(gem)}\s/) }
     end
@@ -127,13 +144,6 @@ class PortableRuby < PortableFormula
 
     system "./configure", *args
     system "make", "extract-gems"
-    # 批量修复所有可能受影响的 Gem
-    Dir.glob(".bundle/gems/**/ext/**/Makefile").each do |makefile|
-      if File.read(makefile).include?("-fvisibility=hidden")
-        inreplace makefile, "-fvisibility=hidden", "-fvisibility=default"
-        ohai "已修复可见性: #{File.dirname(makefile).sub("#{buildpath}/", "")}"
-      end
-    end
     system "make", *make_args
 
     # Add a helper load path file so bundled gems can be easily used (used by brew's standalone/init.rb)
@@ -168,10 +178,6 @@ class PortableRuby < PortableFormula
       cp libxcrypt.lib/"libcrypt.a", lib/"libcrypt.a"
     end
 
-    # Ship libyaml.a & yaml.h so that building native gems doesn't need system libyaml installed.
-    cp libyaml.lib/"libyaml.a", lib/"libyaml.a"
-    cp libyaml.include/"yaml.h", include/"yaml.h"
-
     libexec.mkpath
     cp openssl.libexec/"etc/openssl/cert.pem", libexec/"cert.pem"
     openssl_rb = lib/"ruby/#{abi_version}/openssl.rb"
@@ -202,6 +208,8 @@ class PortableRuby < PortableFormula
       require "fiddle"
       require "bootsnap"
     EOS
+    system testpath/"bin/rake", "--version"
+    system testpath/"bin/irb", "--version"
     system testpath/"bin/gem", "environment"
     system testpath/"bin/bundle", "init"
     # install gem with native components

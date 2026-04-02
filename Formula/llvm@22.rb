@@ -7,8 +7,8 @@ class Llvm < Formula
   head "https://github.com/llvm/llvm-project.git", branch: "main"
 
   stable do
-    url "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.0/llvm-project-22.1.0.src.tar.xz"
-    sha256 "25d2e2adc4356d758405dd885fcfd6447bce82a90eb78b6b87ce0934bd077173"
+    url "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.2/llvm-project-22.1.2.src.tar.xz"
+    sha256 "62f2f13ff25b1bb28ea507888e858212d19aafb65e8e72b4a65ee0629ec4ae0c"
 
     # Fix triple config loading for clang-cl
     # https://github.com/llvm/llvm-project/pull/111397
@@ -136,7 +136,8 @@ class Llvm < Formula
       -DCLANG_PYTHON_BINDINGS_VERSIONS=#{python_versions.join(";")}
       -DLLVM_CREATE_XCODE_TOOLCHAIN=OFF
       -DCLANG_FORCE_MATCHING_LIBCLANG_SOVERSION=OFF
-      -DCLANG_CONFIG_FILE_SYSTEM_DIR=#{clang_config_file_dir.relative_path_from(bin)}
+      #-DCLANG_CONFIG_FILE_SYSTEM_DIR=#{clang_config_file_dir.relative_path_from(bin)}
+      -DCLANG_CONFIG_FILE_SYSTEM_DIR=../etc/clang
       -DCLANG_CONFIG_FILE_USER_DIR=~/.config/clang
       -DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}
       -DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}
@@ -401,6 +402,10 @@ class Llvm < Formula
       system "cmake", "--build", "."
       system "cmake", "--build", ".", "--target", "install"
     end
+
+    clang_config_file_dir.mkpath
+    touch clang_config_file_dir/".keepme"
+    (prefix/"etc").install_symlink clang_config_file_dir
 
     if OS.mac?
       # Get the version from `llvm-config` to get the correct HEAD or RC version too.
@@ -839,6 +844,12 @@ class Llvm < Formula
         end
       end
     end
+
+    return if OS.linux?
+    return unless clang_config_file_dir.exist? # https://github.com/Homebrew/homebrew-test-bot/issues/805
+
+    assert_match("Configuration file: #{opt_prefix}/etc/clang/",
+                 shell_output("#{opt_bin}/clang --version -no-canonical-prefixes"))
   end
 end
 

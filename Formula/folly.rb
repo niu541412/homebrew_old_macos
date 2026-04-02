@@ -1,9 +1,10 @@
 class Folly < Formula
   desc "Collection of reusable C++ library artifacts developed at Facebook"
   homepage "https://github.com/facebook/folly"
-  url "https://github.com/facebook/folly/archive/refs/tags/v2026.03.02.00.tar.gz"
-  sha256 "f2a9bbd4bd36256d4554f9917fcefa9ec356cec637d2a743e01a6a1d569224dc"
+  url "https://github.com/facebook/folly/archive/refs/tags/v2026.03.30.00.tar.gz"
+  sha256 "8806a4574e5b26c12fcef4c938ecfbce5338907982200a2e85b5871ed7f43723"
   license "Apache-2.0"
+  compatibility_version 1
   head "https://github.com/facebook/folly.git", branch: "main"
 
   bottle do
@@ -26,7 +27,7 @@ class Folly < Formula
   depends_on "zstd"
 
   uses_from_macos "bzip2"
-  uses_from_macos "zlib"
+  uses_from_macos "zlib", since: :catalina
 
   on_macos do
     if Formula["blake3"].linked_keg.exist?
@@ -48,8 +49,8 @@ class Folly < Formula
     EOS
   end
 
-  # Workaround for arm64 Linux error on duplicate symbols
-  # Based on https://github.com/facebook/folly/pull/2562
+  # Workaround for arm64 Linux error "Missing variable is: CMAKE_ASM_CREATE_SHARED_LIBRARY"
+  # Ref: https://github.com/facebook/folly/pull/2562#issuecomment-3988207056
   patch :DATA
 
   def install
@@ -89,7 +90,7 @@ class Folly < Formula
         return 0;
       }
     CPP
-    system ENV.cxx, "-std=c++17", "test.cc", "-I#{include}", "-L#{lib}", "-lfolly", "-o", "test"
+    system ENV.cxx, "-std=c++20", "test.cc", "-I#{include}", "-L#{lib}", "-lfolly", "-o", "test"
     system "./test"
   end
 end
@@ -110,22 +111,6 @@ index e07e58745..1429f54e9 100644
  folly_add_library(
    NAME memcpy_aarch64
    SRCS
-@@ -34,6 +38,7 @@ folly_add_library(
- 
- folly_add_library(
-   NAME memcpy_aarch64-use
-+  EXCLUDE_FROM_MONOLITH
-   SRCS
-     memcpy-advsimd.S
-     memcpy-armv8.S
-@@ -58,6 +63,7 @@ folly_add_library(
- 
- folly_add_library(
-   NAME memset_aarch64-use
-+  EXCLUDE_FROM_MONOLITH
-   SRCS
-     memset-advsimd.S
-     memset-mops.S
 
 --- a/folly/io/async/fdsock/AsyncFdSocket.h
 +++ b/folly/io/async/fdsock/AsyncFdSocket.h

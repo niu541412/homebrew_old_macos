@@ -1,25 +1,34 @@
 class Frpc < Formula
   desc "Client app of fast reverse proxy to expose a local server to the internet"
   homepage "https://github.com/fatedier/frp"
-  url "https://github.com/fatedier/frp/archive/refs/tags/v0.67.0.tar.gz"
-  sha256 "18d0a35b965fab7e348aafc7b587847dd04ef2ef84822ed8fd5b9fe46b7ff6d7"
+  url "https://github.com/fatedier/frp/archive/refs/tags/v0.68.0.tar.gz"
+  sha256 "f7678f5c9d3934687976e493a8c5ce9e0d6da39fdea4c7a2fa03a2c289866ac3"
   license "Apache-2.0"
   head "https://github.com/fatedier/frp.git", branch: "dev"
 
   bottle do
-    sha256 cellar: :any_skip_relocation, arm64_tahoe:   "7c72c0a6ccadeeefdd80d8af3b66d59bd7d3dfaeb59be326c388cac52991030f"
-    sha256 cellar: :any_skip_relocation, arm64_sequoia: "7c72c0a6ccadeeefdd80d8af3b66d59bd7d3dfaeb59be326c388cac52991030f"
-    sha256 cellar: :any_skip_relocation, arm64_sonoma:  "7c72c0a6ccadeeefdd80d8af3b66d59bd7d3dfaeb59be326c388cac52991030f"
-    sha256 cellar: :any_skip_relocation, sonoma:        "0fdc17eb89afa9728aee5943088f3201af2914c95e1c552c96c13b3a66181f66"
-    sha256 cellar: :any_skip_relocation, arm64_linux:   "4f0857fc63eef4ecaaaa9614c3819e526d79ab27652d932ddcf97be375b7f87a"
-    sha256 cellar: :any_skip_relocation, x86_64_linux:  "b5b2e8d766c7a6bd39067c345a462dc75339e7f3fb020e90d709637936e780f4"
   end
 
   depends_on "go" => :build
   depends_on "node" => :build
 
   def install
-    inreplace "web/frpc/package.json", /"vite":\s*"[^"]+"/, '"vite": "^6.4.1"'
+    package_json = JSON.parse(File.read("web/package-lock.json"))
+    target = package_json["packages"]["node_modules/esbuild"]
+    if target
+        target["version"] = "0.26.0"
+        target.delete("resolved")
+        target.delete("integrity")
+    end
+    
+    target = package_json["packages"]["node_modules/@esbuild/darwin-x64"]
+    if target
+        target["version"] = "0.26.0"
+        target.delete("resolved")
+        target.delete("integrity")
+    end
+
+    File.write("web/package-lock.json", JSON.pretty_generate(package_json))
 
     cd "web/frpc" do
       system "npm", "install", *std_npm_args(prefix: false)
