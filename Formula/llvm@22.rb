@@ -7,8 +7,8 @@ class Llvm < Formula
   head "https://github.com/llvm/llvm-project.git", branch: "main"
 
   stable do
-    url "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.2/llvm-project-22.1.2.src.tar.xz"
-    sha256 "62f2f13ff25b1bb28ea507888e858212d19aafb65e8e72b4a65ee0629ec4ae0c"
+    url "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.4/llvm-project-22.1.4.src.tar.xz"
+    sha256 "3e68c90dda630c27d41d201e37b8bbf5222e39b273dec5ca880709c69e0a07d4"
 
     # Fix triple config loading for clang-cl
     # https://github.com/llvm/llvm-project/pull/111397
@@ -136,7 +136,6 @@ class Llvm < Formula
       -DCLANG_PYTHON_BINDINGS_VERSIONS=#{python_versions.join(";")}
       -DLLVM_CREATE_XCODE_TOOLCHAIN=OFF
       -DCLANG_FORCE_MATCHING_LIBCLANG_SOVERSION=OFF
-      #-DCLANG_CONFIG_FILE_SYSTEM_DIR=#{clang_config_file_dir.relative_path_from(bin)}
       -DCLANG_CONFIG_FILE_SYSTEM_DIR=../etc/clang
       -DCLANG_CONFIG_FILE_USER_DIR=~/.config/clang
       -DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}

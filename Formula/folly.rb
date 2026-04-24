@@ -1,8 +1,8 @@
 class Folly < Formula
   desc "Collection of reusable C++ library artifacts developed at Facebook"
   homepage "https://github.com/facebook/folly"
-  url "https://github.com/facebook/folly/archive/refs/tags/v2026.03.30.00.tar.gz"
-  sha256 "8806a4574e5b26c12fcef4c938ecfbce5338907982200a2e85b5871ed7f43723"
+  url "https://github.com/facebook/folly/archive/refs/tags/v2026.04.20.00.tar.gz"
+  sha256 "a38658fe42cef33c43520d6550689d08006668a6c8ebaa6b023c9e8c290878c5"
   license "Apache-2.0"
   compatibility_version 1
   head "https://github.com/facebook/folly.git", branch: "main"
@@ -55,7 +55,6 @@ class Folly < Formula
 
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
-
     args = %W[
       -DFOLLY_USE_JEMALLOC=OFF
     ]

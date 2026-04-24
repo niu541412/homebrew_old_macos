@@ -1,9 +1,10 @@
 class OpenjdkAT21 < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  url "https://github.com/openjdk/jdk21u/archive/refs/tags/jdk-21.0.10-ga.tar.gz"
-  sha256 "133a864987b4732d46cca5084b7cde8ffef168bde4e4b0118ebd2b38c1fda2f1"
+  url "https://github.com/openjdk/jdk21u/archive/refs/tags/jdk-21.0.11-ga.tar.gz"
+  sha256 "76b8310966649ea8a6340f92d4f19f6f84e3083b682a514c8f1999c93373385f"
   license "GPL-2.0-only" => { with: "Classpath-exception-2.0" }
+  compatibility_version 1
 
   livecheck do
     url :stable
@@ -28,7 +29,7 @@ class OpenjdkAT21 < Formula
   uses_from_macos "cups"
   uses_from_macos "unzip"
   uses_from_macos "zip"
-  uses_from_macos "zlib"
+  uses_from_macos "zlib", since: :catalina
 
   on_linux do
     depends_on "alsa-lib"
@@ -40,6 +41,7 @@ class OpenjdkAT21 < Formula
     depends_on "libxrender"
     depends_on "libxt"
     depends_on "libxtst"
+    depends_on "zlib-ng-compat"
   end
 
   # From https://jdk.java.net/archive/
@@ -128,9 +130,9 @@ class OpenjdkAT21 < Formula
 
     system "bash", "configure", *args
 
-    inreplace "build/macosx-x86_64-server-release/spec.gmk" do |s|
-       s.gsub! /^(PNG_CFLAGS:=.*) -I\/usr\/include/, "\\1"
-    end
+    #inreplace "build/macosx-x86_64-server-release/spec.gmk" do |s|
+    #   s.gsub! /^(PNG_CFLAGS:=.*) -I\/usr\/include/, "\\1"
+    #end
 
     ENV["MAKEFLAGS"] = "JOBS=#{ENV.make_jobs}"
     system "make", "images"

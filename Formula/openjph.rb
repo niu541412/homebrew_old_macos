@@ -1,9 +1,10 @@
 class Openjph < Formula
   desc "Open-source implementation of JPEG2000 Part-15 (or JPH or HTJ2K)"
   homepage "https://github.com/aous72/OpenJPH"
-  url "https://github.com/aous72/OpenJPH/archive/refs/tags/0.26.3.tar.gz"
-  sha256 "29de006da7f1e8cf0cd7c3ec424cf29103e465052c00b5a5f0ccb7e1f917bb3f"
+  url "https://github.com/aous72/OpenJPH/archive/refs/tags/0.27.0.tar.gz"
+  sha256 "f6768e927d8e4e4884a2efcf500a88d1b6714a48d69516332a9256803a3c8343"
   license "BSD-2-Clause"
+  compatibility_version 2
   head "https://github.com/aous72/OpenJPH.git", branch: "master"
 
   bottle do
@@ -39,8 +40,8 @@ class Openjph < Formula
 end
 
 __END__
---- a/src/core/others/ojph_mem.c
-+++ b/src/core/others/ojph_mem.c
+--- a/src/core/others/ojph_mem_c.c
++++ b/src/core/others/ojph_mem_c.c
 @@ -77,7 +77,14 @@
    void* ojph_aligned_malloc(size_t alignment, size_t size)
    {

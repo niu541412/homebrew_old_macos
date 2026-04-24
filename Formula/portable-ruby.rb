@@ -4,10 +4,9 @@ require File.expand_path("#{HOMEBREW_PREFIX}/Homebrew/Library/Taps/homebrew/home
 class PortableRuby < PortableFormula
   desc "Powerful, clean, object-oriented scripting language"
   homepage "https://www.ruby-lang.org/"
-  url "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.2.tar.gz"
-  sha256 "51502b26b50b68df4963336ca41e368cde92c928faf91654de4c4c1791f82aac"
+  url "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.3.tar.gz"
+  sha256 "77964acc370d5c8375b9502e5ba6c13c03ef91ab9eb9f521c84fb42b9c9a6b0f"
   license "Ruby"
-  revision 1
 
   # This regex restricts matching to versions other than X.Y.0.
   livecheck do
@@ -54,7 +53,7 @@ class PortableRuby < PortableFormula
 
   # Fix performance regression in GC sweeping of classes.
   # https://github.com/Homebrew/brew/issues/21859
-  # Remove with Ruby 4.0.3.
+  # Remove with Ruby 4.0.4.
   patch do
     url "https://github.com/ruby/ruby/commit/2b22593ac12d0e8cbcf8299f0fea14c6311715d8.patch?full_index=1"
     sha256 "fb7efdd6ed383aacf4d2d2cc5aeb8bb180f47dc3930c4280c5e137963780411c"

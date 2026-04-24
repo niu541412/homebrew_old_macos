@@ -1,11 +1,11 @@
 class Go < Formula
   desc "Open source programming language to build simple/reliable/efficient software"
   homepage "https://go.dev/"
-  url "https://go.dev/dl/go1.26.1.src.tar.gz"
-  mirror "https://fossies.org/linux/misc/go1.26.1.src.tar.gz"
-  sha256 "3172293d04b209dc1144698e7ba13f0477f6ba8c5ffd0be66c20fdbc9785dfbb"
+  url "https://go.dev/dl/go1.26.2.src.tar.gz"
+  mirror "https://fossies.org/linux/misc/go1.26.2.src.tar.gz"
+  sha256 "2e91ebb6947a96e9436fb2b3926a8802efe63a6d375dffec4f82aa9dbd6fd43b"
   license "BSD-3-Clause"
-  compatibility_version 3
+  compatibility_version 4
   head "https://go.googlesource.com/go.git", branch: "master"
 
   livecheck do

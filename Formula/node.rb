@@ -1,9 +1,10 @@
 class Node < Formula
   desc "Open-source, cross-platform JavaScript runtime environment"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v25.8.2/node-v25.8.2.tar.xz"
-  sha256 "3efb19e757dc59bb21632507200d2de782369d5226a68955e9372c925fdf2471"
+  url "https://nodejs.org/dist/v25.9.0/node-v25.9.0.tar.xz"
+  sha256 "8f78af3ee55fb278668b5f801db58bd1a38ea161318eb5ce2128ddbc9cd813aa"
   license "MIT"
+  revision 2
   compatibility_version 1
   head "https://github.com/nodejs/node.git", branch: "main"
 
@@ -27,6 +28,8 @@ class Node < Formula
   depends_on "libngtcp2"
   depends_on "libuv"
   depends_on "llhttp"
+  depends_on "merve"
+  depends_on "nbytes"
   depends_on "openssl@3"
   depends_on "simdjson"
   depends_on "sqlite" # Fails with macOS sqlite.
@@ -62,8 +65,8 @@ class Node < Formula
   # We track major/minor from upstream Node releases.
   # We will accept *important* npm patch releases when necessary.
   resource "npm" do
-    url "https://registry.npmjs.org/npm/-/npm-11.11.1.tgz"
-    sha256 "a3b2dbeb2544809a75f186cbae27adc5ceb5adc1ee696e17dfed689d7f46fcf2"
+    url "https://registry.npmjs.org/npm/-/npm-11.12.1.tgz"
+    sha256 "e679850e663b16f5f146ee425d0eb0e3442c1d2bda3d513bbfd7c81f5ee5db38"
 
     livecheck do
       url "https://raw.githubusercontent.com/nodejs/node/refs/tags/v#{LATEST_VERSION}/deps/npm/package.json"
@@ -120,6 +123,8 @@ class Node < Formula
       "hdr-histogram" => ["histogram",       "hdrhistogram_c"],
       "http-parser"   => ["llhttp",          "llhttp"],
       "libuv"         => ["uv",              "libuv"],
+      "merve"         => ["merve",           "merve"],
+      "nbytes"        => ["nbytes",          "nbytes"],
       "nghttp2"       => ["nghttp2",         "libnghttp2"],
       "nghttp3"       => ["ngtcp2/nghttp3",  "libnghttp3"],
       "ngtcp2"        => ["ngtcp2",          "libngtcp2"],
@@ -140,15 +145,11 @@ class Node < Formula
 
     # TODO: Try to devendor these libraries.
     # - `--shared-gtest` is only used for building the test suite, which we don't run here.
-    # - `--shared-merve` is not available as dependency in Homebrew.
-    # - `--shared-nbytes` is not available as dependency in Homebrew.
     # - `--shared-simdutf` seems to result in build failures.
     # - `--shared-temporal_capi` is only used when building with `--v8-enable-temporal-support`
     # - `--shared-lief` is not available as dependency in Homebrew.
     ignored_shared_flags = %w[
       gtest
-      merve
-      nbytes
       simdutf
       temporal_capi
       lief

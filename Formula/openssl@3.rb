@@ -1,10 +1,11 @@
 class OpensslAT3 < Formula
   desc "Cryptography and SSL/TLS Toolkit"
   homepage "https://openssl-library.org"
-  url "https://github.com/openssl/openssl/releases/download/openssl-3.6.1/openssl-3.6.1.tar.gz"
-  mirror "http://fresh-center.net/linux/misc/openssl-3.6.1.tar.gz"
-  sha256 "b1bfedcd5b289ff22aee87c9d600f515767ebf45f77168cb6d64f231f518a82e"
+  url "https://github.com/openssl/openssl/releases/download/openssl-3.6.2/openssl-3.6.2.tar.gz"
+  mirror "http://fresh-center.net/linux/misc/openssl-3.6.2.tar.gz"
+  sha256 "aaf51a1fe064384f811daeaeb4ec4dce7340ec8bd893027eee676af31e83a04f"
   license "Apache-2.0"
+  compatibility_version 1
 
   livecheck do
     url "https://openssl-library.org/source/"
@@ -31,9 +32,9 @@ class OpensslAT3 < Formula
     end
 
     resource "ExtUtils::MakeMaker" do
-      url "https://cpan.metacpan.org/authors/id/B/BI/BINGOS/ExtUtils-MakeMaker-7.76.tar.gz"
-      mirror "http://cpan.metacpan.org/authors/id/B/BI/BINGOS/ExtUtils-MakeMaker-7.76.tar.gz"
-      sha256 "30bcfd75fec4d512e9081c792f7cb590009d9de2fe285ffa8eec1be35a5ae7ca"
+      url "https://cpan.metacpan.org/authors/id/B/BI/BINGOS/ExtUtils-MakeMaker-7.78.tar.gz"
+      mirror "http://cpan.metacpan.org/authors/id/B/BI/BINGOS/ExtUtils-MakeMaker-7.78.tar.gz"
+      sha256 "43b33c20f8d82dba7cc48f8cd702f8fc9811e9d07880886dfd31b7077bd4a3a6"
     end
   end
 
@@ -100,7 +101,6 @@ class OpensslAT3 < Formula
     system "make", "install", "MANDIR=#{man}", "MANSUFFIX=ssl"
     # AF_ALG support isn't always enabled (e.g. some containers), which breaks the tests.
     # AF_ALG is a kernel feature and failures are unlikely to be issues with the formula.
-    system "false"
     system "make", "HARNESS_JOBS=#{ENV.make_jobs}", "test", "TESTS=-test_afalg"
 
     # Prevent `brew` from pruning the `certs` and `private` directories.
