@@ -1,9 +1,10 @@
 class Tbb < Formula
   desc "Rich and complete approach to parallelism in C++"
   homepage "https://uxlfoundation.github.io/oneTBB/"
-  url "https://github.com/uxlfoundation/oneTBB/archive/refs/tags/v2022.3.0.tar.gz"
-  sha256 "01598a46c1162c27253a0de0236f520fd8ee8166e9ebb84a4243574f88e6e50a"
+  url "https://github.com/uxlfoundation/oneTBB/archive/refs/tags/v2023.0.0.tar.gz"
+  sha256 "f8767b971ec6aea25dde58ae0f593e94e7aa75a739a86f67967012f69e2199b1"
   license "Apache-2.0"
+  compatibility_version 1
 
   bottle do
   end
@@ -20,13 +21,7 @@ class Tbb < Formula
   end
 
   def install
-    # Prevent `setup.py` from installing tbb4py as a deprecated egg directly into HOMEBREW_PREFIX.
-    # We need this due to our Python patch.
     site_packages = Language::Python.site_packages(python3)
-    inreplace "python/CMakeLists.txt",
-              "install --prefix build -f",
-              "\\0 --install-lib build/#{site_packages} --single-version-externally-managed --record=RECORD"
-
     tbb_site_packages = prefix/site_packages/"tbb"
     ENV.append "LDFLAGS", "-Wl,-rpath,#{rpath},-rpath,#{rpath(source: tbb_site_packages)}"
 

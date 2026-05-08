@@ -17,7 +17,7 @@ class AdaUrl < Formula
   uses_from_macos "python" => :build
 
   on_macos do
-    depends_on "llvm" if DevelopmentTools.clang_build_version <= 1500
+    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1500
   end
 
   fails_with :clang do
@@ -31,6 +31,7 @@ class AdaUrl < Formula
   end
 
   def install
+    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     # ld: unknown options: --gc-sections
     if OS.mac? && DevelopmentTools.clang_build_version <= 1500
       inreplace "tools/cli/CMakeLists.txt", 'target_link_options(adaparse PRIVATE "-Wl,--gc-sections")', ""

@@ -1,10 +1,9 @@
 class Node < Formula
   desc "Open-source, cross-platform JavaScript runtime environment"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v25.9.0/node-v25.9.0.tar.xz"
-  sha256 "8f78af3ee55fb278668b5f801db58bd1a38ea161318eb5ce2128ddbc9cd813aa"
+  url "https://nodejs.org/dist/v26.0.0/node-v26.0.0.tar.xz"
+  sha256 "fcb5e5c06a5c2ec9e669801248657aafaa2291f8760dac7bfb639f878318c592"
   license "MIT"
-  revision 2
   compatibility_version 1
   head "https://github.com/nodejs/node.git", branch: "main"
 
@@ -44,6 +43,7 @@ class Node < Formula
   end
 
   on_linux do
+    depends_on "llvm" => :build if DevelopmentTools.gcc_version < 13
     depends_on "zlib-ng-compat"
   end
 
@@ -58,8 +58,8 @@ class Node < Formula
   # https://github.com/nodejs/node/blob/main/BUILDING.md#supported-toolchains
   # https://github.com/ada-url/ada?tab=readme-ov-file#requirements
   fails_with :gcc do
-    version "11"
-    cause "needs GCC 12 or newer"
+    version "12"
+    cause "needs GCC 13 or newer"
   end
 
   # We track major/minor from upstream Node releases.
@@ -87,6 +87,8 @@ class Node < Formula
       ENV.append_to_cflags "-isysroot #{MacOS.sdk_path}" if OS.mac?
       ENV.append "LDFLAGS", "#{llvm.opt_lib}/c++/#{shared_library("libc++")}"
     end
+    
+    ENV.llvm_clang if OS.linux? && deps.map(&:name).any?("llvm")
 
     # Backport fix for bundled LIEF's bundled spdlog's bundled fmt.
     # Should be fixed when new LIEF version with following commit is released and used by node:

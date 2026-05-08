@@ -11,13 +11,6 @@ class Jq < Formula
   end
 
   bottle do
-    sha256 cellar: :any,                 arm64_sequoia: "5911dafda561f792305dbc34b1f2ca5265bede9d7e60c655d9390511b560df4e"
-    sha256 cellar: :any,                 arm64_sonoma:  "de8dbc03158683f974e8ef52f886abe1d6d6250dba92e2b0e5c7758eb1a5168c"
-    sha256 cellar: :any,                 arm64_ventura: "4a5c7fa291902388f6e869f6d656619be87a1af597b448e7280813075ed16c2e"
-    sha256 cellar: :any,                 sonoma:        "856817ef0376db702b90fb543180abbf519914f83b0c968f5e668b902cca3e28"
-    sha256 cellar: :any,                 ventura:       "b25424ffc93b27bce860c31eea8ab6174e6e68efa9ae12a1eb985eefdb08e46d"
-    sha256 cellar: :any_skip_relocation, arm64_linux:   "1762be8892ea341cf8062fcdb7587ca9366bfb16e645a5d076d6149ba95dfe4e"
-    sha256 cellar: :any_skip_relocation, x86_64_linux:  "589b86f4e458ce4c6236e18e0a938474f61480cf7034418313c476410a2cc942"
   end
 
   head do

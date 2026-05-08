@@ -18,10 +18,12 @@ class Simdutf < Formula
   depends_on "aklomp-base64" => :build
   depends_on "cmake" => :build
   depends_on "icu4c@78"
+  depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
 
   uses_from_macos "python" => :build
 
   def install
+    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     args = %W[
       -DBUILD_SHARED_LIBS=ON
       -DCMAKE_INSTALL_RPATH=#{rpath}

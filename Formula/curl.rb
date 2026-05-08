@@ -16,12 +16,6 @@ class Curl < Formula
   end
 
   bottle do
-    sha256 cellar: :any,                 arm64_tahoe:   "48707c8f48875dba2094a3d8ebec5b0440382a0fec2c032ce8f5f7e3090c2963"
-    sha256 cellar: :any,                 arm64_sequoia: "f4abfd17ff0f3a507ab2436e1d9415f2f0ed49db2b764a7428b505ff81973cdf"
-    sha256 cellar: :any,                 arm64_sonoma:  "56dc2fef6a1290fddf0d2613979d23ffc24e4d39d71d6193874eecc1ffe946fe"
-    sha256 cellar: :any,                 sonoma:        "a0027833d5cc65535ad7441b716ef0a84373fd4a6e0d2cb7276b610a1a884b8a"
-    sha256 cellar: :any_skip_relocation, arm64_linux:   "605e87afaf7f589f227c9eab7574c3e7913d5a6eb8dea954230023fb1baceb5b"
-    sha256 cellar: :any_skip_relocation, x86_64_linux:  "2fda5084a92a23173877cb7c4bbae01bcf9e8e9eb951b1612b8d2a0798f9c591"
   end
 
   head do

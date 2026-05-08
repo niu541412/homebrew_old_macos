@@ -42,6 +42,7 @@ class Poppler < Formula
     depends_on "gettext"
     depends_on "gpgme"
     depends_on "libassuan"
+    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
   end
 
   on_linux do
@@ -62,6 +63,7 @@ class Poppler < Formula
   end
 
   def install
+    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     args = std_cmake_args + %W[
       -DBUILD_GTK_TESTS=OFF
       -DENABLE_BOOST=OFF

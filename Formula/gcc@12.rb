@@ -12,13 +12,6 @@ class GccAT12 < Formula
   end
 
   bottle do
-    sha256                               arm64_tahoe:  "d8adb7354a111d55e61c661379749d99cb6d0cbaac40b2552e471071cb38c1a6"
-    sha256                               arm64_sonoma: "ca7a9e949ae62998f413a0068cd3eba834297669f92043da35548766246ef6cf"
-    sha256                               tahoe:        "45b46f68b0f409889443043fdb529e484c858c2a9abfa165d97c6ec118089bfc"
-    sha256                               sequoia:      "93386ba3329d06cb4288e10f7fef54e606103bf940bf5be87dc099119364f22c"
-    sha256                               sonoma:       "60e80d01ab1801326bf3e3919f7c883109daa056a5d52d496707d2ce75280ab7"
-    sha256 cellar: :any_skip_relocation, arm64_linux:  "2b65fe2eb9ddd411fbaa0eae6d8470aca65d60d956843df26921b3e3619f6c89"
-    sha256 cellar: :any_skip_relocation, x86_64_linux: "9c1bcaa7819147a8539e81064d9f34d4cc9746d70e14b0ece9a80d81818ebec8"
   end
 
   # The bottles are built on systems with the CLT installed, and do not work

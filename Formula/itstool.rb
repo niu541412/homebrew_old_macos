@@ -14,12 +14,6 @@ class Itstool < Formula
   no_autobump! because: :requires_manual_review
 
   bottle do
-    sha256 cellar: :any,                 arm64_tahoe:   "716cb0efd44428ef62000438ff166627c117befbdd87b6d9c5580afac54c9dc2"
-    sha256 cellar: :any,                 arm64_sequoia: "8659b398ae66d88d974879a6a4e4372f21b81f7d018b13d9dd10b459e84ddd95"
-    sha256 cellar: :any,                 arm64_sonoma:  "d632addd4bb1f3f422347e9f78d49d5e50d15b7a2479ff197b228082b08c32f2"
-    sha256 cellar: :any,                 sonoma:        "9304cac2b3d4b0ce0cc09134157dcd281536f5ece469dda5f2bff14fbb16c126"
-    sha256 cellar: :any_skip_relocation, arm64_linux:   "d6482a8c862c867c1c53bd78c2128c9997d67a0905c700ba05eebbc0417742d6"
-    sha256 cellar: :any_skip_relocation, x86_64_linux:  "8847008ec88f06667281b8517d4a934cf68757cb3b835d2c00a0fe356190f02a"
   end
 
   head do

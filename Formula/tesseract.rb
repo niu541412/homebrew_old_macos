@@ -31,6 +31,7 @@ class Tesseract < Formula
   on_macos do
     depends_on "freetype"
     depends_on "gettext"
+    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
   end
 
   resource "eng" do
@@ -50,6 +51,7 @@ class Tesseract < Formula
 
   patch :DATA
   def install
+    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     # explicitly state leptonica header location, as the makefile defaults to /usr/local/include,
     # which doesn't work for non-default homebrew location
     ENV["LIBLEPT_HEADERSDIR"] = HOMEBREW_PREFIX/"include"

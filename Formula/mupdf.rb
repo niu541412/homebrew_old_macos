@@ -13,12 +13,6 @@ class Mupdf < Formula
   end
 
   bottle do
-    sha256 cellar: :any,                 arm64_tahoe:   "adfc5220c9f64113fc61920f81073107d3baf4c1139c884f6f7d78f0de3a437b"
-    sha256 cellar: :any,                 arm64_sequoia: "c8e638337695132e732310023481986c1ec2d3d72d3d5640751e31f780306c36"
-    sha256 cellar: :any,                 arm64_sonoma:  "69f930f318dd7ad6c5b12d419ed65e90ed26c6a33ca47ef7e2cc040d0f6c045c"
-    sha256 cellar: :any,                 sonoma:        "0120967cfd6b2f95be99963d5453aac7fc3f6942c48633189369fb816b0e344f"
-    sha256 cellar: :any_skip_relocation, arm64_linux:   "d9c407b06730358c2ad4a6c3ead32af302b649ac6858fc73c013353b669672b7"
-    sha256 cellar: :any_skip_relocation, x86_64_linux:  "22d86c746fddcc6e410442ce198defcd205663c6a1b660c5308dda0ee2124cb3"
   end
 
   depends_on "llvm" => :build

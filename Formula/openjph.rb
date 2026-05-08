@@ -1,8 +1,8 @@
 class Openjph < Formula
   desc "Open-source implementation of JPEG2000 Part-15 (or JPH or HTJ2K)"
   homepage "https://github.com/aous72/OpenJPH"
-  url "https://github.com/aous72/OpenJPH/archive/refs/tags/0.27.0.tar.gz"
-  sha256 "f6768e927d8e4e4884a2efcf500a88d1b6714a48d69516332a9256803a3c8343"
+  url "https://github.com/aous72/OpenJPH/archive/refs/tags/0.27.1.tar.gz"
+  sha256 "450c7af7819f86e28f810f8efb8bbe352db295b7112565ec3239f0a042bb30b6"
   license "BSD-2-Clause"
   compatibility_version 2
   head "https://github.com/aous72/OpenJPH.git", branch: "master"
@@ -13,8 +13,13 @@ class Openjph < Formula
   depends_on "cmake" => :build
   depends_on "libtiff"
 
+  on_macos do
+    depends_on "llvm" if DevelopmentTools.clang_build_version <= 1100
+  end
+  
   patch :DATA
   def install
+    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     ENV["DYLD_LIBRARY_PATH"] = lib.to_s
 
     args = %W[

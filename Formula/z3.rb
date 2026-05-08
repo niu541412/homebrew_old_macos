@@ -4,6 +4,7 @@ class Z3 < Formula
   url "https://github.com/Z3Prover/z3/archive/refs/tags/z3-4.15.4.tar.gz"
   sha256 "dae526252cb0585c8c863292ebec84cace4901a014b190a73f14087dd08d252b"
   license "MIT"
+  compatibility_version 1
   head "https://github.com/Z3Prover/z3.git", branch: "master"
 
   livecheck do
@@ -13,12 +14,6 @@ class Z3 < Formula
   end
 
   bottle do
-    sha256 cellar: :any,                 arm64_tahoe:   "9f57f90f63a0995a9b56b6f4c94a1c29bd8fd9a474e09f78cba7f64aaf25708c"
-    sha256 cellar: :any,                 arm64_sequoia: "df9a167ac9c51be88180cbe464e09c46315c6145e775ca8da76de4d4e261354c"
-    sha256 cellar: :any,                 arm64_sonoma:  "734ca95d3bcb87f5c62e27294ea3485698ac160a8bc0cb6eafa68ca73f792ce0"
-    sha256 cellar: :any,                 sonoma:        "daa3779a2ee08f218dd714c80ce78e9451b81340c65efee8a1f44f16dee8aa07"
-    sha256 cellar: :any_skip_relocation, arm64_linux:   "02148c88d3b6adc67f7cb43fc1eb3f8a1a7317838a567e7de95c60cffc4fd208"
-    sha256 cellar: :any_skip_relocation, x86_64_linux:  "aecd2a8e5cc6512f5ad5cc3ba78602236642ac02d4471fc9635383976012236d"
   end
 
   depends_on "cmake" => :build

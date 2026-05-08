@@ -1,8 +1,8 @@
 class Openexr < Formula
   desc "High dynamic-range image file format"
   homepage "https://www.openexr.com/"
-  url "https://github.com/AcademySoftwareFoundation/openexr/archive/refs/tags/v3.4.10.tar.gz"
-  sha256 "b61ae2d0fa4872c5f5fc45618f107945df37c0eba4853263091b949c513d3319"
+  url "https://github.com/AcademySoftwareFoundation/openexr/archive/refs/tags/v3.4.11.tar.gz"
+  sha256 "63730442f5fd6c5a79395bdd199040ab3821c229066049f52a57424a984b16ed"
   license "BSD-3-Clause"
   compatibility_version 1
 
@@ -15,6 +15,7 @@ class Openexr < Formula
   depends_on "imath"
   depends_on "libdeflate"
   depends_on "openjph"
+  depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
 
   on_linux do
     depends_on "zlib-ng-compat"
@@ -28,6 +29,7 @@ class Openexr < Formula
   link_overwrite "lib/libIlmThread.so"
 
   def install
+    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     system "cmake", "-S", ".", "-B", "build", *std_cmake_args, 
         "-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}",
         "-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}"

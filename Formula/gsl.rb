@@ -7,13 +7,6 @@ class Gsl < Formula
   license "GPL-3.0-or-later"
 
   bottle do
-    sha256 cellar: :any,                 arm64_sonoma:   "b5cd011cc1f8ac606487224628d21247cbe290b4a035f844ab016088c82bbdf7"
-    sha256 cellar: :any,                 arm64_ventura:  "5a197c4ee1e19b629de8203c0e365c7df8293c0d83cdadb38282baa2cceb926b"
-    sha256 cellar: :any,                 arm64_monterey: "3b13e8f79478d63845e9f2e0f4e6b09dee7b7c139f9a789a87a1250a6e989da0"
-    sha256 cellar: :any,                 sonoma:         "a955529c333b0d646bdc2ea92c821b5280d2451090e999e159e78e6d274a24a0"
-    sha256 cellar: :any,                 ventura:        "0b59031c0d9af903b2c1fc50e98022199a802ce5e44ad554a81bf763a2748806"
-    sha256 cellar: :any,                 monterey:       "0d90b773e23b6892e7c90a6a7a1cd9bc8b647f50abcf5e39adc520af9ee7d93b"
-    sha256 cellar: :any_skip_relocation, x86_64_linux:   "f7fb92934fa28882ef82232f29289132270d1de558d75452644668a8fdcd630a"
   end
 
   patch do

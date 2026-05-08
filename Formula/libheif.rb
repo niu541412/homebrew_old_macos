@@ -20,8 +20,10 @@ class Libheif < Formula
   depends_on "libtiff"
   depends_on "webp"
   depends_on "x265"
+  depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
 
   def install
+    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     args = %W[
       -DCMAKE_INSTALL_RPATH=#{rpath}
       -DPLUGIN_DIRECTORY=#{HOMEBREW_PREFIX}/lib/libheif

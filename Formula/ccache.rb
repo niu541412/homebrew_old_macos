@@ -1,10 +1,10 @@
 class Ccache < Formula
   desc "Object-file caching compiler wrapper"
   homepage "https://ccache.dev/"
-  url "https://github.com/ccache/ccache/releases/download/v4.11.3/ccache-4.11.3.tar.xz"
-  sha256 "d5a340e199977b7b1e89c0add794132c977fdc2ecc7ca5451e03d43627a1b1be"
+  url "https://github.com/ccache/ccache/releases/download/v4.13.6/ccache-4.13.6.tar.xz"
+  sha256 "a7de667ca08cf67c3c8af9f213f6aa701a1188a2b3163fb74483858ce5e79fbb"
   license "GPL-3.0-or-later"
-  revision 1
+  compatibility_version 1
   head "https://github.com/ccache/ccache.git", branch: "master"
 
   bottle do
@@ -17,22 +17,50 @@ class Ccache < Formula
   depends_on "pkgconf" => :build
   depends_on "span-lite" => :build
   depends_on "tl-expected" => :build
+
   depends_on "blake3"
   depends_on "fmt"
   depends_on "hiredis"
+  depends_on "openssl@3"
   depends_on "xxhash"
   depends_on "zstd"
-  depends_on "llvm" => :build
+  depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
 
+  on_linux do
+    depends_on "zlib-ng-compat"
+  end
+
+  # Expose base16 source digest in debug input text, upstream PR ref, https://github.com/ccache/ccache/pull/1735
+  patch do
+    url "https://github.com/ccache/ccache/commit/517329f27aeb90195bda57955435cafbe88f38c6.patch?full_index=1"
+    sha256 "4e14cfc43d5654f67f011393501ecba8402acbaf51fffd55cce94f668b3aa35c"
+  end
+
+  patch :DATA
   def install
+    args = []
+    if OS.mac? && MacOS.version < :catalina
+      ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
+      llvm = Formula["llvm"]
+
+      linker_flags = [
+        "#{llvm.opt_lib}/c++/#{shared_library("libc++")}",
+        "-L#{llvm.opt_lib}/unwind",
+        "-lunwind",
+      ].join(" ")
+
+      args += [
+        "-DCMAKE_CXX_COMPILER_AR=#{llvm.opt_bin}/llvm-ar",
+        "-DCMAKE_EXE_LINKER_FLAGS=#{linker_flags}",
+      ]
+    end
+    
     system "cmake", "-S", ".", "-B", "build",
                     "-DCMAKE_INSTALL_SYSCONFDIR=#{etc}",
                     "-DENABLE_IPO=TRUE",
                     "-DREDIS_STORAGE_BACKEND=ON",
                     "-DDEPS=LOCAL",
-                    #"-DCMAKE_CXX_FLAGS='-I#{Formula["llvm"].opt_include}/c++/v1 -include cstdlib'",
-                    "-DCMAKE_CXX_FLAGS='-include cstdlib'",
-                    "-DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}",
+                    *args,
                     *std_cmake_args
     system "cmake", "--build", "build"
 
@@ -41,8 +69,10 @@ class Ccache < Formula
     # (especially with IPO enabled), adds negligible time to the build process, and we don't actually test
     # this formula properly in the test block since doing so would be too complicated.
     # See https://github.com/Homebrew/homebrew-core/pull/83900#issuecomment-90624064
+    system "ctest", "-j1", "--test-dir", "build", "-R", "profiling"
+    # ctest debug_prefix_map  will failed with the latest llvm, so exclude it.
     with_env(CC: DevelopmentTools.locate(DevelopmentTools.default_compiler)) do
-      system "ctest", "-j#{ENV.make_jobs}", "--test-dir", "build"
+      system "ctest", "-j#{ENV.make_jobs}", "--test-dir", "build", "-E", "debug_prefix_map|profiling"
     end
 
     system "cmake", "--install", "build"
@@ -108,7 +138,7 @@ class Ccache < Formula
     assert_equal "6ef4b356229ca145dca726e94e88ad10", shell_output("#{bin}/ccache --checksum-file test.c").chomp
     # Test that we link with blake3 correctly.
     file_hash = shell_output("#{bin}/ccache --hash-file test.c").chomp
-    assert_equal "5af3d23skapbcgbs975geemfqv6r6utsu", file_hash
+    assert_equal "5af36887ca2b2b6417c49cb073acfd7cdb37bbcf", file_hash
 
     system bin/"ccache", ENV.cc, "-c", "test.c"
     system bin/"ccache", "debug=true", ENV.cc, "-c", "test.c"
@@ -116,6 +146,7 @@ class Ccache < Formula
     input_text = testpath.glob("test.o.*.ccache-input-text").first.read
     assert_match File.basename(ENV.cc), input_text
     assert_match "test.c", input_text
+    assert_match "### sourcecode hash (base16)", input_text
     assert_match file_hash, input_text
 
     # The format of the log file seems to differ on Linux.
@@ -126,3 +157,17 @@ class Ccache < Formula
     assert_match "cache hit", log.read
   end
 end
+__END__
+--- a/src/ccache/storage/remote/httpstorage.cpp
++++ b/src/ccache/storage/remote/httpstorage.cpp
+@@ -29,5 +29,10 @@
+ #include <ccache/util/string.hpp>
+ #include <ccache/util/types.hpp>
+ 
++#ifdef HAVE_UNISTD_H
++#undef HAVE_UNISTD_H
++#endif
++#define HAVE_UNISTD_H 1
++
+ #include <cxxurl/url.hpp>
+ #include <httplib.h>
