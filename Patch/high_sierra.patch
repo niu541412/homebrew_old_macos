@@ -1,6 +1,6 @@
 --- a/Library/Homebrew/brew.sh
 +++ b/Library/Homebrew/brew.sh
-@@ -600,7 +600,7 @@ HOMEBREW_MACOS_NEWEST_SUPPORTED="26"
+@@ -649,7 +649,7 @@ HOMEBREW_MACOS_NEWEST_SUPPORTED="26"
  # - `os-version min` in package/Distribution.xml
  # - https://github.com/Homebrew/install/blob/HEAD/install.sh
  HOMEBREW_MACOS_OLDEST_SUPPORTED="14"
@@ -57,6 +57,22 @@
    }.freeze, T::Hash[Symbol, String])
  
    sig { params(macos_version: MacOSVersion).returns(Version) }
+--- a/Library/Homebrew/os/mac/sdk.rb
++++ b/Library/Homebrew/os/mac/sdk.rb
+@@ -118,6 +118,13 @@ module OS
+         sdk_settings = sdk_path/"SDKSettings.json"
+         sdk_settings_string = sdk_settings.read if sdk_settings.exist?
+ 
++        # Pre-10.14 SDKs
++        sdk_settings = sdk_path/"SDKSettings.plist"
++        if sdk_settings_string.blank? && sdk_settings.exist?
++          result = system_command("plutil", args: ["-convert", "json", "-o", "-", sdk_settings])
++          sdk_settings_string = result.stdout if result.success?
++        end
++
+         return if sdk_settings_string.blank?
+ 
+         sdk_settings_json = JSON.parse(sdk_settings_string)
 --- a/Library/Homebrew/os/mac/xcode.rb
 +++ b/Library/Homebrew/os/mac/xcode.rb
 @@ -23,6 +23,10 @@
@@ -105,6 +121,17 @@
          else
            "#{macos}.0.0"
          end
+--- a/Library/Homebrew/shims/super/cc
++++ b/Library/Homebrew/shims/super/cc
+@@ -469,7 +469,7 @@ class Cmd
+   end
+ 
+   def oso_prefix?
+-    !configure? && !debug_symbols?
++    config.include?("o") && !configure? && !debug_symbols?
+   end
+ 
+   def ld_classic?
 --- a/Library/Homebrew/shims/mac/shared/include/llvm/__config_site
 +++ b/Library/Homebrew/shims/mac/shared/include/llvm/__config_site
 @@ -2,6 +2,6 @@
