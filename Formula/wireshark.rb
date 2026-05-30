@@ -1,9 +1,9 @@
 class Wireshark < Formula
   desc "Network analyzer and capture tool - without graphical user interface"
   homepage "https://www.wireshark.org"
-  url "https://www.wireshark.org/download/src/all-versions/wireshark-4.6.5.tar.xz"
-  mirror "https://1.eu.dl.wireshark.org/src/all-versions/wireshark-4.6.5.tar.xz"
-  sha256 "b5322538b20fa3e0bf004be83c534a42937d442be3f960d01b4e1f0db6c50386"
+  url "https://www.wireshark.org/download/src/all-versions/wireshark-4.6.6.tar.xz"
+  mirror "https://1.eu.dl.wireshark.org/src/all-versions/wireshark-4.6.6.tar.xz"
+  sha256 "27e7ff780cd68a7466082be82ca26c06a002e74a71646ef3a6e4683e444c1a86"
   license "GPL-2.0-or-later"
   head "https://gitlab.com/wireshark/wireshark.git", branch: "master"
 
@@ -15,12 +15,6 @@ class Wireshark < Formula
   end
 
   bottle do
-    sha256                               arm64_tahoe:   "1e34f03cf9795aecd7947bb58ff3910408abc3bb63efd3c1a4a23bb34b2383ed"
-    sha256                               arm64_sequoia: "0f6c690807d0af39d0bf94d50a7656f4615b9156a165a36aae13db76d031c757"
-    sha256                               arm64_sonoma:  "c615c035c78537029d08eeaec64fbe6bc2bbc63254fedc248a62aa1948ced623"
-    sha256                               sonoma:        "94a555a70d028d3507ada4b48e648968e3a0dba055c0eec4bee32996fa4986cc"
-    sha256                               arm64_linux:   "c2a70492fb6e10258083db140679464628c5f3ac2f2ac3e6a8be784614e8eb97"
-    sha256 cellar: :any_skip_relocation, x86_64_linux:  "cc9acf8ce2a250f6b711d27b610fea3f62b0ae9bffb24e00a62b3a2cd6bcdf86"
   end
 
   depends_on "cmake" => :build

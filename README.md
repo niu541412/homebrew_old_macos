@@ -12,6 +12,7 @@ Since Homebrew no longer accepts pull requests for unsupported macOS versions, I
 > - Since brew v4.6.4, `brew install` from source must set `HOMEBREW_DEVELOPER=1`, see [Don&#39;t allow installing formulae from paths without HOMEBREW_DEVELOPER](https://github.com/Homebrew/brew/pull/20414)
 > - Since brew v4.7.0, Homebrew has dropped support for macOS versions under Catalina, see [Homebrew 4.7.0 deprecations/disables/removals](https://github.com/Homebrew/brew/pull/20973). Patch the Homebrew directory `/usr/local/Homebrew` to with this [file](Patch/high_sierra.patch) force brew to work again.
 > - Restore some pkg-config files for older macOS versions, i.e. [10.13 pkg-config files](https://github.com/Homebrew/brew/tree/0236b2fc2d5556c9913822c4a4f02ec108de8a4e/Library/Homebrew/os/mac/pkgconfig/10.13).
+Note that zlib.pc need to remove "-I/usr/include" from the `Cflags` section, i.e. see [zlib.pc](Patch/10.13/zlib.pc).
 > - Since brew v5.0.0, Homebrew portable ruby no longer supports macOS versions under Catalina, see [Portable Ruby 3.4.7](https://github.com/Homebrew/brew/commit/58a6c827f682e8d5bd0cc23d594ad63e7711c520). You need manually set the `RUBY_URL` to my self-built ruby bottle with this [patch](Patch/portable_ruby.patch).
 You need to carefully check the patch file and my repo. So it should be much easier that if you just manaully untar the [bottle](https://github.com/niu541412/homebrew_old_macos/releases) to the directory `/usr/local/Homebrew/Library/Homebrew/vendor/portable-ruby` and set the soft link.
 

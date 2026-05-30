@@ -1,19 +1,23 @@
-class Openjdk < Formula
+class OpenjdkAT25 < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  url "https://github.com/openjdk/jdk25u/archive/refs/tags/jdk-25.0.2-ga.tar.gz"
-  sha256 "e4b935e999a28ee732dfb932dcef4a8591b42f6fcd182099319db68e9d8017ff"
+  url "https://github.com/openjdk/jdk25u/archive/refs/tags/jdk-25.0.3-ga.tar.gz"
+  sha256 "24080b39d5bb28c34d1fa738e8704db411c6fc7dac0962cc33305536b0391b9e"
   license "GPL-2.0-only" => { with: "Classpath-exception-2.0" }
+  compatibility_version 1
 
   livecheck do
     url :stable
-    regex(/^jdk[._-]v?(\d+(?:\.\d+)*)-ga$/i)
+    regex(/^jdk[._-]v?(25(?:\.\d+)*)-ga$/i)
   end
 
   bottle do
   end
 
-  keg_only :shadowed_by_macos
+  keg_only :versioned_formula
+
+  deprecate! date: "2030-09-30", because: :unmaintained
+  disable! date: "2033-09-30", because: :unmaintained
 
   depends_on "autoconf" => :build
   depends_on "pkgconf" => :build
@@ -24,12 +28,16 @@ class Openjdk < Formula
   depends_on "jpeg-turbo"
   depends_on "libpng"
   depends_on "little-cms2"
-  depends_on "lld"
 
   uses_from_macos "cups"
   uses_from_macos "unzip"
   uses_from_macos "zip"
   uses_from_macos "zlib"
+
+  on_macos do
+    depends_on "lld"
+    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
+  end
 
   on_linux do
     depends_on "alsa-lib"
@@ -41,14 +49,15 @@ class Openjdk < Formula
     depends_on "libxrender"
     depends_on "libxt"
     depends_on "libxtst"
+    depends_on "zlib-ng-compat"
   end
 
   # From https://jdk.java.net/archive/
   resource "boot-jdk" do
     on_macos do
       on_arm do
-        url "https://download.java.net/java/GA/jdk25.0.1/2fbf10d8c78e40bd87641c434705079d/8/GPL/openjdk-25.0.1_macos-aarch64_bin.tar.gz"
-        sha256 "9175d602f3be2ffa241eb01d24ba4541e29a4dfa2095d4bdc1c9eb4bf4d56705"
+        url "https://download.java.net/java/GA/jdk25.0.2/b1e0dfa218384cb9959bdcb897162d4e/10/GPL/openjdk-25.0.2_macos-aarch64_bin.tar.gz"
+        sha256 "7581b0d1752cd5acbf39e286c03f07b6cd6c205b562eb2fe753ff0253cf4c1bf"
       end
       on_intel do
         url "https://github.com/niu541412/homebrew_old_macos/releases/download/openjdk/openjdk--24.0.2.high_sierra.bottle.tar.gz"
@@ -57,12 +66,12 @@ class Openjdk < Formula
     end
     on_linux do
       on_arm do
-        url "https://download.java.net/java/GA/jdk25.0.1/2fbf10d8c78e40bd87641c434705079d/8/GPL/openjdk-25.0.1_linux-aarch64_bin.tar.gz"
-        sha256 "c5732ae191151195fbd2cfb7aef7675bf2c37cfa8bfd06f8330b6f04d4eb03a4"
+        url "https://download.java.net/java/GA/jdk25.0.2/b1e0dfa218384cb9959bdcb897162d4e/10/GPL/openjdk-25.0.2_linux-aarch64_bin.tar.gz"
+        sha256 "671208d205e70c9805da45a483f670d49dd64654990a7b7223ccffb2abb070dd"
       end
       on_intel do
-        url "https://download.java.net/java/GA/jdk25.0.1/2fbf10d8c78e40bd87641c434705079d/8/GPL/openjdk-25.0.1_linux-x64_bin.tar.gz"
-        sha256 "514db33011f2c81fa9c589f7712735b42b9d2575db8f817d3be40a92d2ef7ad8"
+        url "https://download.java.net/java/GA/jdk25.0.2/b1e0dfa218384cb9959bdcb897162d4e/10/GPL/openjdk-25.0.2_linux-x64_bin.tar.gz"
+        sha256 "555ce0821e4fe175ea50d54518cd6fbece9663c1998de529bc6ce429534457df"
       end
     end
   end
@@ -135,10 +144,6 @@ class Openjdk < Formula
 
     system "bash", "configure", *args
 
-    inreplace "build/macosx-x86_64-server-release/spec.gmk" do |s|
-       s.gsub! /^(PNG_CFLAGS\s*:=.*) -I\/usr\/include/, "\\1"
-    end
-
     ENV["MAKEFLAGS"] = "JOBS=#{ENV.make_jobs}"
     system "make", "images"
 
@@ -160,7 +165,7 @@ class Openjdk < Formula
     on_macos do
       <<~EOS
         For the system Java wrappers to find this JDK, symlink it with
-          sudo ln -sfn #{opt_libexec}/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
+          sudo ln -sfn #{opt_libexec}/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-25.jdk
       EOS
     end
   end

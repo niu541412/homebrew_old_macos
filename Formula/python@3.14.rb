@@ -1,14 +1,14 @@
 class PythonAT314 < Formula
   desc "Interpreted, interactive, object-oriented programming language"
   homepage "https://www.python.org/"
-  url "https://www.python.org/ftp/python/3.14.4/Python-3.14.4.tgz"
-  sha256 "b4c059d5895f030e7df9663894ce3732bfa1b32cd3ab2883980266a45ce3cb3b"
+  url "https://www.python.org/ftp/python/3.14.5/Python-3.14.5.tgz"
+  sha256 "9c22bfe9939a6c5418fc74b289a5f1cc41859ae82ac6b163016b5844bd0a86bc"
   license "Python-2.0"
   compatibility_version 1
 
   livecheck do
-    url "https://www.python.org/ftp/python/"
-    regex(%r{href=.*?v?(3\.14(?:\.\d+)*)/?["' >]}i)
+    url "https://www.python.org/downloads/source/"
+    regex(%r{href=.*?/Python[._-]v?(3\.14(?:\.\d+)*)\.t}i)
   end
 
   bottle do
@@ -27,10 +27,8 @@ class PythonAT314 < Formula
   uses_from_macos "libffi"
   uses_from_macos "ncurses"
   uses_from_macos "unzip"
-  uses_from_macos "zlib", since: :catalina
 
   on_linux do
-    depends_on "berkeley-db@5"
     depends_on "zlib-ng-compat"
   end
 
@@ -60,18 +58,18 @@ class PythonAT314 < Formula
   end
 
   resource "packaging" do
-    url "https://files.pythonhosted.org/packages/65/ee/299d360cdc32edc7d2cf530f3accf79c4fca01e96ffc950d8a52213bd8e4/packaging-26.0.tar.gz"
-    sha256 "00243ae351a257117b6a241061796684b084ed1c516a08c48a3f7e147a9d80b4"
+    url "https://files.pythonhosted.org/packages/d7/f1/e7a6dd94a8d4a5626c03e4e99c87f241ba9e350cd9e6d75123f992427270/packaging-26.2.tar.gz"
+    sha256 "ff452ff5a3e828ce110190feff1178bb1f2ea2281fa2075aadb987c2fb221661"
   end
 
   resource "pip" do
-    url "https://files.pythonhosted.org/packages/48/83/0d7d4e9efe3344b8e2fe25d93be44f64b65364d3c8d7bc6dc90198d5422e/pip-26.0.1.tar.gz"
-    sha256 "c4037d8a277c89b320abe636d59f91e6d0922d08a05b60e85e53b296613346d8"
+    url "https://files.pythonhosted.org/packages/b6/48/cb9b7a682f6fe01a4221e1728941dd4ac3cd9090a17db3779d6ff490b602/pip-26.1.1.tar.gz"
+    sha256 "d36762751d156a4ee895de8af39aa0abeeeb577f93a2eca6ab62467bbf0f8a78"
   end
 
   resource "wheel" do
-    url "https://files.pythonhosted.org/packages/89/24/a2eb353a6edac9a0303977c4cb048134959dd2a51b48a269dfc9dde00c8a/wheel-0.46.3.tar.gz"
-    sha256 "e3e79874b07d776c40bd6033f8ddf76a7dad46a7b8aa1b2787a83083519a1803"
+    url "https://files.pythonhosted.org/packages/39/62/75f18a0f03b4219c456652c7780e4d749b929eb605c098ce3a5b6b6bc081/wheel-0.47.0.tar.gz"
+    sha256 "cc72bd1009ba0cf63922e28f94d9d83b920aa2bb28f798a31d0691b02fa3c9b3"
   end
 
   # Modify default sysconfig to match the brew install layout.
@@ -156,7 +154,7 @@ class PythonAT314 < Formula
       args << "MACOSX_DEPLOYMENT_TARGET=#{MacOS.version}"
     else
       args << "--enable-shared"
-      args << "--with-dbmliborder=bdb"
+      args << "--with-dbmliborder="
     end
 
     # Allow python modules to use ctypes.find_library to find homebrew's stuff
@@ -444,6 +442,11 @@ class PythonAT314 < Formula
   end
 
   def caveats
+    dbm_is = "`dbm.gnu` is"
+    on_linux do
+      dbm_is = "`dbm.gnu` and `dbm.ndbm` are"
+    end
+
     <<~EOS
       Python is installed as
         #{HOMEBREW_PREFIX}/bin/python3
@@ -455,7 +458,10 @@ class PythonAT314 < Formula
       `idle#{version.major_minor}` requires tkinter, which is available separately:
         brew install python-tk@#{version.major_minor}
 
-      See: https://docs.brew.sh/Homebrew-and-Python
+      #{dbm_is} available separately:
+        brew install python-gdbm@#{version.major_minor}
+
+      For more information about Homebrew and Python, see: https://docs.brew.sh/Homebrew-and-Python
     EOS
   end
 
@@ -485,7 +491,8 @@ class PythonAT314 < Formula
     assert_match "ModuleNotFoundError: No module named '_gdbm'",
                  shell_output("#{python3} -Sc 'import dbm.gnu' 2>&1", 1)
 
-    # Verify that the selected DBM interface works
+    # Verify that the selected DBM interface works on macOS.
+    # Linux requires installing python-gdbm formula
     (testpath/"dbm_test.py").write <<~PYTHON
       import dbm
 
@@ -496,7 +503,7 @@ class PythonAT314 < Formula
           assert b"foo \\xbd" in db
           assert db[b"foo \\xbd"] == b"bar \\xbd"
     PYTHON
-    system python3, "dbm_test.py"
+    system python3, "dbm_test.py" if OS.mac?
 
     system bin/"pip#{version.major_minor}", "list", "--format=columns"
 

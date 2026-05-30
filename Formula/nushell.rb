@@ -1,8 +1,8 @@
 class Nushell < Formula
   desc "Modern shell for the GitHub era"
   homepage "https://www.nushell.sh"
-  url "https://github.com/nushell/nushell/archive/refs/tags/0.112.2.tar.gz"
-  sha256 "32ebcfe41b6390145e90eb86273e221f22eeacd53ecac5274405f148fb4258c2"
+  url "https://github.com/nushell/nushell/archive/refs/tags/0.113.1.tar.gz"
+  sha256 "d2b514b9ec7c1cc5930025528987d730cadcaa0f063227691c837516093328fd"
   license "MIT"
   head "https://github.com/nushell/nushell.git", branch: "main"
 
@@ -18,9 +18,13 @@ class Nushell < Formula
   depends_on "pkgconf" => :build
   depends_on "rust" => :build
   depends_on "openssl@3"
-  depends_on "libgit2"
+
   uses_from_macos "curl"
 
+  on_macos do
+    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
+  end
+  
   on_linux do
     depends_on "libgit2" # for `nu_plugin_gstat`
     depends_on "libx11"
@@ -29,6 +33,7 @@ class Nushell < Formula
   end
 
   def install
+    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     ENV["NU_VENDOR_AUTOLOAD_DIR"] = HOMEBREW_PREFIX/"share/nushell/vendor/autoload"
 
     system "cargo", "install", *std_cargo_args

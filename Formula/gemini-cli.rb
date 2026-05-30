@@ -1,9 +1,15 @@
 class GeminiCli < Formula
   desc "Interact with Google Gemini AI models from the command-line"
   homepage "https://github.com/google-gemini/gemini-cli"
-  url "https://registry.npmjs.org/@google/gemini-cli/-/gemini-cli-0.41.2.tgz"
-  sha256 "880d45a4f86796ec21d863084a99320251c9a2a4969419a92f3313bd54246018"
+  url "https://registry.npmjs.org/@google/gemini-cli/-/gemini-cli-0.44.1.tgz"
+  sha256 "fcf5dc9f01eb602e64c204f7112bf33e17ba5e36f737a8ed374821c838ab2cf9"
   license "Apache-2.0"
+
+  bottle do
+  end
+
+  deprecate! date: "2026-06-18", because: :unsupported, replacement_cask: "antigravity-cli"
+  disable! date: "2026-12-18", because: :unsupported, replacement_cask: "antigravity-cli"
 
   depends_on "node"
   depends_on "llvm" if DevelopmentTools.clang_build_version <= 1100

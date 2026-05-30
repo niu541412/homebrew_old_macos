@@ -1,9 +1,10 @@
 class Ghostscript < Formula
   desc "Interpreter for PostScript and PDF"
   homepage "https://www.ghostscript.com/"
-  url "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10070/ghostpdl-10.07.0.tar.xz"
-  sha256 "ba1366006a93b91e615f74aad9c0905fae503d3f5b04078ce2ddbe360bd2f9df"
+  url "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10071/ghostpdl-10.07.1.tar.xz"
+  sha256 "56f6a82907c3a73bba95de1319e029adf16477e34df2dea180d390e71e7c4053"
   license "AGPL-3.0-or-later"
+  compatibility_version 1
 
   # The GitHub tags omit delimiters (e.g. `gs9533` for version 9.53.3). The
   # `head` repository tags are formatted fine (e.g. `ghostpdl-9.53.3`) but a
@@ -22,7 +23,7 @@ class Ghostscript < Formula
   end
 
   head do
-    url "https://git.ghostscript.com/ghostpdl.git", branch: "master"
+    url "https://github.com/ArtifexSoftware/ghostpdl.git", branch: "master"
 
     depends_on "autoconf" => :build
     depends_on "automake" => :build
@@ -51,7 +52,6 @@ class Ghostscript < Formula
 
   conflicts_with "gambit-scheme", because: "both install `gsc` binary"
   conflicts_with "gerbil-scheme", because: "both install `gsc` binary"
-  conflicts_with "git-spice", because: "both install `gs` binary"
 
   # https://sourceforge.net/projects/gs-fonts/
   resource "fonts" do

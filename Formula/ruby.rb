@@ -7,15 +7,15 @@ class Ruby < Formula
 
   stable do
     # TODO: enable default_user_install when updating to Ruby 4.1
-    url "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.3.tar.gz"
-    sha256 "77964acc370d5c8375b9502e5ba6c13c03ef91ab9eb9f521c84fb42b9c9a6b0f"
+    url "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.5.tar.gz"
+    sha256 "7d6149079a63f8ae1d326c9fa65c6019ba2dc3155eae7b39159817911c88958e"
 
     # Should be updated only when Ruby is updated (if an update is available).
     # The exception is Rubygem security fixes, which mandate updating this
     # formula & the versioned equivalents and bumping the revisions.
     resource "rubygems" do
-      url "https://rubygems.org/rubygems/rubygems-4.0.10.tgz"
-      sha256 "6a225b7a8883de45d90c9b3f7ee14391759b286030ba1d1d77588cd7282e6cc7"
+      url "https://rubygems.org/rubygems/rubygems-4.0.11.tgz"
+      sha256 "95fe9d9d5293d022ceb29afac56eee4e2d46f901de309ab46915ff84d5ec68e8"
 
       livecheck do
         url "https://rubygems.org/pages/download"
@@ -39,6 +39,9 @@ class Ruby < Formula
   depends_on "rust" => :build
   depends_on "libyaml"
   depends_on "openssl@3"
+  on_macos do
+    depends_on "llvm" if DevelopmentTools.clang_build_version <= 1100
+  end
 
   uses_from_macos "gperf"
   uses_from_macos "libffi"
@@ -74,6 +77,7 @@ class Ruby < Formula
   end
 
   def install
+    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     paths = %w[libyaml openssl@3].map { |f| Formula[f].opt_prefix }
     # Add versioned Ruby RPATH so user-installed gems can work when user is switched to versioned Ruby
     paths << versioned_opt_prefix if OS.linux? && !versioned_formula?

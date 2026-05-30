@@ -1,9 +1,10 @@
 class Openjdk < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  url "https://github.com/openjdk/jdk25u/archive/refs/tags/jdk-25.0.2-ga.tar.gz"
-  sha256 "e4b935e999a28ee732dfb932dcef4a8591b42f6fcd182099319db68e9d8017ff"
+  url "https://github.com/openjdk/jdk26u/archive/refs/tags/jdk-26.0.1-ga.tar.gz"
+  sha256 "1f9c92513a7b7949e6d01b1935c7b6f77096319b2657e0a4c013bc2da44e2d9d"
   license "GPL-2.0-only" => { with: "Classpath-exception-2.0" }
+  compatibility_version 1
 
   livecheck do
     url :stable
@@ -24,12 +25,16 @@ class Openjdk < Formula
   depends_on "jpeg-turbo"
   depends_on "libpng"
   depends_on "little-cms2"
-  depends_on "lld"
 
   uses_from_macos "cups"
   uses_from_macos "unzip"
   uses_from_macos "zip"
-  uses_from_macos "zlib"
+  #uses_from_macos "zlib"
+
+  on_macos do
+    depends_on "lld"
+    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
+  end
 
   on_linux do
     depends_on "alsa-lib"
@@ -41,39 +46,41 @@ class Openjdk < Formula
     depends_on "libxrender"
     depends_on "libxt"
     depends_on "libxtst"
+    depends_on "zlib-ng-compat"
   end
 
   # From https://jdk.java.net/archive/
   resource "boot-jdk" do
     on_macos do
       on_arm do
-        url "https://download.java.net/java/GA/jdk25.0.1/2fbf10d8c78e40bd87641c434705079d/8/GPL/openjdk-25.0.1_macos-aarch64_bin.tar.gz"
-        sha256 "9175d602f3be2ffa241eb01d24ba4541e29a4dfa2095d4bdc1c9eb4bf4d56705"
+        url "https://download.java.net/java/GA/jdk25.0.2/b1e0dfa218384cb9959bdcb897162d4e/10/GPL/openjdk-25.0.2_macos-aarch64_bin.tar.gz"
+        sha256 "7581b0d1752cd5acbf39e286c03f07b6cd6c205b562eb2fe753ff0253cf4c1bf"
       end
       on_intel do
-        url "https://github.com/niu541412/homebrew_old_macos/releases/download/openjdk/openjdk--24.0.2.high_sierra.bottle.tar.gz"
-        sha256 "a42978531f4d9a6906b9a757a758b41c4d3d4e6df1c40b68f644d6e01d2b44c4"
+        url "https://github.com/niu541412/homebrew_old_macos/releases/download/openjdk/openjdk--25.0.3.high_sierra.bottle.tar.gz"
+        sha256 "898238b3959341d07c51093fadcdfc3d7948d833b522879cec7022cc5c9a9d70"
       end
     end
     on_linux do
       on_arm do
-        url "https://download.java.net/java/GA/jdk25.0.1/2fbf10d8c78e40bd87641c434705079d/8/GPL/openjdk-25.0.1_linux-aarch64_bin.tar.gz"
-        sha256 "c5732ae191151195fbd2cfb7aef7675bf2c37cfa8bfd06f8330b6f04d4eb03a4"
+        url "https://download.java.net/java/GA/jdk25.0.2/b1e0dfa218384cb9959bdcb897162d4e/10/GPL/openjdk-25.0.2_linux-aarch64_bin.tar.gz"
+        sha256 "671208d205e70c9805da45a483f670d49dd64654990a7b7223ccffb2abb070dd"
       end
       on_intel do
-        url "https://download.java.net/java/GA/jdk25.0.1/2fbf10d8c78e40bd87641c434705079d/8/GPL/openjdk-25.0.1_linux-x64_bin.tar.gz"
-        sha256 "514db33011f2c81fa9c589f7712735b42b9d2575db8f817d3be40a92d2ef7ad8"
+        url "https://download.java.net/java/GA/jdk25.0.2/b1e0dfa218384cb9959bdcb897162d4e/10/GPL/openjdk-25.0.2_linux-x64_bin.tar.gz"
+        sha256 "555ce0821e4fe175ea50d54518cd6fbece9663c1998de529bc6ce429534457df"
       end
     end
   end
 
   patch :DATA
   def install
+    ENV.O3
     inreplace "make/autoconf/flags.m4", "MACOSX_VERSION_MIN=11.00.00", "MACOSX_VERSION_MIN=#{MacOS.version}.00"
 
     boot_jdk = buildpath/"boot-jdk"
     resource("boot-jdk").stage boot_jdk
-    boot_jdk /= "24.0.2/libexec/openjdk.jdk/Contents/Home" if OS.mac?
+    boot_jdk /= "25.0.3/libexec/openjdk.jdk/Contents/Home" if OS.mac?
     java_options = ENV.delete("_JAVA_OPTIONS")
 
     args = %W[
@@ -134,10 +141,6 @@ class Openjdk < Formula
     end
 
     system "bash", "configure", *args
-
-    inreplace "build/macosx-x86_64-server-release/spec.gmk" do |s|
-       s.gsub! /^(PNG_CFLAGS\s*:=.*) -I\/usr\/include/, "\\1"
-    end
 
     ENV["MAKEFLAGS"] = "JOBS=#{ENV.make_jobs}"
     system "make", "images"
@@ -212,18 +215,6 @@ __END__
  #include "nmt/memMapPrinter.hpp"
  #include "runtime/os.hpp"
  #include "utilities/align.hpp"
-
---- a/make/autoconf/flags-ldflags.m4
-+++ b/make/autoconf/flags-ldflags.m4
-@@ -100,7 +100,7 @@
-   if test "x$OPENJDK_TARGET_OS" = xmacosx && test "x$TOOLCHAIN_TYPE" = xclang; then
-     # FIXME: We should really generalize SET_SHARED_LIBRARY_ORIGIN instead.
-     OS_LDFLAGS_JVM_ONLY="-Wl,-rpath,@loader_path/. -Wl,-rpath,@loader_path/.."
--    OS_LDFLAGS="-mmacosx-version-min=$MACOSX_VERSION_MIN -Wl,-reproducible"
-+    OS_LDFLAGS="-mmacosx-version-min=$MACOSX_VERSION_MIN"
-   fi
- 
-   # Setup debug level-dependent LDFLAGS
 
 --- a/src/java.desktop/macosx/native/libawt_lwawt/awt/CDesktopPeer.m	
 +++ b/src/java.desktop/macosx/native/libawt_lwawt/awt/CDesktopPeer.m	
@@ -306,3 +297,53 @@ __END__
  
  JNI_COCOA_EXIT(env);
      return status;
+
+--- a/src/hotspot/share/gc/g1/g1OopClosures.inline.hpp
++++ b/src/hotspot/share/gc/g1/g1OopClosures.inline.hpp
+@@ -285,7 +285,7 @@ template <class T> void G1RebuildRemSetC
+   G1HeapRegionRemSet* rem_set = to->rem_set();
+   if (rem_set->is_tracked()) {
+     if (to->is_young()) {
+-      G1BarrierSet::g1_barrier_set()->write_ref_field_post(p);
++      G1BarrierSet::g1_barrier_set()->write_ref_field_post<AS_NORMAL>(p);
+     } else {
+       G1HeapRegion* from = _g1h->heap_region_containing(p);
+ 
+--- a/make/autoconf/flags-ldflags.m4
++++ b/make/autoconf/flags-ldflags.m4
+@@ -71,7 +71,7 @@ AC_DEFUN([FLAGS_SETUP_LDFLAGS_HELPER],
+     BASIC_LDFLAGS_JVM_ONLY="-mno-omit-leaf-frame-pointer -mstack-alignment=16 \
+         -fPIC"
+ 
+-    LDFLAGS_LTO="-flto=auto -fuse-linker-plugin -fno-strict-aliasing"
++    LDFLAGS_LTO="-flto -fuse-linker-plugin -fno-strict-aliasing"
+     LDFLAGS_CXX_PARTIAL_LINKING="$MACHINE_FLAG -r"
+ 
+     if test "x$OPENJDK_TARGET_OS" = xlinux; then
+@@ -108,7 +108,7 @@ AC_DEFUN([FLAGS_SETUP_LDFLAGS_HELPER],
+     fi
+     # FIXME: We should really generalize SetSharedLibraryOrigin instead.
+     OS_LDFLAGS_JVM_ONLY="-Wl,-rpath,@loader_path/. -Wl,-rpath,@loader_path/.."
+-    OS_LDFLAGS="-mmacosx-version-min=$MACOSX_VERSION_MIN -Wl,-reproducible"
++    OS_LDFLAGS="-mmacosx-version-min=$MACOSX_VERSION_MIN"
+   fi
+ 
+   # Setup debug level-dependent LDFLAGS
+--- a/src/hotspot/share/runtime/atomic.hpp
++++ b/src/hotspot/share/runtime/atomic.hpp
+@@ -162,7 +162,6 @@ class AtomicImpl {
+     Translated
+   };
+ 
+-#if defined(__GNUC__) && !defined(__clang__)
+   // Workaround for gcc bug. Make category() public, else we get this error
+   //   error: 'static constexpr AtomicImpl::Category AtomicImpl::category()
+   //     [with T = unsigned int]' is private within this context
+@@ -170,7 +169,6 @@ class AtomicImpl {
+   // class a couple lines below, in this same class!
+   // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=122098
+ public:
+-#endif
+   // Selection of Atomic<T> category, based on T.
+   template<typename T>
+   static constexpr Category category();

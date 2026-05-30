@@ -73,10 +73,8 @@ class Php < Formula
   uses_from_macos "bzip2"
   uses_from_macos "libedit"
   uses_from_macos "libffi", since: :catalina
-  uses_from_macos "libxml2", since: :catalina
+  uses_from_macos "libxml2"
   uses_from_macos "libxslt"
-  uses_from_macos "zlib", since: :catalina
-  depends_on "libidn2"
 
   on_macos do
     depends_on "gettext"

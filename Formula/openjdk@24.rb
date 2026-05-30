@@ -133,10 +133,6 @@ class OpenjdkAT24 < Formula
 
     system "bash", "configure", *args
 
-    inreplace "build/macosx-x86_64-server-release/spec.gmk" do |s|
-       s.gsub! /^(PNG_CFLAGS\s*:=.*) -I\/usr\/include/, "\\1"
-    end
-
     ENV["MAKEFLAGS"] = "JOBS=#{ENV.make_jobs}"
     system "make", "images"
 

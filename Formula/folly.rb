@@ -1,8 +1,8 @@
 class Folly < Formula
   desc "Collection of reusable C++ library artifacts developed at Facebook"
   homepage "https://github.com/facebook/folly"
-  url "https://github.com/facebook/folly/archive/refs/tags/v2026.05.04.00.tar.gz"
-  sha256 "52594240e779cc01aeac4506489f7435a684b20200b52dd89507d0a35c9f9df2"
+  url "https://github.com/facebook/folly/archive/refs/tags/v2026.05.25.00.tar.gz"
+  sha256 "8773183092b151227046cd221e882adfb09008b3280bc31615a3e2d5ab25dbdc"
   license "Apache-2.0"
   compatibility_version 1
   head "https://github.com/facebook/folly.git", branch: "main"
@@ -25,10 +25,15 @@ class Folly < Formula
   depends_on "snappy"
   depends_on "xz"
   depends_on "zstd"
-  depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
 
   uses_from_macos "bzip2"
-  uses_from_macos "zlib", since: :catalina
+
+  on_macos do
+    if Formula["blake3"].linked_keg.exist?
+      odie "blake3 is linked and might interfere with the build!"
+    end
+    depends_on "llvm" if DevelopmentTools.clang_build_version <= 1100
+  end
 
   on_linux do
     depends_on "zlib-ng-compat"

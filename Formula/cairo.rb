@@ -29,12 +29,15 @@ class Cairo < Formula
   depends_on "lzo"
   depends_on "pixman"
 
-  uses_from_macos "zlib"
   depends_on "python" => :build
   depends_on "libffi"
 
   on_macos do
     depends_on "gettext"
+  end
+
+  on_linux do
+    depends_on "zlib-ng-compat"
   end
 
   def install

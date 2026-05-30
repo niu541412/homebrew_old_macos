@@ -23,6 +23,7 @@ class Doxygen < Formula
   uses_from_macos "flex" => :build, since: :big_sur
   uses_from_macos "python" => :build, since: :catalina
 
+  patch :DATA
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     system "cmake", "-S", ".", "-B", "build",
@@ -41,3 +42,24 @@ class Doxygen < Formula
     system bin/"doxygen", "Doxyfile"
   end
 end
+__END__
+--- a/src/dotrunner.cpp
++++ b/src/dotrunner.cpp
+@@ -397,14 +397,15 @@ bool DotRunner::run(const DotJobs &dotJobs)
+         {
+           if (cmd.numDotFiles>0)
+           {
+-            auto process = [this,cmd,dirStr]() -> size_t
++            std::string tmpDirStr = dirStr;
++            auto process = [this,cmd,tmpDirStr]() -> size_t
+             {
+               int exitCode;
+               if ((exitCode = Portable::system(m_dotExe, cmd.arguments, FALSE)) != 0)
+               {
+                 err_full(cmd.firstJob->srcFile, 1,
+                     "Problems running dot: exit code={}, command='{}', dir='{}', arguments='{}'",
+-                    exitCode, m_dotExe, dirStr, cmd.arguments);
++                    exitCode, m_dotExe, tmpDirStr, cmd.arguments);
+               }
+               return cmd.numDotFiles;
+             };

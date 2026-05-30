@@ -29,7 +29,7 @@ class Tbb < Formula
       -DTBB_TEST=OFF
       -DTBB4PY_BUILD=ON
       -DPYTHON_EXECUTABLE=#{which(python3)}
-      -DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}
+      -DTBB_FILE_TRIM=OFF
     ]
 
     system "cmake", "-S", ".", "-B", "build/shared",

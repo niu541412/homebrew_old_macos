@@ -5,7 +5,8 @@ class Gnutls < Formula
   mirror "https://www.mirrorservice.org/sites/ftp.gnupg.org/gcrypt/gnutls/v3.8/gnutls-3.8.13.tar.xz"
   sha256 "ffed8ec1bf09c2426d4f14aae377de4753b53e537d685e604e99a8b16ca9c97e"
   license all_of: ["LGPL-2.1-or-later", "GPL-3.0-only"]
-  compatibility_version 1
+  revision 2
+  compatibility_version 2
 
   # The download page links to the directory listing pages for the "Next" and
   # "Current stable" versions. We use the "Next" version in the formula, so we
@@ -35,7 +36,7 @@ class Gnutls < Formula
 
   depends_on "pkgconf" => :build
   depends_on "texinfo" => :build
-  depends_on "ca-certificates"
+  depends_on "ca-certificates" => :no_linkage
   depends_on "gmp"
   depends_on "libidn2"
   depends_on "libtasn1"
@@ -45,22 +46,21 @@ class Gnutls < Formula
   depends_on "unbound"
 
   on_macos do
-    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1400
+    #depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1400
     depends_on "gettext"
   end
 
-  on_linux do
-    depends_on "zlib-ng-compat"
-  end
-
-  fails_with :clang do
-    build 1400
-    cause "error: CRAU_MAYBE_UNUSED is not getting defined"
-  end
+  #fails_with :clang do
+   # build 1400
+   # cause "error: CRAU_MAYBE_UNUSED is not getting defined"
+  #end
 
   patch :DATA
   def install
+    # DANE support is disabled so GnuTLS does not have an indirect dependency on OpenSSL.
+    # If the feature is wanted, then can consider shipping as split `gnutls-dane` formula.
     args = %W[
+      --disable-libdane
       --disable-silent-rules
       --disable-static
       --sysconfdir=#{etc}
@@ -72,7 +72,7 @@ class Gnutls < Formula
     system "./configure", *args, *std_configure_args
     system "make", "install"
 
-    inreplace [lib/"pkgconfig/gnutls.pc", lib/"pkgconfig/gnutls-dane.pc"], prefix, opt_prefix
+    inreplace lib/"pkgconfig/gnutls.pc", prefix, opt_prefix
 
     # certtool shadows the macOS certtool utility
     mv bin/"certtool", bin/"gnutls-certtool"

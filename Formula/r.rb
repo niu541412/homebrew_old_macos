@@ -1,10 +1,10 @@
 class R < Formula
   desc "Software environment for statistical computing"
   homepage "https://www.r-project.org/"
-  url "https://cran.r-project.org/src/base/R-4/R-4.5.2.tar.gz"
-  sha256 "0d71ff7106ec69cd7c67e1e95ed1a3cee355880931f2eb78c530014a9e379f20"
+  url "https://cran.r-project.org/src/base/R-4/R-4.6.0.tar.gz"
+  sha256 "b8dc9b4543660c7b596b87938df532394350360976527d344228ee0ed12e45ec"
   license "GPL-2.0-or-later"
-  revision 1
+  compatibility_version 2
 
   livecheck do
     url "https://cran.rstudio.com/banner.shtml"
@@ -31,7 +31,6 @@ class R < Formula
   uses_from_macos "bzip2"
   uses_from_macos "curl"
   uses_from_macos "libffi"
-  uses_from_macos "zlib"
 
   on_macos do
     depends_on "fontconfig"
@@ -54,6 +53,7 @@ class R < Formula
     depends_on "libx11"
     depends_on "libxt"
     depends_on "pango"
+    depends_on "zlib-ng-compat"
   end
 
   # needed to preserve executable permissions on files without shebangs
@@ -102,6 +102,7 @@ class R < Formula
       ENV.append "LDFLAGS", "-L#{Formula[f].opt_lib}"
     end
 
+    ENV["TZ"] = "UTC"
     system "./configure", *args
     system "make"
     ENV.deparallelize do

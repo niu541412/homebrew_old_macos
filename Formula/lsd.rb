@@ -12,10 +12,11 @@ class Lsd < Formula
   depends_on "pandoc" => :build
   depends_on "rust" => :build
 
-  uses_from_macos "zlib"
+  on_linux do
+    depends_on "zlib-ng-compat"
+  end
 
   def install
-    #inreplace "Cargo.lock", "version = \"1.1.16\"","version = \"1.1.18\"" 
     ENV["MACOSX_DEPLOYMENT_TARGET"] = "10.14" 
 
     ENV["SHELL_COMPLETIONS_DIR"] = buildpath
