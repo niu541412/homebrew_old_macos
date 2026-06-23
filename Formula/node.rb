@@ -1,8 +1,8 @@
 class Node < Formula
   desc "Open-source, cross-platform JavaScript runtime environment"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v26.0.0/node-v26.0.0.tar.xz"
-  sha256 "fcb5e5c06a5c2ec9e669801248657aafaa2291f8760dac7bfb639f878318c592"
+  url "https://nodejs.org/dist/v26.3.1/node-v26.3.1.tar.xz"
+  sha256 "979b9b8308a8d2d4a27c662ed50448c85f970c0fd4f5ce8b98e8da78c441f2bc"
   license "MIT"
   compatibility_version 1
   head "https://github.com/nodejs/node.git", branch: "main"
@@ -22,6 +22,7 @@ class Node < Formula
   depends_on "c-ares"
   depends_on "hdrhistogram_c"
   depends_on "icu4c@78"
+  depends_on "libffi" # System `libffi` is missing some definitions used by node
   depends_on "libnghttp2"
   depends_on "libnghttp3"
   depends_on "libngtcp2"
@@ -43,7 +44,6 @@ class Node < Formula
   end
 
   on_linux do
-    depends_on "llvm" => :build if DevelopmentTools.gcc_version < 13
     depends_on "zlib-ng-compat"
   end
 
@@ -65,8 +65,8 @@ class Node < Formula
   # We track major/minor from upstream Node releases.
   # We will accept *important* npm patch releases when necessary.
   resource "npm" do
-    url "https://registry.npmjs.org/npm/-/npm-11.12.1.tgz"
-    sha256 "e679850e663b16f5f146ee425d0eb0e3442c1d2bda3d513bbfd7c81f5ee5db38"
+    url "https://registry.npmjs.org/npm/-/npm-11.16.0.tgz"
+    sha256 "30fc15697c771002878665c29f49dddde9aa8667fa5719854b2f52d3cd19230b"
 
     livecheck do
       url "https://raw.githubusercontent.com/nodejs/node/refs/tags/v#{LATEST_VERSION}/deps/npm/package.json"
@@ -76,6 +76,8 @@ class Node < Formula
     end
   end
 
+  deny_network_access! [:build, :postinstall]
+  
   patch :DATA
   def install
     if OS.mac? && DevelopmentTools.clang_build_version <= 1400
@@ -122,6 +124,7 @@ class Node < Formula
       "ada"           => ["ada",             "ada-url"],
       "brotli"        => ["brotli",          "brotli"],
       "cares"         => ["cares",           "c-ares"],
+      "ffi"           => ["libffi",          "libffi"],
       "hdr-histogram" => ["histogram",       "hdrhistogram_c"],
       "http-parser"   => ["llhttp",          "llhttp"],
       "libuv"         => ["uv",              "libuv"],

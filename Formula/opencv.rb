@@ -2,7 +2,7 @@ class Opencv < Formula
   desc "Open source computer vision library"
   homepage "https://opencv.org/"
   license "Apache-2.0"
-  revision 12
+  revision 15
   compatibility_version 1
 
   stable do
@@ -54,7 +54,7 @@ class Opencv < Formula
   depends_on "openblas"
   depends_on "openexr"
   depends_on "openjpeg"
-  #depends_on "openvino"
+  depends_on "openvino"
   depends_on "protobuf"
   depends_on "python@3.14"
   depends_on "tbb"
@@ -137,7 +137,7 @@ class Opencv < Formula
       -DWITH_JASPER=OFF
       -DWITH_OPENEXR=ON
       -DWITH_OPENGL=OFF
-      -DWITH_OPENVINO=OFF
+      -DWITH_OPENVINO=ON
       -DWITH_QT=OFF
       -DWITH_TBB=ON
       -DWITH_VTK=OFF

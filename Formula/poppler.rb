@@ -1,10 +1,10 @@
 class Poppler < Formula
   desc "PDF rendering library (based on the xpdf-3.0 code base)"
   homepage "https://poppler.freedesktop.org/"
-  url "https://poppler.freedesktop.org/poppler-26.04.0.tar.xz"
-  sha256 "b0955163114af96bc0106f68cb24daf973a629462453d8b82775f81b0d4e0693"
-  license "GPL-2.0-only"
-  compatibility_version 3
+  url "https://poppler.freedesktop.org/poppler-26.06.0.tar.xz"
+  sha256 "4cb4e5a3dc8cb5eec751c8a23c8ba19f61f96dedc0cd07d2aee6b0c8e2cf6ba4"
+  license any_of: ["GPL-2.0-only", "GPL-3.0-only"] # see README-XPDF
+  compatibility_version 4
   head "https://gitlab.freedesktop.org/poppler/poppler.git", branch: "master"
 
   livecheck do
@@ -41,7 +41,6 @@ class Poppler < Formula
   on_macos do
     depends_on "gettext"
     depends_on "gpgme"
-    depends_on "libassuan"
     depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
   end
 
@@ -62,12 +61,18 @@ class Poppler < Formula
     end
   end
 
+  # Fix mutex lock crash on macOS
+  # MR ref: https://gitlab.freedesktop.org/poppler/poppler/-/merge_requests/2262
+  patch do
+    url "https://gitlab.freedesktop.org/poppler/poppler/-/commit/e263f50b8ecac8aaad458a4c45d8ca9761dd8878.diff"
+    sha256 "b61ff6d4a474503f00bdd96a0bf60ee245adc9e23b77bba2096da47da182513a"
+  end
+
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     args = std_cmake_args + %W[
       -DBUILD_GTK_TESTS=OFF
       -DENABLE_BOOST=OFF
-      -DENABLE_CMS=lcms2
       -DENABLE_GLIB=ON
       -DENABLE_QT5=OFF
       -DENABLE_QT6=OFF
@@ -85,6 +90,9 @@ class Poppler < Formula
     lib.install "build_static/libpoppler.a"
     lib.install "build_static/cpp/libpoppler-cpp.a"
     lib.install "build_static/glib/libpoppler-glib.a"
+
+    # Add extra metafiles for licensing information
+    prefix.install "COPYING3", "README-XPDF"
 
     resource("font-data").stage do
       system "make", "install", "prefix=#{prefix}"

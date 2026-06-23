@@ -1,29 +1,14 @@
-class Gcc < Formula
+class GccAT15 < Formula
   desc "GNU compiler collection"
   homepage "https://gcc.gnu.org/"
+  url "https://ftpmirror.gnu.org/gnu/gcc/gcc-15.3.0/gcc-15.3.0.tar.xz"
+  mirror "https://ftp.gnu.org/gnu/gcc/gcc-15.3.0/gcc-15.3.0.tar.xz"
+  sha256 "fa59c1beef8995f27c4d71c1df227587189315d3e6faff1bb4306e61b0c530eb"
   license "GPL-3.0-or-later" => { with: "GCC-exception-3.1" }
-  compatibility_version 2
-  head "https://gcc.gnu.org/git/gcc.git", branch: "master"
-
-  stable do
-    url "https://ftpmirror.gnu.org/gnu/gcc/gcc-16.1.0/gcc-16.1.0.tar.xz"
-    mirror "https://ftp.gnu.org/gnu/gcc/gcc-16.1.0/gcc-16.1.0.tar.xz"
-    sha256 "50efb4d94c3397aff3b0d61a5abd748b4dd31d9d3f2ab7be05b171d36a510f79"
-
-    # Branch from the Darwin maintainer of GCC, with a few generic fixes and
-    # Apple Silicon support, located at https://github.com/iains/gcc-16-branch
-    patch do
-      on_macos do
-        #file "Patches/gcc/gcc-16.1.0.diff"
-        url "https://raw.githubusercontent.com/Homebrew/homebrew-core/b22fda/Patches/gcc/gcc-16.1.0.diff"
-        sha256 "1593153257db78c270282742088ffe961b44d793f7bbaa458895357094d6f7fc"
-      end
-    end
-  end
 
   livecheck do
     url :stable
-    regex(%r{href=["']?gcc[._-]v?(\d+(?:\.\d+)+)(?:/?["' >]|\.t)}i)
+    regex(%r{href=["']?gcc[._-]v?(15(?:\.\d+)+)(?:/?["' >]|\.t)}i)
   end
 
   bottle do
@@ -41,13 +26,11 @@ class Gcc < Formula
 
   uses_from_macos "flex" => :build
   uses_from_macos "m4" => :build
-  #uses_from_macos "zlib"
 
   on_macos do
     # macOS make is too old, has intermittent parallel build issue
     depends_on "texinfo" => :build
     depends_on "make" => :build
-    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
   end
 
   on_linux do
@@ -55,16 +38,15 @@ class Gcc < Formula
     depends_on "zlib-ng-compat"
   end
 
-  def version_suffix
-    if build.head?
-      "HEAD"
-    else
-      version.major.to_s
+  # Branch from the Darwin maintainer of GCC, with a few generic fixes and
+  # Apple Silicon support, located at https://github.com/iains/gcc-15-branch
+  patch do
+    on_macos do
+      file "Patches/gcc/gcc-15.3.0.diff"
     end
   end
 
   def install
-    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     # GCC will suffer build errors if forced to use a particular linker.
     ENV.delete "LD"
 
@@ -81,15 +63,14 @@ class Gcc < Formula
 
     pkgversion = "Homebrew GCC #{pkg_version} #{build.used_options*" "}".strip
 
-    # Use `lib/gcc/current` to provide a path that doesn't change with GCC's version.
     args = %W[
       --prefix=#{opt_prefix}
-      --libdir=#{opt_lib}/gcc/current
+      --libdir=#{opt_lib}/gcc/#{version.major}
       --disable-nls
       --enable-checking=release
       --with-gcc-major-version-only
       --enable-languages=#{languages.join(",")}
-      --program-suffix=-#{version_suffix}
+      --program-suffix=-#{version.major}
       --with-gmp=#{Formula["gmp"].opt_prefix}
       --with-mpfr=#{Formula["mpfr"].opt_prefix}
       --with-mpc=#{Formula["libmpc"].opt_prefix}
@@ -125,9 +106,6 @@ class Gcc < Formula
       inreplace "gcc/config/i386/t-linux64", "m64=../lib64", "m64="
       inreplace "gcc/config/aarch64/t-aarch64-linux", "lp64=../lib64", "lp64="
 
-      # Use our own (recent) binutils for as
-      args << "--with-as=#{Formula["binutils"].opt_bin}/as"
-
       ENV.append_path "CPATH", Formula["zlib-ng-compat"].opt_include
       ENV.append_path "LIBRARY_PATH", Formula["zlib-ng-compat"].opt_lib
     end
@@ -147,20 +125,10 @@ class Gcc < Formula
       mv Dir[Pathname.pwd/"../instdir/#{opt_prefix}/*"], prefix
     end
 
-    bin.install_symlink bin/"gfortran-#{version_suffix}" => "gfortran"
-    bin.install_symlink bin/"gm2-#{version_suffix}" => "gm2"
-
-    # Provide a `lib/gcc/xy` directory to align with the versioned GCC formulae.
-    # We need to create `lib/gcc/xy` as a directory and not a symlink to avoid `brew link` conflicts.
-    (lib/"gcc"/version_suffix).install_symlink (lib/"gcc/current").children
-
-    # Only the newest brewed gcc should install gfortan libs as we can only have one.
-    lib.install_symlink lib.glob("gcc/current/libgfortran.*") if OS.linux?
-
     # Handle conflicts between GCC formulae and avoid interfering
     # with system compilers.
     # Rename man7.
-    man7.glob("*.7") { |file| add_suffix file, version_suffix }
+    man7.glob("*.7") { |file| add_suffix file, version.major }
     # Even when we disable building info pages some are still installed.
     rm_r(info)
 
@@ -178,7 +146,7 @@ class Gcc < Formula
 
   def post_install
     if OS.linux?
-      gcc = bin/"gcc-#{version_suffix}"
+      gcc = bin/"gcc-#{version.major}"
       libgcc = Pathname.new(Utils.safe_popen_read(gcc, "-print-libgcc-file-name")).parent
       raise "command failed: #{gcc} -print-libgcc-file-name" if $CHILD_STATUS.exitstatus.nonzero?
 
@@ -237,7 +205,7 @@ class Gcc < Formula
       #   * `-L#{HOMEBREW_PREFIX}/lib` instructs gcc to find the rest
       #     brew libraries.
       # Note: *link will silently add #{libdir} first to the RPATH
-      libdir = HOMEBREW_PREFIX/"lib/gcc/current"
+      libdir = HOMEBREW_PREFIX/"lib/gcc/#{version.major}"
       specs.write specs_string + <<~EOS
         *cpp_unique_options:
         + -isysroot #{HOMEBREW_PREFIX}/nonexistent #{system_header_dirs.map { |p| "-idirafter #{p}" }.join(" ")}
@@ -265,7 +233,7 @@ class Gcc < Formula
         return 0;
       }
     C
-    system bin/"gcc-#{version_suffix}", "-o", "hello-c", "hello-c.c"
+    system bin/"gcc-#{version.major}", "-o", "hello-c", "hello-c.c"
     assert_equal "Hello, world!\n", shell_output("./hello-c")
 
     (testpath/"hello-cc.cc").write <<~CPP
@@ -280,7 +248,7 @@ class Gcc < Formula
         return 0;
       }
     CPP
-    system bin/"g++-#{version_suffix}", "-o", "hello-cc", "hello-cc.cc"
+    system bin/"g++-#{version.major}", "-o", "hello-cc", "hello-cc.cc"
     assert_equal "Hello, world!\n", shell_output("./hello-cc")
 
     (testpath/"test.f90").write <<~FORTRAN
@@ -294,21 +262,21 @@ class Gcc < Formula
       write(*,"(A)") "Done"
       end
     FORTRAN
-    system bin/"gfortran", "-o", "test", "test.f90"
+    system bin/"gfortran-#{version.major}", "-o", "test", "test.f90"
     assert_equal "Done\n", shell_output("./test")
 
     # Modula-2 is temporarily disabled on macOS 15
     return if OS.mac? && MacOS.version >= :sequoia
 
-    (testpath/"hello.mod").write <<~MODULA2
+    (testpath/"hello.mod").write <<~EOS
       MODULE hello;
       FROM InOut IMPORT WriteString, WriteLn;
       BEGIN
            WriteString("Hello, world!");
            WriteLn;
       END hello.
-    MODULA2
-    system bin/"gm2", "-o", "hello-m2", "hello.mod"
+    EOS
+    system bin/"gm2-#{version.major}", "-o", "hello-m2", "hello.mod"
     assert_equal "Hello, world!\n", shell_output("./hello-m2")
   end
 end

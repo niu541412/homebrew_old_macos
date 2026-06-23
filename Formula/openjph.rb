@@ -1,10 +1,10 @@
 class Openjph < Formula
   desc "Open-source implementation of JPEG2000 Part-15 (or JPH or HTJ2K)"
   homepage "https://github.com/aous72/OpenJPH"
-  url "https://github.com/aous72/OpenJPH/archive/refs/tags/0.27.3.tar.gz"
-  sha256 "f96808ef72cf3acca73a52123bda3e680f6550dfb4774ad7de57eb3ce26de57a"
+  url "https://github.com/aous72/OpenJPH/archive/refs/tags/0.30.1.tar.gz"
+  sha256 "fb3ccf71af838ed2a42c6ea669308a2adaba115ae9d5862dfb1e2865b43eb5b8"
   license "BSD-2-Clause"
-  compatibility_version 2
+  compatibility_version 5
   head "https://github.com/aous72/OpenJPH.git", branch: "master"
 
   bottle do
@@ -14,7 +14,7 @@ class Openjph < Formula
   depends_on "libtiff"
 
   on_macos do
-    depends_on "llvm" if DevelopmentTools.clang_build_version <= 1100
+    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
   end
   
   patch :DATA

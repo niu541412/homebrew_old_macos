@@ -1,8 +1,8 @@
 class NodeAT24 < Formula
   desc "Open-source, cross-platform JavaScript runtime environment"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v24.16.0/node-v24.16.0.tar.xz"
-  sha256 "2ff84a6de70b6165290111b0fc656ded1ad207a799816fe720cc7c31232df30f"
+  url "https://nodejs.org/dist/v24.17.0/node-v24.17.0.tar.xz"
+  sha256 "a7ab562ed2369a29c68b72fa00e3103bcdfe37063dff799c6acc8e404e275fcd"
   license "MIT"
   compatibility_version 1
 
@@ -158,9 +158,7 @@ class NodeAT24 < Formula
 
     system "./configure", *args
     system "make", "install"
-  end
 
-  def post_install
     (lib/"node_modules/npm/npmrc").atomic_write("prefix = #{HOMEBREW_PREFIX}\n")
   end
 
@@ -188,6 +186,8 @@ class NodeAT24 < Formula
     assert_path_exists bin/"npx", "npx must exist"
     assert_predicate bin/"npx", :executable?, "npx must be executable"
     assert_match "< hello >", shell_output("#{bin}/npx --yes cowsay hello")
+
+    assert_equal HOMEBREW_PREFIX.to_s, shell_output("#{bin}/npm config get prefix").chomp
 
     # Test `uvwasi` is linked correctly
     (testpath/"wasi-smoke-test.mjs").write <<~JAVASCRIPT

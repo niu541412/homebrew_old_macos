@@ -1,9 +1,10 @@
 class Folly < Formula
   desc "Collection of reusable C++ library artifacts developed at Facebook"
   homepage "https://github.com/facebook/folly"
-  url "https://github.com/facebook/folly/archive/refs/tags/v2026.05.25.00.tar.gz"
-  sha256 "8773183092b151227046cd221e882adfb09008b3280bc31615a3e2d5ab25dbdc"
+  url "https://github.com/facebook/folly/archive/refs/tags/v2026.06.15.00.tar.gz"
+  sha256 "50c9140edea532bc3762c5615eaa5fb908796d4ff7dc99a4d8a1b0aae0ee90e2"
   license "Apache-2.0"
+  revision 1
   compatibility_version 1
   head "https://github.com/facebook/folly.git", branch: "main"
 
@@ -29,9 +30,6 @@ class Folly < Formula
   uses_from_macos "bzip2"
 
   on_macos do
-    if Formula["blake3"].linked_keg.exist?
-      odie "blake3 is linked and might interfere with the build!"
-    end
     depends_on "llvm" if DevelopmentTools.clang_build_version <= 1100
   end
 
@@ -39,13 +37,15 @@ class Folly < Formula
     depends_on "zlib-ng-compat"
   end
 
-  fails_with :clang do
-    build 1100
-    # https://github.com/facebook/folly/issues/1545
-    cause <<~EOS
-      Undefined symbols for architecture x86_64:
-        "std::__1::__fs::filesystem::path::lexically_normal() const"
-    EOS
+  # Fix fmt 12.2 compat: https://github.com/facebook/folly/pull/2661
+  patch do
+    url "https://github.com/facebook/folly/commit/4091b8d53a07512d9f8ab2b42d2dd0fddef34e35.patch?full_index=1"
+    sha256 "52a2ed7475ba76e54cd902ae035cbc457af565ff0c2cc70453a58fc01b3bc7e9"
+  end
+
+  patch do
+    url "https://github.com/facebook/folly/commit/dd2a73e8a3b7a9e044918507d52a780cb181f63d.patch?full_index=1"
+    sha256 "3b6138a50d31d785817058df5009343b35d52a8386d494e8e5f62202efcc419e"
   end
 
   # Workaround for arm64 Linux error "Missing variable is: CMAKE_ASM_CREATE_SHARED_LIBRARY"
@@ -190,4 +190,50 @@ index e07e58745..1429f54e9 100644
 +#endif
  
  } // namespace fs
+ } // namespace folly
+
+--- a/folly/hash/UniqueHashKey.cpp
++++ b/folly/hash/UniqueHashKey.cpp
+@@ -23,9 +23,11 @@
+ #include <sys/auxv.h>
+ #endif
+ 
++#if 0
+ #if __has_include(<blake3.h>)
+ #include <blake3.h>
+ #endif
++#endif
+ 
+ #if __has_include(<xxh3.h>)
+ #include <xxh3.h>
+@@ -84,6 +86,7 @@ unique_hash_key_algo_strong_sha256_init(
+   return object;
+ }
+ 
++#if 0
+ #if __has_include(<blake3.h>)
+ 
+ /// unique_hash_key_init_process_key_blake3
+@@ -168,6 +171,7 @@ struct unique_hash_key_algo_fast_xxh3_op
+ #endif // __has_include(<xxh3.h>)
+ 
+ #endif // __has_include(<blake3.h>)
++#endif
+ 
+ template <typename Hash, typename Update>
+ FOLLY_ALWAYS_INLINE static void unique_hash_key_hash_items(
+@@ -218,6 +222,7 @@ template std::array<uint8_t, 32> //
+ unique_hash_key_algo_strong_sha256_fn<32>::operator()(
+     span<detail::unique_hash_key_item const> in) const noexcept;
+ 
++#if 0
+ #if __has_include(<blake3.h>)
+ 
+ template <size_t Size>
+@@ -278,5 +283,6 @@ unique_hash_key_algo_fast_xxh3_fn<16>::o
+ #endif // __has_include(<xxh3.h>)
+ 
+ #endif // __has_include(<blake3.h>)
++#endif
+ 
  } // namespace folly

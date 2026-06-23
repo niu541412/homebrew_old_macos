@@ -1,8 +1,8 @@
 class Freerdp < Formula
   desc "X11 implementation of the Remote Desktop Protocol (RDP)"
   homepage "https://www.freerdp.com/"
-  url "https://github.com/FreeRDP/FreeRDP/archive/refs/tags/3.26.0.tar.gz"
-  sha256 "ae3b1c0b8e334ecbc2c784bce266249309fad32a0ef41947ce5c059eb18e2059"
+  url "https://github.com/FreeRDP/FreeRDP/archive/refs/tags/3.27.1.tar.gz"
+  sha256 "929ac6a5a8651fcf524e0f061aa7e0186e25eae5af2096525f99f6f7a376fc86"
   license "Apache-2.0"
 
   bottle do
@@ -19,6 +19,8 @@ class Freerdp < Formula
   depends_on "ffmpeg"
   depends_on "jansson"
   depends_on "jpeg-turbo"
+  depends_on "libcbor"
+  depends_on "libfido2"
   depends_on "libusb"
   depends_on "libx11"
   depends_on "libxcursor"

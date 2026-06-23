@@ -1,8 +1,8 @@
 class Uv < Formula
   desc "Extremely fast Python package installer and resolver, written in Rust"
   homepage "https://docs.astral.sh/uv/"
-  url "https://github.com/astral-sh/uv/archive/refs/tags/0.11.17.tar.gz"
-  sha256 "c27a8e558bbb3661cac050eb173353539a8aadce5d631f8b2b982e6c16dd9bc9"
+  url "https://github.com/astral-sh/uv/archive/refs/tags/0.11.23.tar.gz"
+  sha256 "8bbb236ae5ab7fc72261d600f79f8efd0e306acb130669371d7c11db5eb6747b"
   license any_of: ["Apache-2.0", "MIT"]
   compatibility_version 1
   head "https://github.com/astral-sh/uv.git", branch: "main"
@@ -12,7 +12,10 @@ class Uv < Formula
 
   depends_on "pkgconf" => :build
   depends_on "rust" => :build
-  depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
+  
+  on_macos do
+    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
+  end
 
   uses_from_macos "python" => :test
   uses_from_macos "bzip2"

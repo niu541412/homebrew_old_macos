@@ -7,8 +7,8 @@ class Llvm < Formula
   head "https://github.com/llvm/llvm-project.git", branch: "main"
 
   stable do
-    url "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.6/llvm-project-22.1.6.src.tar.xz"
-    sha256 "6e0b376a1f6d9873e7dfb09ae6e04b9c7024400f01733fa4c29be69d5c138bc2"
+    url "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.8/llvm-project-22.1.8.src.tar.xz"
+    sha256 "922f1817a0df7b1489272d18134ee0087a8b068828f87ac63b9861b1a9965888"
 
     # Fix triple config loading for clang-cl
     # https://github.com/llvm/llvm-project/pull/111397
@@ -34,12 +34,17 @@ class Llvm < Formula
   depends_on "swig" => :build # for lldb
   depends_on "python@3.14"
   depends_on "xz" # for lldb
-  depends_on "z3"
   depends_on "zstd"
 
   uses_from_macos "libedit"
   uses_from_macos "libffi"
   uses_from_macos "ncurses" # for lldb
+
+  # Z3 needs C++20 std::format which is only available in Xcode 15.3 or later.
+  # To avoid a dependency loop, we disable Z3 support on older macOS.
+  on_system :linux, macos: :sonoma_or_newer do
+    depends_on "z3"
+  end
 
   on_linux do
     depends_on "binutils" => :build # needed for LLVMgold plugin
@@ -81,6 +86,7 @@ class Llvm < Formula
     ]
 
     unless versioned_formula?
+      enable_z3 = deps.map(&:name).include?("z3")
       projects << "lldb"
 
       if OS.mac?
@@ -121,7 +127,7 @@ class Llvm < Formula
       -DLLVM_INCLUDE_DOCS=OFF
       -DLLVM_INCLUDE_TESTS=OFF
       -DLLVM_INSTALL_UTILS=ON
-      -DLLVM_ENABLE_Z3_SOLVER=#{versioned_formula? ? "OFF" : "ON"}
+      -DLLVM_ENABLE_Z3_SOLVER=#{enable_z3 ? "ON" : "OFF"}
       -DLLVM_OPTIMIZED_TABLEGEN=ON
       -DLLVM_TARGETS_TO_BUILD=all
       -DLLVM_USE_RELATIVE_PATHS_IN_FILES=ON
@@ -154,7 +160,7 @@ class Llvm < Formula
     builtins_cmake_args = []
 
     if OS.mac?
-      macos_sdk = MacOS.sdk_path_if_needed
+      macos_sdk = MacOS.sdk_path
       args << "-DFFI_INCLUDE_DIR=#{macos_sdk}/usr/include/ffi"
       args << "-DFFI_LIBRARY_DIR=#{macos_sdk}/usr/lib"
 

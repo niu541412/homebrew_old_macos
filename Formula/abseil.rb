@@ -11,7 +11,9 @@ class Abseil < Formula
 
   depends_on "cmake" => [:build, :test]
   depends_on "googletest" => :build # For test helpers
-  depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
+  on_macos do
+    depends_on "llvm" if DevelopmentTools.clang_build_version <= 1100
+  end
 
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
