@@ -1,8 +1,8 @@
 class Node < Formula
   desc "Open-source, cross-platform JavaScript runtime environment"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v26.3.1/node-v26.3.1.tar.xz"
-  sha256 "979b9b8308a8d2d4a27c662ed50448c85f970c0fd4f5ce8b98e8da78c441f2bc"
+  url "https://nodejs.org/dist/v26.5.0/node-v26.5.0.tar.xz"
+  sha256 "0e179470097e247a0c0769b77cc1359fc3e1baf0686df89bafe1fb48cb1887f4"
   license "MIT"
   compatibility_version 1
   head "https://github.com/nodejs/node.git", branch: "main"
@@ -65,8 +65,8 @@ class Node < Formula
   # We track major/minor from upstream Node releases.
   # We will accept *important* npm patch releases when necessary.
   resource "npm" do
-    url "https://registry.npmjs.org/npm/-/npm-11.16.0.tgz"
-    sha256 "30fc15697c771002878665c29f49dddde9aa8667fa5719854b2f52d3cd19230b"
+    url "https://registry.npmjs.org/npm/-/npm-11.17.0.tgz"
+    sha256 "b290bbb35b9e72c3ef84edbe041f28c4479c4d9ee79f555817b8caafe7ce4bba"
 
     livecheck do
       url "https://raw.githubusercontent.com/nodejs/node/refs/tags/v#{LATEST_VERSION}/deps/npm/package.json"
@@ -95,9 +95,9 @@ class Node < Formula
     # Backport fix for bundled LIEF's bundled spdlog's bundled fmt.
     # Should be fixed when new LIEF version with following commit is released and used by node:
     # https://github.com/lief-project/LIEF/commit/710637216b1f6f19569002d62e43fca201b9d91c
-    inreplace "deps/LIEF/third-party/spdlog/include/spdlog/fmt/bundled/format.h",
-              "#ifndef FMT_MODULE\n#  include <cmath>",
-              "#ifndef FMT_MODULE\n#  include <stdlib.h>\n#  include <cmath>"
+   # inreplace "deps/LIEF/third-party/spdlog/include/spdlog/fmt/bundled/format.h",
+    #          "#ifndef FMT_MODULE\n#  include <cmath>",
+     #         "#ifndef FMT_MODULE\n#  include <stdlib.h>\n#  include <cmath>"
 
     # make sure subprocesses spawned by make are using our Python 3
     ENV["PYTHON"] = which("python3.14")
@@ -107,12 +107,14 @@ class Node < Formula
 
     # Never install the bundled "npm", always prefer our
     # installation from tarball for better packaging control.
+    # Disable SEA as incompatible with --shared, https://github.com/nodejs/node/issues/63126
     args = %W[
       --prefix=#{prefix}
       --without-npm
       --with-intl=system-icu
       --shared
       --openssl-use-def-ca-store
+      --disable-single-executable-application
     ]
     args << "--tag=head" if build.head?
 
@@ -152,7 +154,7 @@ class Node < Formula
     # - `--shared-gtest` is only used for building the test suite, which we don't run here.
     # - `--shared-simdutf` seems to result in build failures.
     # - `--shared-temporal_capi` is only used when building with `--v8-enable-temporal-support`
-    # - `--shared-lief` is not available as dependency in Homebrew.
+    # - `--shared-lief` is only used for disabled SEA feature
     ignored_shared_flags = %w[
       gtest
       simdutf
@@ -238,6 +240,15 @@ class Node < Formula
     end
 
     (node_modules/"npm/npmrc").atomic_write("prefix = #{HOMEBREW_PREFIX}\n")
+  end
+
+  # Explain why some features enabled in upstream binaries are disabled in Homebrew.
+  # These require fixes upstream for Homebrew to consider enabling them. Do not open issues.
+  def caveats
+    <<~EOS
+      Single Executable Application is disabled as it doesn't work with shared libnode.
+      Temporal support is disabled as it doesn't work with shared ICU library.
+    EOS
   end
 
   test do

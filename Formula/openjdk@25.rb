@@ -115,8 +115,8 @@ class OpenjdkAT25 < Formula
     ]
     args += if OS.mac?
       ENV["LLD"] = "#{Formula["lld"].opt_bin}/lld"
-      ENV["ADLC_LDFLAGS"] = "#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}"
-      ldflags << "-headerpad_max_install_names #{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}"
+      ENV["ADLC_LDFLAGS"] = "#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
+      ldflags << "-headerpad_max_install_names #{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
 
       # Allow unbundling `freetype` on macOS
       inreplace "make/autoconf/lib-freetype.m4", '= "xmacosx"', '= ""'

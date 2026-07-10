@@ -52,8 +52,8 @@ class Protobuf < Formula
       -Dprotobuf_BUILD_TESTS=#{OS.mac? ? "ON" : "OFF"}
       -Dprotobuf_FORCE_FETCH_DEPENDENCIES=OFF
       -Dprotobuf_LOCAL_DEPENDENCIES_ONLY=ON
-      -DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}
-      -DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}
+      -DCMAKE_SHARED_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}
+      -DCMAKE_EXE_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}
     ]
 
     system "cmake", "-S", ".", "-B", "build", *cmake_args, *std_cmake_args

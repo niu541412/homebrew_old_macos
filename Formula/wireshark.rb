@@ -1,9 +1,9 @@
 class Wireshark < Formula
   desc "Network analyzer and capture tool - without graphical user interface"
   homepage "https://www.wireshark.org"
-  url "https://www.wireshark.org/download/src/all-versions/wireshark-4.6.6.tar.xz"
-  mirror "https://1.eu.dl.wireshark.org/src/all-versions/wireshark-4.6.6.tar.xz"
-  sha256 "27e7ff780cd68a7466082be82ca26c06a002e74a71646ef3a6e4683e444c1a86"
+  url "https://www.wireshark.org/download/src/all-versions/wireshark-4.6.7.tar.xz"
+  mirror "https://1.eu.dl.wireshark.org/src/all-versions/wireshark-4.6.7.tar.xz"
+  sha256 "242929b8c10ba89a8d3bcad7ff2eba8effb648d30f48e270d2e5e6ff94d88613"
   license "GPL-2.0-or-later"
   head "https://gitlab.com/wireshark/wireshark.git", branch: "master"
 
@@ -42,6 +42,7 @@ class Wireshark < Formula
 
   on_macos do
     depends_on "libgpg-error"
+    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
   end
 
   on_linux do
@@ -51,6 +52,7 @@ class Wireshark < Formula
   conflicts_with cask: "wireshark-app"
 
   def install
+    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     lua = Formula["lua"]
     plugindir = lib/"wireshark/plugins/#{version.major}-#{version.minor}"
     args = %W[
@@ -58,10 +60,10 @@ class Wireshark < Formula
       -DENABLE_SNAPPY=OFF
       -DLUA_INCLUDE_DIR=#{lua.opt_include}/lua
       -DLUA_LIBRARY=#{lua.opt_lib/shared_library("liblua")}
-      -DCARES_INCLUDE_DIR=#{Formula["c-ares"].opt_include}
-      -DGCRYPT_INCLUDE_DIR=#{Formula["libgcrypt"].opt_include}
-      -DGNUTLS_INCLUDE_DIR=#{Formula["gnutls"].opt_include}
-      -DMAXMINDDB_INCLUDE_DIR=#{Formula["libmaxminddb"].opt_include}
+      -DCARES_INCLUDE_DIR=#{formula_opt_include("c-ares")}
+      -DGCRYPT_INCLUDE_DIR=#{formula_opt_include("libgcrypt")}
+      -DGNUTLS_INCLUDE_DIR=#{formula_opt_include("gnutls")}
+      -DMAXMINDDB_INCLUDE_DIR=#{formula_opt_include("libmaxminddb")}
       -DBUILD_wireshark=OFF
       -DBUILD_logray=OFF
       -DENABLE_APPLICATION_BUNDLE=OFF

@@ -110,7 +110,7 @@ class OpenjdkAT22 < Formula
       -Wl,-rpath,#{loader_path.gsub("$", "\\$$")}/server
     ]
     args += if OS.mac?
-      ldflags << "-headerpad_max_install_names #{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}"
+      ldflags << "-headerpad_max_install_names #{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
 
       # Allow unbundling `freetype` on macOS
       inreplace "make/autoconf/lib-freetype.m4", '= "xmacosx"', '= ""'

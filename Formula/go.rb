@@ -1,11 +1,11 @@
 class Go < Formula
   desc "Open source programming language to build simple/reliable/efficient software"
   homepage "https://go.dev/"
-  url "https://go.dev/dl/go1.26.4.src.tar.gz"
-  mirror "https://fossies.org/linux/misc/go1.26.4.src.tar.gz"
-  sha256 "4f668a32fbfc1132e6a881fb968c2f1dada631492a339211735fbb255a42602d"
+  url "https://go.dev/dl/go1.26.5.src.tar.gz"
+  mirror "https://fossies.org/linux/misc/go1.26.5.src.tar.gz"
+  sha256 "495be4bc87176ac567392e5b4116abd98466d33d7b49d41e764ccc6976b2dc42"
   license "BSD-3-Clause"
-  compatibility_version 6
+  compatibility_version 7
   head "https://go.googlesource.com/go.git", branch: "master"
 
   livecheck do
@@ -57,6 +57,7 @@ class Go < Formula
     end
   end
 
+  deny_network_access!
   patch :DATA
   def install
     libexec.install Dir["*"]

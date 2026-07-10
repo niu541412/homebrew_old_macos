@@ -45,7 +45,7 @@ class Lnav < Formula
 
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
-    ENV.append "LDFLAGS", "#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}" 
+    ENV.append "LDFLAGS", "#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}" 
     system "./autogen.sh" if build.head?
     system "./configure", "--with-sqlite3=#{Formula["sqlite"].opt_prefix}",
                           "--with-libarchive=#{Formula["libarchive"].opt_prefix}",

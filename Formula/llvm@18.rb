@@ -91,7 +91,7 @@ class LlvmAT18 < Formula
       -DPACKAGE_VENDOR=Homebrew
       -DBUG_REPORT_URL=https://github.com/Homebrew/homebrew-core/issues
       -DCLANG_VENDOR_UTI=org.homebrew.clang
-      -DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}
+      -DCMAKE_SHARED_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}
     ]
 
     runtimes_cmake_args = []

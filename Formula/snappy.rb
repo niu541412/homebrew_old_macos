@@ -38,7 +38,7 @@ class Snappy < Formula
     system "cmake", "--build", "build/static"
     system "cmake", "--install", "build/static"
 
-    system "cmake", "-S", ".", "-B", "build/shared", "-DBUILD_SHARED_LIBS=ON", *args, *std_cmake_args, "-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}"
+    system "cmake", "-S", ".", "-B", "build/shared", "-DBUILD_SHARED_LIBS=ON", *args, *std_cmake_args, "-DCMAKE_SHARED_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
     system "cmake", "--build", "build/shared"
     system "cmake", "--install", "build/shared"
   end

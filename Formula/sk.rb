@@ -1,8 +1,8 @@
 class Sk < Formula
   desc "Fuzzy Finder in rust!"
   homepage "https://github.com/skim-rs/skim"
-  url "https://github.com/skim-rs/skim/archive/refs/tags/v4.8.0.tar.gz"
-  sha256 "b5dabe228f88da1e87263bc3623c565f756907d918b80452ab5f1ec20d4c3295"
+  url "https://github.com/skim-rs/skim/archive/refs/tags/v5.1.0.tar.gz"
+  sha256 "9f3d8226114b7f76e78b2a4b2819c7a23694528bd06a3f05e02e6c9667143d33"
   license "MIT"
   head "https://github.com/skim-rs/skim.git", branch: "master"
 
@@ -23,9 +23,7 @@ class Sk < Formula
   def install
     inreplace "shell/key-bindings.bash", "[[ ! -v NO_COLOR ]]", '[ -z "${NO_COLOR+x}" ]'   
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
-    # Restore default features when frizbee supports stable Rust
-    # Issue ref: https://github.com/skim-rs/skim/issues/905
-    system "cargo", "install", "--no-default-features", *std_cargo_args(features: "cli")
+    system "cargo", "install", *std_cargo_args
 
     generate_completions_from_executable(bin/"sk", "--shell")
     bash_completion.install "shell/key-bindings.bash"

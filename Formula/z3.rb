@@ -62,7 +62,7 @@ class Z3 < Formula
     system "cmake", "--build", "build"
     system "cmake", "--install", "build"
 
-    #ENV.append "CXXFLAGS", "#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}"
+    #ENV.append "CXXFLAGS", "#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
     system "make", "-C", "contrib/qprofdiff"
     bin.install "contrib/qprofdiff/qprofdiff"
 

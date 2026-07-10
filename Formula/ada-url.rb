@@ -45,7 +45,7 @@ class AdaUrl < Formula
       -DADA_TOOLS=ON
       -DCPM_LOCAL_PACKAGES_ONLY=ON
       -DFETCHCONTENT_FULLY_DISCONNECTED=ON
-      -DCMAKE_EXE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}
+      -DCMAKE_EXE_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}
     ]
 
     system "cmake", "-S", ".", "-B", "build", *args, *std_cmake_args

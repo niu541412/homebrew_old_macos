@@ -32,7 +32,7 @@ class Btop < Formula
 
   def install
     inreplace "Makefile", " -lIOReport", ""
-    ENV.append "LDFLAGS", "#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}"
+    ENV.append "LDFLAGS", "#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
     ENV.append "CC", "-D_GNU_SOURCE" if OS.linux? && Hardware::CPU.intel?
 
     system "make", "CXX=#{ENV.cxx}", "STRIP=true", "GPU_SUPPORT=false"

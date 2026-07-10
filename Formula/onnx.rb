@@ -41,7 +41,7 @@ class Onnx < Formula
       -DONNX_USE_LITE_PROTO=ON
       -DONNX_USE_PROTOBUF_SHARED_LIBS=ON
       -DPython3_EXECUTABLE=#{which("python3")}
-      -DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}
+      -DCMAKE_SHARED_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}
     ]
 
     system "cmake", "-S", ".", "-B", "build", *args, *std_cmake_args

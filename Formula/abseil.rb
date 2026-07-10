@@ -30,7 +30,7 @@ class Abseil < Formula
                     "-DBUILD_SHARED_LIBS=ON",
                     "-DABSL_PROPAGATE_CXX_STD=ON",
                     "-DABSL_ENABLE_INSTALL=ON",
-                    "-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}",
+                    "-DCMAKE_SHARED_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}",
                     *extra_cmake_args, *std_cmake_args
     system "cmake", "--build", "build"
     system "cmake", "--install", "build"

@@ -1,9 +1,9 @@
 class GccAT14 < Formula
   desc "GNU compiler collection"
   homepage "https://gcc.gnu.org/"
-  url "https://ftp.gnu.org/gnu/gcc/gcc-14.3.0/gcc-14.3.0.tar.xz"
-  mirror "https://ftpmirror.gnu.org/gcc/gcc-14.3.0/gcc-14.3.0.tar.xz"
-  sha256 "e0dc77297625631ac8e50fa92fffefe899a4eb702592da5c32ef04e2293aca3a"
+  url "https://ftpmirror.gnu.org/gnu/gcc/gcc-14.4.0/gcc-14.4.0.tar.xz"
+  mirror "https://ftp.gnu.org/gnu/gcc/gcc-14.4.0/gcc-14.4.0.tar.xz"
+  sha256 "752b6f567beac83159c77a7680b1316bdd784738bff9a9d070112c09da90f6d9"
   license "GPL-3.0-or-later" => { with: "GCC-exception-3.1" }
 
   livecheck do
@@ -26,30 +26,29 @@ class GccAT14 < Formula
 
   uses_from_macos "flex" => :build
   uses_from_macos "m4" => :build
-  uses_from_macos "zlib"
 
   on_macos do
     # macOS make is too old, has intermittent parallel build issue
     depends_on "make" => :build
+    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
   end
 
   on_linux do
     depends_on "binutils"
+    depends_on "zlib-ng-compat"
   end
-
-  # GCC bootstraps itself, so it is OK to have an incompatible C++ stdlib
-  cxxstdlib_check :skip
 
   # Branch from the Darwin maintainer of GCC, with a few generic fixes and
   # Apple Silicon support, located at https://github.com/iains/gcc-14-branch
   patch do
     on_macos do
-      url "https://raw.githubusercontent.com/Homebrew/formula-patches/473d292cbbdfd318341cb6d4bcdf8de47879bab7/gcc/gcc-14.3.0.diff"
-      sha256 "b8611362ae43a5644ab908d6e4d9bfc90346a914c3ba851197086d54148b1289"
+      #file "Patches/gcc/gcc-14.4.0.diff"
+      url "https://raw.githubusercontent.com/Homebrew/homebrew-core/refs/heads/main/Patches/gcc/gcc-14.4.0.diff"
     end
   end
 
   def install
+    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100) 
     # GCC will suffer build errors if forced to use a particular linker.
     ENV.delete "LD"
 
@@ -73,34 +72,33 @@ class GccAT14 < Formula
       --with-gcc-major-version-only
       --enable-languages=#{languages.join(",")}
       --program-suffix=-#{version.major}
-      --with-gmp=#{Formula["gmp"].opt_prefix}
-      --with-mpfr=#{Formula["mpfr"].opt_prefix}
-      --with-mpc=#{Formula["libmpc"].opt_prefix}
-      --with-isl=#{Formula["isl"].opt_prefix}
-      --with-zstd=#{Formula["zstd"].opt_prefix}
+      --with-gmp=#{formula_opt_prefix("gmp")}
+      --with-mpfr=#{formula_opt_prefix("mpfr")}
+      --with-mpc=#{formula_opt_prefix("libmpc")}
+      --with-isl=#{formula_opt_prefix("isl")}
+      --with-zstd=#{formula_opt_prefix("zstd")}
       --with-pkgversion=#{pkgversion}
       --with-bugurl="https://github.com/Homebrew/homebrew-core/issues"
       --with-system-zlib
     ]
 
     if OS.mac?
-      ENV.append "LDFLAGS", "#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}"
+      ENV.append "LDFLAGS", "#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
       cpu = Hardware::CPU.arm? ? "aarch64" : "x86_64"
       args << "--build=#{cpu}-apple-darwin#{OS.kernel_version.major}"
 
       # System headers may not be in /usr/include
-      # MacOS::CLT.separate_header_package is deprecated, https://github.com/Homebrew/brew/commit/5b3b7b10cc1193f5e6dca4fb07f15407609bb553
-      sdk = MacOS.sdk_path_if_needed if MacOS.version > :high_sierra
+      sdk = MacOS.sdk_path if MacOS.version > :high_sierra 
       args << "--with-sysroot=#{sdk}" if sdk
 
       # Avoid this semi-random failure:
       # "Error: Failed changing install name"
       # "Updated load commands do not fit in the header"
-      make_args = %w[BOOT_LDFLAGS=-Wl,-headerpad_max_install_names]
+      make_args = %w[
+        BOOT_LDFLAGS=-Wl,-headerpad_max_install_names
+        LDFLAGS_FOR_TARGET=-Wl,-headerpad_max_install_names
+      ]
     else
-      # Fix cc1: error while loading shared libraries: libisl.so.15
-      args << "--with-boot-ldflags=-static-libstdc++ -static-libgcc #{ENV.ldflags}"
-
       # Fix Linux error: gnu/stubs-32.h: No such file or directory.
       args << "--disable-multilib"
 
@@ -114,7 +112,7 @@ class GccAT14 < Formula
 
       make_args = %W[
         BOOT_CFLAGS=-I#{Formula["zlib"].opt_include}
-        BOOT_LDFLAGS=-L#{Formula["zlib"].opt_lib}
+       do BOOT_LDFLAGS=-L#{Formula["zlib"].opt_lib}
       ]
     end
 
@@ -276,14 +274,14 @@ class GccAT14 < Formula
     # Modula-2 is temporarily disabled on macOS 15
     return if OS.mac? && MacOS.version >= :sequoia
 
-    (testpath/"hello.mod").write <<~EOS
+    (testpath/"hello.mod").write <<~MODULA2
       MODULE hello;
       FROM InOut IMPORT WriteString, WriteLn;
       BEGIN
            WriteString("Hello, world!");
            WriteLn;
       END hello.
-    EOS
+    MODULA2
     system bin/"gm2-#{version.major}", "-o", "hello-m2", "hello.mod"
     assert_equal "Hello, world!\n", shell_output("./hello-m2")
   end

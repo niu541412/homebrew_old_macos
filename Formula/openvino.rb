@@ -156,8 +156,8 @@ class Openvino < Formula
     if OS.mac?
       cmake_args << "-DCMAKE_OSX_DEPLOYMENT_TARGET=#{MacOS.version}.0"
       ENV["MACOSX_DEPLOYMENT_TARGET"] = "#{MacOS.version}.0"
-      cmake_args << "-DCMAKE_SHARED_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}" 
-      cmake_args << "-DCMAKE_MODULE_LINKER_FLAGS=#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}"
+      cmake_args << "-DCMAKE_SHARED_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}" 
+      cmake_args << "-DCMAKE_MODULE_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
     end
 
     # Fix linking failure of certain binaries as Scons disables superenv

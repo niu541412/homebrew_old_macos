@@ -58,7 +58,7 @@ class Tesseract < Formula
 
     ENV.cxx11
 
-    ENV.append "LDFLAGS", "#{Formula["llvm"].opt_lib}/c++/#{shared_library("libc++")}"
+    ENV.append "LDFLAGS", "#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
     system "./autogen.sh"
     system "./configure", "--datarootdir=#{HOMEBREW_PREFIX}/share",
                           "--disable-silent-rules",
