@@ -1,9 +1,10 @@
 class Tesseract < Formula
   desc "OCR (Optical Character Recognition) engine"
   homepage "https://tesseract-ocr.github.io/"
-  url "https://github.com/tesseract-ocr/tesseract/archive/refs/tags/5.5.2.tar.gz"
-  sha256 "6235ea0dae45ea137f59c09320406f5888383741924d98855bd2ce0d16b54f21"
+  url "https://github.com/tesseract-ocr/tesseract/archive/refs/tags/5.5.3.tar.gz"
+  sha256 "9218e62793116d42a9f6d14cd9348518b27f382096eea3d0f2d1a24616bb5884"
   license "Apache-2.0"
+  compatibility_version 1
   head "https://github.com/tesseract-ocr/tesseract.git", branch: "main"
 
   livecheck do
@@ -26,11 +27,11 @@ class Tesseract < Formula
   depends_on "leptonica"
   depends_on "libarchive"
   depends_on "pango"
-  depends_on "libffi"
 
   on_macos do
     depends_on "freetype"
     depends_on "gettext"
+    depends_on "libffi" if MacOS.version < :catalina
     depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
   end
 
@@ -59,15 +60,17 @@ class Tesseract < Formula
     ENV.cxx11
 
     ENV.append "LDFLAGS", "#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
+    # The High Sierra pkg-config shims expose /usr/include explicitly.
+    # Treat it as a system include path so pkgconf filters it without
+    # disturbing Homebrew dependency paths under /usr/local.
+    if OS.mac? && MacOS.version <= :high_sierra
+      ENV.append_path "PKG_CONFIG_SYSTEM_INCLUDE_PATH", "/usr/include"
+    end
+
     system "./autogen.sh"
     system "./configure", "--datarootdir=#{HOMEBREW_PREFIX}/share",
                           "--disable-silent-rules",
                           *std_configure_args
-    %w[libcurl_CFLAGS pango_CFLAGS cairo_CFLAGS].each do |var|
-      inreplace "Makefile",
-        /^(#{var}\s*=.*?)(\s+-I\/usr\/include\b)/,
-        '\1'
-    end
     system "make", "training"
 
     # make install in the local share folder to avoid permission errors

@@ -1,17 +1,64 @@
+--- a/Library/Homebrew/api.rb
++++ b/Library/Homebrew/api.rb
+@@ -73,8 +73,9 @@ module Homebrew
+       require "development_tools"
+ 
+       retry_count = 0
+-      url = "#{Homebrew::EnvConfig.api_domain}/#{endpoint}"
+-      default_url = "#{HOMEBREW_API_DEFAULT_DOMAIN}/#{endpoint}"
++      new_endpoint = endpoint.gsub("high_sierra", "catalina")
++      url = "#{Homebrew::EnvConfig.api_domain}/#{new_endpoint}"
++      default_url = "#{HOMEBREW_API_DEFAULT_DOMAIN}/#{new_endpoint}"
+ 
+       if Homebrew.running_as_root_but_not_owned_by_root? &&
+          (!target.exist? || target.empty?)
 --- a/Library/Homebrew/brew.sh
 +++ b/Library/Homebrew/brew.sh
-@@ -649,7 +649,7 @@ HOMEBREW_MACOS_NEWEST_SUPPORTED="26"
+@@ -339,7 +339,7 @@ HOMEBREW_MACOS_NEWEST_SUPPORTED="26"
  # - `os-version min` in package/Distribution.xml
  # - https://github.com/Homebrew/install/blob/HEAD/install.sh
  HOMEBREW_MACOS_OLDEST_SUPPORTED="14"
 -HOMEBREW_MACOS_OLDEST_ALLOWED="10.15"
 +HOMEBREW_MACOS_OLDEST_ALLOWED="10.13"
  
- if [[ -n "${HOMEBREW_MACOS}" ]]
- then
+ setup-os-details
+ check-curl-version
+--- a/Library/Homebrew/cmd/update.sh
++++ b/Library/Homebrew/cmd/update.sh
+@@ -43,6 +43,9 @@ macos_version_name() {
+   then
+     # odisabled: remove support for Catalina September (or later) 2026
+     echo "catalina"
++  elif [[ "${HOMEBREW_MACOS_VERSION_NUMERIC}" -ge "101300" ]]
++  then
++    echo "high_sierra"
+   fi
+ }
+ 
+@@ -443,7 +446,8 @@ fetch_api_file() {
+     curl_exit_code=$?
+     last_json_url="${json_url}"
+     [[ ${curl_exit_code} -eq 0 ]] && break
+-  done < <(api_urls "${filename}")
++  done < <(api_urls "${filename/high_sierra/catalina}")
++  #done < <(api_urls "${filename}")
+ 
+   if [[ -n ${is_formula_file} ]] && [[ -f "${api_cache}/formula_names.txt" ]]
+   then
+--- a/Library/Homebrew/dev-cmd/bottle.rb
++++ b/Library/Homebrew/dev-cmd/bottle.rb
+@@ -392,6 +392,8 @@ module Homebrew
+       sig { params(formula: Formula).void }
+       def bottle_formula(formula)
+         local_bottle_json = args.json? && formula.local_bottle_path
++        #local_bottle_json = args.json? && formula.local_bottle_path.present?
++        # puts "@@@@ #{local_bottle_json}" # jomic
+ 
+         unless local_bottle_json
+           unless formula.latest_version_installed?
 --- a/Library/Homebrew/extend/os/mac/dev-cmd/bottle.rb
 +++ b/Library/Homebrew/extend/os/mac/dev-cmd/bottle.rb
-@@ -7,7 +7,11 @@
+@@ -7,7 +7,11 @@ module OS
        module Bottle
          sig { returns(T::Array[String]) }
          def tar_args
@@ -26,30 +73,25 @@
          sig { params(gnu_tar_formula: Formula).returns(String) }
 --- a/Library/Homebrew/extend/os/mac/extend/ENV/super.rb
 +++ b/Library/Homebrew/extend/os/mac/extend/ENV/super.rb
-@@ -134,7 +134,7 @@
+@@ -148,7 +151,11 @@ module OS
          self["HOMEBREW_PREFER_CLT_PROXIES"] = "1"
  
          # Deterministic timestamping.
 -        self["ZERO_AR_DATE"] = "1"
 +        self["ZERO_AR_DATE"] = "1" if MacOS::Xcode.version >= "11.0" || MacOS::CLT.version >= "11.0"
- 
-         # Pass `-no_fixup_chains` whenever the linker is invoked with `-undefined dynamic_lookup`.
-         # See: https://github.com/python/cpython/issues/97524
-@@ -142,7 +142,7 @@
-         no_fixup_chains
- 
-         # Strip build prefixes from linker where supported, for deterministic builds.
--        append_to_cccfg "o"
++
++        # Strip build prefixes from linker where supported, for deterministic builds.
 +        append_to_cccfg "o" if ::DevelopmentTools.ld64_version >= 512
++
+       end
  
-         # Pass `-ld_classic` whenever the linker is invoked with `-dead_strip_dylibs`
-         # on `ld` versions that don't properly handle that option.
+       sig { void }
 --- a/Library/Homebrew/macos_version.rb
 +++ b/Library/Homebrew/macos_version.rb
-@@ -30,6 +30,10 @@
-     big_sur:  "11",
+@@ -31,6 +31,10 @@ class MacOSVersion < Version
+     big_sur:     "11",
      # odisabled: remove support for Catalina September (or later) 2026
-     catalina: "10.15",
+     catalina:    "10.15",
 +    mojave:      "10.14",
 +    high_sierra: "10.13",
 +    sierra:      "10.12",
@@ -59,7 +101,17 @@
    sig { params(macos_version: MacOSVersion).returns(Version) }
 --- a/Library/Homebrew/os/mac/sdk.rb
 +++ b/Library/Homebrew/os/mac/sdk.rb
-@@ -118,6 +118,13 @@ module OS
+@@ -44,7 +44,8 @@ module OS
+ 
+       sig { params(version: MacOSVersion).returns(SDK) }
+       def sdk_for(version)
+-        sdk = all_sdks.find { |s| s.version == version }
++        sdk = all_sdks.find { |s| s.version == version } ||
++          all_sdks.select { |s| s.version > version }.min_by(&:version)
+         raise NoSDKError if sdk.nil?
+ 
+         sdk
+@@ -118,6 +119,13 @@ module OS
          sdk_settings = sdk_path/"SDKSettings.json"
          sdk_settings_string = sdk_settings.read if sdk_settings.exist?
  
@@ -75,7 +127,7 @@
          sdk_settings_json = JSON.parse(sdk_settings_string)
 --- a/Library/Homebrew/os/mac/xcode.rb
 +++ b/Library/Homebrew/os/mac/xcode.rb
-@@ -23,6 +23,10 @@
+@@ -23,6 +23,10 @@ module OS
          when "12" then "14.2"
          when "11" then "13.2.1"
          when "10.15" then "12.4"
@@ -86,7 +138,7 @@
          else
            raise "macOS '#{macos}' is invalid" unless macos.prerelease?
  
-@@ -45,6 +49,10 @@
+@@ -45,6 +49,10 @@ module OS
          when "12" then "13.1"
          when "11" then "12.2"
          when "10.15" then "11.0"
@@ -97,7 +149,7 @@
          else
            "#{macos}.0"
          end
-@@ -335,7 +343,11 @@
+@@ -331,7 +339,11 @@ module OS
          when "13" then "1500.1.0.2.5"
          when "12" then "1400.0.29.202"
          when "11" then "1300.0.29.30"
@@ -110,7 +162,7 @@
          end
        end
  
-@@ -352,6 +364,10 @@
+@@ -348,6 +360,10 @@ module OS
          when "12" then "13.0.0"
          when "11" then "12.5.0"
          when "10.15" then "11.0.0"
@@ -123,7 +175,7 @@
          end
 --- a/Library/Homebrew/shims/super/cc
 +++ b/Library/Homebrew/shims/super/cc
-@@ -469,7 +469,7 @@ class Cmd
+@@ -467,7 +467,7 @@ class Cmd
    end
  
    def oso_prefix?

@@ -1,8 +1,8 @@
 class Fontconfig < Formula
   desc "XML-based font configuration API for X Windows"
   homepage "https://wiki.freedesktop.org/www/Software/fontconfig/"
-  url "https://gitlab.freedesktop.org/fontconfig/fontconfig/-/archive/2.18.1/fontconfig-2.18.1.tar.gz"
-  sha256 "e9309564717b6301230112b173f36c288489479d381d2f0add1210ca5b16ba7e"
+  url "https://gitlab.freedesktop.org/fontconfig/fontconfig/-/archive/2.18.3/fontconfig-2.18.3.tar.gz"
+  sha256 "9ae01e1d53acdef56010c5451cd34aa41d325b2faccd8606448d8fa01b2496b3"
   license all_of: [
     "HPND-sell-variant",
     "Unicode-3.0",        # fc-case/CaseFolding.txt
@@ -37,14 +37,6 @@ class Fontconfig < Formula
   end
 
   def install
-    font_dirs = %w[
-      /System/Library/Fonts
-      /Library/Fonts
-      ~/Library/Fonts
-    ]
-
-    font_dirs << Dir["/System/Library/Assets{,V2}/com_apple_MobileAsset_Font*"].max if OS.mac?
-
     args = %W[
       --default-library=both
       --localstatedir=#{var}
@@ -53,17 +45,29 @@ class Fontconfig < Formula
       -Dtests=disabled
       -Dtools=enabled
       -Dcache-build=disabled
-      -Ddefault-fonts-dirs=#{font_dirs}
       -Dadditional-fonts-dirs=no
     ]
+
+    # Cannot use default dirs on macOS due to fc-cache recursing unnecessary directories
+    # Issue ref: https://gitlab.freedesktop.org/fontconfig/fontconfig/-/work_items/547
+    if OS.mac?
+      font_dirs = %w[
+        /System/Library/Fonts
+        /Library/Fonts
+        ~/Library/Fonts
+      ]
+      font_dirs << Dir["/System/Library/Assets{,V2}/com_apple_MobileAsset_Font*"].max
+
+      args << "-Ddefault-fonts-dirs=#{font_dirs}"
+    end
+
     system "meson", "setup", "build", *args, *std_meson_args
     system "meson", "compile", "-C", "build", "--verbose"
     system "meson", "install", "-C", "build"
   end
 
-  def post_install
-    ohai "Regenerating font cache, this may take a while"
-    system bin/"fc-cache", "--force", "--really-force", "--verbose"
+  post_install_steps do
+    run "fc-cache", args: ["--force", "--really-force", "--verbose"], base: :bin
   end
 
   test do

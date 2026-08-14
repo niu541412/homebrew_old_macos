@@ -1,8 +1,8 @@
 class OpenjdkAT21 < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  url "https://github.com/openjdk/jdk21u/archive/refs/tags/jdk-21.0.11-ga.tar.gz"
-  sha256 "76b8310966649ea8a6340f92d4f19f6f84e3083b682a514c8f1999c93373385f"
+  url "https://github.com/openjdk/jdk21u/archive/refs/tags/jdk-21.0.12-ga.tar.gz"
+  sha256 "1efd38fa2729d32cdf0ed4c9197c31ee31890ad1b7bff82984992e0c2c67c72b"
   license "GPL-2.0-only" => { with: "Classpath-exception-2.0" }
   compatibility_version 1
 
@@ -16,6 +16,9 @@ class OpenjdkAT21 < Formula
 
   keg_only :versioned_formula
 
+  deprecate! date: "2028-09-30", because: :unmaintained
+  disable! date: "2031-09-30", because: :unmaintained
+
   depends_on "autoconf" => :build
   depends_on "pkgconf" => :build
   depends_on xcode: :build # for metal
@@ -26,20 +29,20 @@ class OpenjdkAT21 < Formula
   depends_on "libpng"
   depends_on "little-cms2"
 
-  uses_from_macos "cups"
-  uses_from_macos "unzip"
-  uses_from_macos "zip"
+  uses_from_macos "unzip" => :build
+  uses_from_macos "zip" => :build
+  uses_from_macos "cups" => :no_linkage
   uses_from_macos "zlib", since: :catalina
 
   on_linux do
+    depends_on "libxt" => :build
     depends_on "alsa-lib"
-    depends_on "fontconfig"
+    depends_on "fontconfig" => :no_linkage
     depends_on "libx11"
     depends_on "libxext"
     depends_on "libxi"
-    depends_on "libxrandr"
+    depends_on "libxrandr" => :no_linkage
     depends_on "libxrender"
-    depends_on "libxt"
     depends_on "libxtst"
     depends_on "zlib-ng-compat"
   end
@@ -110,8 +113,8 @@ class OpenjdkAT21 < Formula
 
       %W[
         --enable-dtrace
-        --with-freetype-include=#{Formula["freetype"].opt_include}
-        --with-freetype-lib=#{Formula["freetype"].opt_lib}
+        --with-freetype-include=#{formula_opt_include("freetype")}
+        --with-freetype-lib=#{formula_opt_lib("freetype")}
         --with-sysroot=#{MacOS.sdk_path}
       ]
     else
@@ -131,7 +134,15 @@ class OpenjdkAT21 < Formula
     system "bash", "configure", *args
 
     ENV["MAKEFLAGS"] = "JOBS=#{ENV.make_jobs}"
-    system "make", "images"
+    5.times do |attempt|
+      system "make", "images"
+      break
+    rescue BuildError
+      raise if attempt == 4
+
+      ENV["MAKEFLAGS"] = "JOBS=1"
+      opoo "parallel make images failed; retrying serial incremental build (#{attempt + 2}/5)"
+    end
 
     jdk = libexec
     if OS.mac?

@@ -1,8 +1,8 @@
 class OpenjdkAT25 < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  url "https://github.com/openjdk/jdk25u/archive/refs/tags/jdk-25.0.3-ga.tar.gz"
-  sha256 "24080b39d5bb28c34d1fa738e8704db411c6fc7dac0962cc33305536b0391b9e"
+  url "https://github.com/openjdk/jdk25u/archive/refs/tags/jdk-25.0.4-ga.tar.gz"
+  sha256 "85934f45ebfde0024a76e3dce86218236c3712687689bf00f24c559ac1ed0e6a"
   license "GPL-2.0-only" => { with: "Classpath-exception-2.0" }
   compatibility_version 1
 
@@ -29,9 +29,9 @@ class OpenjdkAT25 < Formula
   depends_on "libpng"
   depends_on "little-cms2"
 
-  uses_from_macos "cups"
-  uses_from_macos "unzip"
-  uses_from_macos "zip"
+  uses_from_macos "unzip" => :build
+  uses_from_macos "zip" => :build
+  uses_from_macos "cups" => :no_linkage
   uses_from_macos "zlib"
 
   on_macos do
@@ -40,14 +40,14 @@ class OpenjdkAT25 < Formula
   end
 
   on_linux do
+    depends_on "libxt" => :build
     depends_on "alsa-lib"
-    depends_on "fontconfig"
+    depends_on "fontconfig" => :no_linkage
     depends_on "libx11"
     depends_on "libxext"
     depends_on "libxi"
-    depends_on "libxrandr"
+    depends_on "libxrandr" => :no_linkage
     depends_on "libxrender"
-    depends_on "libxt"
     depends_on "libxtst"
     depends_on "zlib-ng-compat"
   end
@@ -114,7 +114,7 @@ class OpenjdkAT25 < Formula
       -Wl,-rpath,#{loader_path.gsub("$", "\\$$")}/server
     ]
     args += if OS.mac?
-      ENV["LLD"] = "#{Formula["lld"].opt_bin}/lld"
+      ENV["LLD"] = "#{formula_opt_bin("lld")}/lld"
       ENV["ADLC_LDFLAGS"] = "#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
       ldflags << "-headerpad_max_install_names #{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
 
@@ -123,8 +123,8 @@ class OpenjdkAT25 < Formula
 
       %W[
         --enable-dtrace
-        --with-freetype-include=#{Formula["freetype"].opt_include}
-        --with-freetype-lib=#{Formula["freetype"].opt_lib}
+        --with-freetype-include=#{formula_opt_include("freetype")}
+        --with-freetype-lib=#{formula_opt_lib("freetype")}
         --with-sysroot=#{MacOS.sdk_path}
       ]
     else
@@ -138,9 +138,9 @@ class OpenjdkAT25 < Formula
     args << "--with-extra-ldflags=#{ldflags.join(" ")}"
 
     # Workaround for Xcode 16 bug: https://bugs.openjdk.org/browse/JDK-8340341.
-    if DevelopmentTools.clang_build_version == 1600
-      args << "--with-extra-cflags=-mllvm -enable-constraint-elimination=0"
-    end
+    #if DevelopmentTools.clang_build_version == 1600
+    #  args << "--with-extra-cflags=-mllvm -enable-constraint-elimination=0"
+    #end
 
     system "bash", "configure", *args
 
@@ -240,10 +240,10 @@ __END__
      NSWorkspaceOpenConfiguration *configuration = [NSWorkspaceOpenConfiguration configuration];
      configuration.activates = YES; // To bring app to foreground
      configuration.promptsUserIfNeeded = YES; // To allow macOS desktop prompts
-@@ -81,6 +82,18 @@
-     }];
+@@ -84,6 +85,18 @@
  
      dispatch_semaphore_wait(semaphore, timeout);
+     dispatch_release(semaphore);
 +    #else
 +    NSError *error = nil;
 +    NSWorkspaceLaunchOptions options = NSWorkspaceLaunchDefault;
@@ -259,7 +259,7 @@ __END__
  
  JNI_COCOA_EXIT(env);
      return status;
-@@ -110,9 +123,13 @@
+@@ -113,9 +126,13 @@
  
      // Prepare NSOpenConfig object
      NSArray<NSURL *> *urls = @[urlToOpen];
@@ -273,7 +273,7 @@ __END__
  
      // pre-checks for open/print/edit before calling openURLs API
      if (action == sun_lwawt_macosx_CDesktopPeer_OPEN
-@@ -124,7 +141,11 @@
+@@ -128,7 +145,11 @@
          }
          // Additionally set forPrinting=TRUE for print
          if (action == sun_lwawt_macosx_CDesktopPeer_PRINT) {
@@ -285,7 +285,7 @@ __END__
          }
      } else if (action == sun_lwawt_macosx_CDesktopPeer_EDIT) {
          if (appURI == nil
-@@ -139,6 +160,7 @@
+@@ -144,6 +165,7 @@
          }
      }
  
@@ -293,10 +293,10 @@ __END__
      // dispatch semaphores used to wait for the completion handler to update and return status
      dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
      dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(NSEC_PER_SEC)); // 1 second timeout
-@@ -155,6 +177,17 @@
-     }];
+@@ -163,6 +185,17 @@
  
      dispatch_semaphore_wait(semaphore, timeout);
+     dispatch_release(semaphore);
 +    #else
 +    NSError *error = nil;
 +    [[NSWorkspace sharedWorkspace] openURLs:urls
@@ -309,5 +309,5 @@ __END__
 +    }
 +    #endif
  
+     [urlToOpen release];
  JNI_COCOA_EXIT(env);
-     return status;

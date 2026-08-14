@@ -1,21 +1,18 @@
 class Freerdp < Formula
   desc "X11 implementation of the Remote Desktop Protocol (RDP)"
   homepage "https://www.freerdp.com/"
-  url "https://github.com/FreeRDP/FreeRDP/archive/refs/tags/3.28.0.tar.gz"
-  sha256 "2d6e37cd726163c37c2070a9aa38a4624feb6b2d414f4d9dbecd60600e971142"
+  url "https://github.com/FreeRDP/FreeRDP/archive/refs/tags/3.30.0.tar.gz"
+  sha256 "21b3f72bd688fcd1dbbef37b7129bfc9701906705572fce2a5a80b1e85ecc0ee"
   license "Apache-2.0"
+  revision 1
+  head "https://github.com/FreeRDP/FreeRDP.git", branch: "master"
 
   bottle do
   end
 
-  head do
-    url "https://github.com/FreeRDP/FreeRDP.git", branch: "master"
-    depends_on xcode: :build
-  end
 
   depends_on "cmake" => :build
   depends_on "pkgconf" => :build
-  depends_on "cjson"
   depends_on "ffmpeg"
   depends_on "jansson"
   depends_on "jpeg-turbo"
@@ -32,7 +29,6 @@ class Freerdp < Formula
   depends_on "libxrender"
   depends_on "libxv"
   depends_on "openssl@3"
-  depends_on "pkcs11-helper"
   depends_on "sdl3"
   depends_on "sdl3_ttf"
   depends_on "uriparser"
@@ -70,12 +66,12 @@ class Freerdp < Formula
 
     # Native macOS client and server implementations are unmaintained and use APIs that are obsolete on Sequoia.
     # Ref: https://github.com/FreeRDP/FreeRDP/issues/10558
-    if OS.mac? && MacOS.version >= :sequoia
+    #if OS.mac? && MacOS.version >= :sequoia
       # As a workaround, force X11 shadow server implementation. Can use -DWITH_SHADOW=OFF if it doesn't work
-      inreplace "server/shadow/CMakeLists.txt", "add_subdirectory(Mac)", "add_subdirectory(X11)"
+    #  inreplace "server/shadow/CMakeLists.txt", "add_subdirectory(Mac)", "add_subdirectory(X11)"
 
-      args += ["-DWITH_CLIENT_MAC=OFF", "-DWITH_PLATFORM_SERVER=OFF"]
-    end
+     # args += ["-DWITH_CLIENT_MAC=OFF", "-DWITH_PLATFORM_SERVER=OFF"]
+    #end
 
     system "cmake", "-S", ".", "-B", "build", *args, *std_cmake_args
     system "cmake", "--build", "build"

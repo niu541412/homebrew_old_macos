@@ -3,10 +3,9 @@ require File.expand_path("#{HOMEBREW_PREFIX}/Homebrew/Library/Taps/homebrew/home
 class PortableRuby < PortableFormula
   desc "Powerful, clean, object-oriented scripting language"
   homepage "https://www.ruby-lang.org/"
-  url "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.5.tar.gz"
-  sha256 "7d6149079a63f8ae1d326c9fa65c6019ba2dc3155eae7b39159817911c88958e"
+  url "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.6.tar.gz"
+  sha256 "837d299e8f7ddf2be31a229a7a7e019d354979825117989acb3b32b1a9be262a"
   license "Ruby"
-  revision 1
 
   # This regex restricts matching to versions other than X.Y.0.
   livecheck do
@@ -28,8 +27,8 @@ class PortableRuby < PortableFormula
   end
 
   resource "msgpack" do
-    url "https://rubygems.org/downloads/msgpack-1.8.0.gem"
-    sha256 "e64ce0212000d016809f5048b48eb3a65ffb169db22238fb4b72472fecb2d732"
+    url "https://rubygems.org/downloads/msgpack-1.8.3.gem"
+    sha256 "8bda4a6428d3244e50d6bd55854d354edbada88a4e1f4f5731a39a0f86bee6a1"
 
     livecheck do
       url "https://rubygems.org/api/v1/versions/msgpack.json"
@@ -40,8 +39,8 @@ class PortableRuby < PortableFormula
   end
 
   resource "bootsnap" do
-    url "https://rubygems.org/downloads/bootsnap-1.24.5.gem"
-    sha256 "36b677448524d279b470469aabd5dff4a980e3fa4931a0df68da4a500eb1b6c4"
+    url "https://rubygems.org/downloads/bootsnap-1.24.6.gem"
+    sha256 "c60bab88c70332290f0a2636a288f675299eb4f804a02a3c085b42eca9da164a"
 
     livecheck do
       url "https://rubygems.org/api/v1/versions/bootsnap.json"
@@ -163,12 +162,7 @@ class PortableRuby < PortableFormula
     abi_arch = `#{bin}/ruby -rrbconfig -e 'print RbConfig::CONFIG["arch"]'`
 
     if OS.linux?
-      # Don't restrict to a specific GCC compiler binary we used (e.g. gcc-5).
       inreplace lib/"ruby/#{abi_version}/#{abi_arch}/rbconfig.rb" do |s|
-        s.gsub! ENV.cxx, "c++"
-        s.gsub! ENV.cc, "cc"
-        # Change e.g. `CONFIG["AR"] = "gcc-ar-11"` to `CONFIG["AR"] = "ar"`
-        s.gsub!(/(CONFIG\[".+"\] = )"gcc-(.*)-\d+"/, '\\1"\\2"')
         # C++ compiler might have been disabled because we break it with glibc@* builds
         s.sub!(/(CONFIG\["CXX"\] = )"false"/, '\\1"c++"')
       end
@@ -180,10 +174,10 @@ class PortableRuby < PortableFormula
     libexec.mkpath
     cp openssl.libexec/"etc/openssl/cert.pem", libexec/"cert.pem"
     openssl_rb = lib/"ruby/#{abi_version}/openssl.rb"
-    inreplace openssl_rb, "require 'openssl.so'", <<~EOS.chomp
+    inreplace openssl_rb, "require 'openssl.so'", <<~RUBY.chomp
       ENV["PORTABLE_RUBY_SSL_CERT_FILE"] = ENV["SSL_CERT_FILE"] || File.expand_path("../../libexec/cert.pem", RbConfig.ruby)
       \\0
-    EOS
+    RUBY
   end
 
   test do
@@ -200,13 +194,13 @@ class PortableRuby < PortableFormula
       shell_output("#{ruby} -ropenssl -e 'puts OpenSSL::Digest::SHA256.hexdigest(\"\")'").chomp
     assert_match "200",
       shell_output("#{ruby} -ropen-uri -e 'URI.open(\"https://google.com\") { |f| puts f.status.first }'").chomp
-    system ruby, "-rrbconfig", "-e", <<~EOS
+    system ruby, "-rrbconfig", "-e", <<~RUBY
       Gem.discover_gems_on_require = false
       require "portable_ruby_gems"
       require "debug"
       require "fiddle"
       require "bootsnap"
-    EOS
+    RUBY
     system testpath/"bin/rake", "--version"
     system testpath/"bin/irb", "--version"
     system testpath/"bin/gem", "environment"

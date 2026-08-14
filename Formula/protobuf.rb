@@ -4,6 +4,7 @@ class Protobuf < Formula
   url "https://github.com/protocolbuffers/protobuf/releases/download/v35.1/protobuf-35.1.tar.gz"
   sha256 "f0b6838e7522a8da96126d487068c959bc624926368f3024ac8fd03abd0a1ac4"
   license "BSD-3-Clause"
+  revision 1
   compatibility_version 4
 
   livecheck do
@@ -37,10 +38,6 @@ class Protobuf < Formula
 
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
-    # TODO: Remove after moving CI to Ubuntu 24.04. Cannot use newer GCC as it
-    # will increase minimum GLIBCXX in bottle resulting in a runtime dependency.
-    #ENV.llvm_clang if OS.linux? && deps.map(&:name).any?("llvm")
-
     # Keep `CMAKE_CXX_STANDARD` in sync with the same variable in `abseil.rb`.
     abseil_cxx_standard = 17
     cmake_args = %W[

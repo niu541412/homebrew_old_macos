@@ -1,8 +1,8 @@
 class OpenjdkAT17 < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  url "https://github.com/openjdk/jdk17u/archive/refs/tags/jdk-17.0.19-ga.tar.gz"
-  sha256 "b165f0dd120f4455904b76cf87dd9352fd23f88c2e9a33c2532fabacc3cca962"
+  url "https://github.com/openjdk/jdk17u/archive/refs/tags/jdk-17.0.20-ga.tar.gz"
+  sha256 "ba3ac4b9d7f2c050f46ddcec39b4258660a3f09836f5a71617fd3f7311d06c0b"
   license "GPL-2.0-only" => { with: "Classpath-exception-2.0" }
   compatibility_version 1
 
@@ -16,6 +16,9 @@ class OpenjdkAT17 < Formula
 
   keg_only :versioned_formula
 
+  deprecate! date: "2026-09-30", because: :unmaintained
+  disable! date: "2029-09-30", because: :unmaintained
+
   depends_on "autoconf" => :build
   depends_on "pkgconf" => :build
   depends_on xcode: :build # for metal
@@ -27,20 +30,20 @@ class OpenjdkAT17 < Formula
   depends_on "libpng"
   depends_on "little-cms2"
 
-  uses_from_macos "cups"
-  uses_from_macos "unzip"
-  uses_from_macos "zip"
+  uses_from_macos "unzip" => :build
+  uses_from_macos "zip" => :build
+  uses_from_macos "cups" => :no_linkage
   uses_from_macos "zlib", since: :catalina
 
   on_linux do
+    depends_on "libxt" => :build
     depends_on "alsa-lib"
-    depends_on "fontconfig"
+    depends_on "fontconfig" => :no_linkage
     depends_on "libx11"
     depends_on "libxext"
     depends_on "libxi"
-    depends_on "libxrandr"
+    depends_on "libxrandr" => :no_linkage
     depends_on "libxrender"
-    depends_on "libxt"
     depends_on "libxtst"
     depends_on "zlib-ng-compat"
   end
@@ -111,8 +114,8 @@ class OpenjdkAT17 < Formula
 
       %W[
         --enable-dtrace
-        --with-freetype-include=#{Formula["freetype"].opt_include}
-        --with-freetype-lib=#{Formula["freetype"].opt_lib}
+        --with-freetype-include=#{formula_opt_include("freetype")}
+        --with-freetype-lib=#{formula_opt_lib("freetype")}
         --with-sysroot=#{MacOS.sdk_path}
       ]
     else
@@ -127,12 +130,20 @@ class OpenjdkAT17 < Formula
 
     if DevelopmentTools.clang_build_version == 1600 && MacOS::Xcode.version < "16.2"
       args << "--with-extra-cflags=-mllvm -enable-constraint-elimination=0"
-    end
+end
 
     system "bash", "configure", *args
 
     ENV["MAKEFLAGS"] = "JOBS=#{ENV.make_jobs}"
-    system "make", "images"
+    5.times do |attempt|
+      system "make", "images"
+      break
+    rescue BuildError
+      raise if attempt == 4
+
+      ENV["MAKEFLAGS"] = "JOBS=1"
+      opoo "parallel make images failed; retrying serial incremental build (#{attempt + 2}/5)"
+    end
 
     jdk = libexec
     if OS.mac?

@@ -1,8 +1,8 @@
 class Node < Formula
   desc "Open-source, cross-platform JavaScript runtime environment"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v26.5.0/node-v26.5.0.tar.xz"
-  sha256 "0e179470097e247a0c0769b77cc1359fc3e1baf0686df89bafe1fb48cb1887f4"
+  url "https://nodejs.org/dist/v26.7.0/node-v26.7.0.tar.xz"
+  sha256 "e6b182cbeeab032d1082ca4ac4fe15e3a57de691d3bde78ecf8a761fd56ee356"
   license "MIT"
   compatibility_version 1
   head "https://github.com/nodejs/node.git", branch: "main"
@@ -65,8 +65,8 @@ class Node < Formula
   # We track major/minor from upstream Node releases.
   # We will accept *important* npm patch releases when necessary.
   resource "npm" do
-    url "https://registry.npmjs.org/npm/-/npm-11.17.0.tgz"
-    sha256 "b290bbb35b9e72c3ef84edbe041f28c4479c4d9ee79f555817b8caafe7ce4bba"
+    url "https://registry.npmjs.org/npm/-/npm-11.19.0.tgz"
+    sha256 "31e9770f7dc71119a58509353b27917557aaf0ac9b5ef1a0465ee7d8ec67ae75"
 
     livecheck do
       url "https://raw.githubusercontent.com/nodejs/node/refs/tags/v#{LATEST_VERSION}/deps/npm/package.json"
@@ -91,13 +91,6 @@ class Node < Formula
     end
     
     ENV.llvm_clang if OS.linux? && deps.map(&:name).any?("llvm")
-
-    # Backport fix for bundled LIEF's bundled spdlog's bundled fmt.
-    # Should be fixed when new LIEF version with following commit is released and used by node:
-    # https://github.com/lief-project/LIEF/commit/710637216b1f6f19569002d62e43fca201b9d91c
-   # inreplace "deps/LIEF/third-party/spdlog/include/spdlog/fmt/bundled/format.h",
-    #          "#ifndef FMT_MODULE\n#  include <cmath>",
-     #         "#ifndef FMT_MODULE\n#  include <stdlib.h>\n#  include <cmath>"
 
     # make sure subprocesses spawned by make are using our Python 3
     ENV["PYTHON"] = which("python3.14")
@@ -145,8 +138,8 @@ class Node < Formula
       rm_r(buildpath/"deps"/subdir)
       args << "--shared-#{flag}"
       if formula
-        args << "--shared-#{flag}-includes=#{Formula[formula].include}"
-        args << "--shared-#{flag}-libpath=#{Formula[formula].lib}"
+        args << "--shared-#{flag}-includes=#{formula_opt_include(formula)}"
+        args << "--shared-#{flag}-libpath=#{formula_opt_lib(formula)}"
       end
     end
 
@@ -177,12 +170,11 @@ class Node < Formula
       end
     end
 
-    # Enabling LTO errors on Linux with:
-    # terminate called after throwing an instance of 'std::out_of_range'
+    # Enabling LTO causes brew to error on Linux with a vague message:
+    # Error: Process completed with exit code 123.
     # macOS also can't build with LTO when using LLVM Clang
     # LTO is unpleasant if you have to build from source.
-    # FIXME: re-enable me, currently crashes sequoia runner after 6 hours
-    # args << "--enable-lto" if OS.mac? && DevelopmentTools.clang_build_version > 1699 && build.bottle?
+    args << "--enable-lto" if OS.mac? && ENV.compiler == :clang && build.bottle?
 
     system "./configure", *args
     system "make", "install"
@@ -193,53 +185,48 @@ class Node < Formula
     bootstrap = buildpath/"npm_bootstrap"
     bootstrap.install resource("npm")
     # These dirs must exists before npm install.
-    mkdir_p libexec/"lib"
-    system "node", bootstrap/"bin/npm-cli.js", "install", "-ddd", "--global",
+    (libexec/"lib").mkpath
+    system "node", bootstrap/"bin/npm-cli.js", "install", "--loglevel=silly", "--global",
             "--prefix=#{libexec}", resource("npm").cached_download
 
     # The `package.json` stores integrity information about the above passed
     # in `cached_download` npm resource, which breaks `npm -g outdated npm`.
     # This copies back over the vanilla `package.json` to fix this issue.
-    cp bootstrap/"package.json", libexec/"lib/node_modules/npm"
+    (libexec/"lib/node_modules/npm").install bootstrap/"package.json"
 
     # These symlinks are never used & they've caused issues in the past.
     rm_r libexec/"share" if (libexec/"share").exist?
 
     # Create temporary npm and npx symlinks until post_install is done.
-    ln_s libexec/"lib/node_modules/npm/bin/npm-cli.js", bin/"npm"
-    ln_s libexec/"lib/node_modules/npm/bin/npx-cli.js", bin/"npx"
+    bin.install_symlink libexec/"lib/node_modules/npm/bin/npm-cli.js" => "npm"
+    bin.install_symlink libexec/"lib/node_modules/npm/bin/npx-cli.js" => "npx"
 
     # Use the _npm completion included in Zsh rather than generating broken completion
     generate_completions_from_executable(bin/"npm", "completion", shells: [:bash], shell_parameter_format: :none)
+
+    (libexec/"lib/node_modules/npm/npmrc").write("prefix = #{HOMEBREW_PREFIX}\n")
   end
 
-  def post_install
-    node_modules = HOMEBREW_PREFIX/"lib/node_modules"
-    node_modules.mkpath
-    # Remove npm but preserve all other modules across node updates/upgrades.
-    rm_r node_modules/"npm" if (node_modules/"npm").exist?
-
-    cp_r libexec/"lib/node_modules/npm", node_modules
-    # This symlink doesn't hop into homebrew_prefix/bin automatically so
-    # we make our own. This is a small consequence of our
-    # bottle-npm-and-retain-a-private-copy-in-libexec setup
-    # All other installs **do** symlink to homebrew_prefix/bin correctly.
-    # We ln rather than cp this because doing so mimics npm's normal install.
-    ln_sf node_modules/"npm/bin/npm-cli.js", bin/"npm"
-    ln_sf node_modules/"npm/bin/npx-cli.js", bin/"npx"
-    ln_sf bin/"npm", HOMEBREW_PREFIX/"bin/npm"
-    ln_sf bin/"npx", HOMEBREW_PREFIX/"bin/npx"
-
-    # Create manpage symlinks (or overwrite the old ones)
-    %w[man1 man5 man7].each do |man|
-      # Dirs must exist first: https://github.com/Homebrew/legacy-homebrew/issues/35969
-      mkdir_p HOMEBREW_PREFIX/"share/man/#{man}"
-      # still needed to migrate from copied file manpages to symlink manpages
-      rm(Dir[HOMEBREW_PREFIX/"share/man/#{man}/{npm.,npm-,npmrc.,package.json.,npx.}*"])
-      ln_sf Dir[node_modules/"npm/man/#{man}/{npm,package-,shrinkwrap-,npx}*"], HOMEBREW_PREFIX/"share/man/#{man}"
+  # Replace npm but preserve all other modules across node updates/upgrades.
+  # The bin symlink is to overwrite the temporary npm and npx symlinks to use
+  # global path. Also create manpage symlinks (or overwrite the old ones).
+  post_install_steps do
+    mkdir_p "{{HOMEBREW_PREFIX}}/lib/node_modules"
+    mkdir_p "{{HOMEBREW_PREFIX}}/share/man/man1"
+    mkdir_p "{{HOMEBREW_PREFIX}}/share/man/man5"
+    mkdir_p "{{HOMEBREW_PREFIX}}/share/man/man7"
+    if_path_exists "{{HOMEBREW_PREFIX}}/lib/node_modules/npm" do
+      remove "{{HOMEBREW_PREFIX}}/lib/node_modules/npm", recursive: true
     end
-
-    (node_modules/"npm/npmrc").atomic_write("prefix = #{HOMEBREW_PREFIX}\n")
+    copy "{{libexec}}/lib/node_modules/npm", "{{HOMEBREW_PREFIX}}/lib/node_modules", recursive: true
+    symlink "{{HOMEBREW_PREFIX}}/lib/node_modules/npm/bin/npm-cli.js", "{{bin}}/npm", overwrite: true
+    symlink "{{HOMEBREW_PREFIX}}/lib/node_modules/npm/bin/npx-cli.js", "{{bin}}/npx", overwrite: true
+    symlink "{{HOMEBREW_PREFIX}}/lib/node_modules/npm/man/man1/{npm,npx,package-}*",
+            "{{HOMEBREW_PREFIX}}/share/man/man1", overwrite: true, source_glob: true
+    symlink "{{HOMEBREW_PREFIX}}/lib/node_modules/npm/man/man5/{npm,npx,package-}*",
+            "{{HOMEBREW_PREFIX}}/share/man/man5", overwrite: true, source_glob: true
+    symlink "{{HOMEBREW_PREFIX}}/lib/node_modules/npm/man/man7/{npm,npx,package-}*",
+            "{{HOMEBREW_PREFIX}}/share/man/man7", overwrite: true, source_glob: true
   end
 
   # Explain why some features enabled in upstream binaries are disabled in Homebrew.

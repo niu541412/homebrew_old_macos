@@ -1,8 +1,8 @@
 class Openjdk < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  url "https://github.com/openjdk/jdk26u/archive/refs/tags/jdk-26.0.1-ga.tar.gz"
-  sha256 "1f9c92513a7b7949e6d01b1935c7b6f77096319b2657e0a4c013bc2da44e2d9d"
+  url "https://github.com/openjdk/jdk26u/archive/refs/tags/jdk-26.0.2-ga.tar.gz"
+  sha256 "c8f068a7825eea7c82fb543e59427bcdd580e6aeb82e48b3c7ed6f5e367694a7"
   license "GPL-2.0-only" => { with: "Classpath-exception-2.0" }
   compatibility_version 1
 
@@ -26,10 +26,9 @@ class Openjdk < Formula
   depends_on "libpng"
   depends_on "little-cms2"
 
-  uses_from_macos "cups"
-  uses_from_macos "unzip"
-  uses_from_macos "zip"
-  #uses_from_macos "zlib"
+  uses_from_macos "unzip" => :build
+  uses_from_macos "zip" => :build
+  uses_from_macos "cups" => :no_linkage
 
   on_macos do
     depends_on "lld"
@@ -37,14 +36,14 @@ class Openjdk < Formula
   end
 
   on_linux do
+    depends_on "libxt" => :build
     depends_on "alsa-lib"
-    depends_on "fontconfig"
+    depends_on "fontconfig" => :no_linkage
     depends_on "libx11"
     depends_on "libxext"
     depends_on "libxi"
-    depends_on "libxrandr"
+    depends_on "libxrandr" => :no_linkage
     depends_on "libxrender"
-    depends_on "libxt"
     depends_on "libxtst"
     depends_on "zlib-ng-compat"
   end
@@ -53,22 +52,22 @@ class Openjdk < Formula
   resource "boot-jdk" do
     on_macos do
       on_arm do
-        url "https://download.java.net/java/GA/jdk25.0.2/b1e0dfa218384cb9959bdcb897162d4e/10/GPL/openjdk-25.0.2_macos-aarch64_bin.tar.gz"
-        sha256 "7581b0d1752cd5acbf39e286c03f07b6cd6c205b562eb2fe753ff0253cf4c1bf"
+        url "https://download.java.net/java/GA/jdk26.0.1/458fda22e4c54d5ba572ab8d2b22eb83/8/GPL/openjdk-26.0.1_macos-aarch64_bin.tar.gz"
+        sha256 "b2d57405194a312ed4ec6ec08e83b314d3fd2e425e895d704ec5ef8ea6059e17"
       end
       on_intel do
-        url "https://github.com/niu541412/homebrew_old_macos/releases/download/openjdk/openjdk--25.0.3.high_sierra.bottle.tar.gz"
-        sha256 "898238b3959341d07c51093fadcdfc3d7948d833b522879cec7022cc5c9a9d70"
+        url "https://github.com/niu541412/homebrew_old_macos/releases/download/openjdk/openjdk--25.0.4.high_sierra.bottle.tar.gz"
+        sha256 "da78197220859919b270144c8041f459796d0c800e2933d48102ce8cbf77a7c2"
       end
     end
     on_linux do
       on_arm do
-        url "https://download.java.net/java/GA/jdk25.0.2/b1e0dfa218384cb9959bdcb897162d4e/10/GPL/openjdk-25.0.2_linux-aarch64_bin.tar.gz"
-        sha256 "671208d205e70c9805da45a483f670d49dd64654990a7b7223ccffb2abb070dd"
+        url "https://download.java.net/java/GA/jdk26.0.1/458fda22e4c54d5ba572ab8d2b22eb83/8/GPL/openjdk-26.0.1_linux-aarch64_bin.tar.gz"
+        sha256 "12a3649b2f4a0c9f6491d220bdd04b4fff07cae502b435aaff46eac0e36f4df1"
       end
       on_intel do
-        url "https://download.java.net/java/GA/jdk25.0.2/b1e0dfa218384cb9959bdcb897162d4e/10/GPL/openjdk-25.0.2_linux-x64_bin.tar.gz"
-        sha256 "555ce0821e4fe175ea50d54518cd6fbece9663c1998de529bc6ce429534457df"
+        url "https://download.java.net/java/GA/jdk26.0.1/458fda22e4c54d5ba572ab8d2b22eb83/8/GPL/openjdk-26.0.1_linux-x64_bin.tar.gz"
+        sha256 "2f2802d57b5fc414f1ddf6648ba12cc9a6454cf67b32ac95407c018f2e6ab0b0"
       end
     end
   end
@@ -80,7 +79,7 @@ class Openjdk < Formula
 
     boot_jdk = buildpath/"boot-jdk"
     resource("boot-jdk").stage boot_jdk
-    boot_jdk /= "25.0.3/libexec/openjdk.jdk/Contents/Home" if OS.mac?
+    boot_jdk /= "25.0.4/libexec/openjdk.jdk/Contents/Home" if OS.mac?
     java_options = ENV.delete("_JAVA_OPTIONS")
 
     args = %W[
@@ -121,8 +120,8 @@ class Openjdk < Formula
 
       %W[
         --enable-dtrace
-        --with-freetype-include=#{Formula["freetype"].opt_include}
-        --with-freetype-lib=#{Formula["freetype"].opt_lib}
+        --with-freetype-include=#{formula_opt_include("freetype")}
+        --with-freetype-lib=#{formula_opt_lib("freetype")}
         --with-sysroot=#{MacOS.sdk_path}
       ]
     else
@@ -143,7 +142,15 @@ class Openjdk < Formula
     system "bash", "configure", *args
 
     ENV["MAKEFLAGS"] = "JOBS=#{ENV.make_jobs}"
-    system "make", "images"
+    5.times do |attempt|
+      system "make", "images"
+      break
+    rescue BuildError
+      raise if attempt == 4
+
+      ENV["MAKEFLAGS"] = "JOBS=1"
+      opoo "parallel make images failed; retrying serial incremental build (#{attempt + 2}/5)"
+    end
 
     jdk = libexec
     if OS.mac?
@@ -226,10 +233,10 @@ __END__
      NSWorkspaceOpenConfiguration *configuration = [NSWorkspaceOpenConfiguration configuration];
      configuration.activates = YES; // To bring app to foreground
      configuration.promptsUserIfNeeded = YES; // To allow macOS desktop prompts
-@@ -81,6 +82,18 @@
-     }];
- 
+@@ -85,6 +86,19 @@
      dispatch_semaphore_wait(semaphore, timeout);
+     dispatch_release(semaphore);
+ 
 +    #else
 +    NSError *error = nil;
 +    NSWorkspaceLaunchOptions options = NSWorkspaceLaunchDefault;
@@ -242,10 +249,11 @@ __END__
 +        status = (OSStatus)error.code;
 +    }
 +    #endif
- 
++
  JNI_COCOA_EXIT(env);
      return status;
-@@ -110,9 +123,13 @@
+ }
+@@ -113,9 +127,13 @@
  
      // Prepare NSOpenConfig object
      NSArray<NSURL *> *urls = @[urlToOpen];
@@ -259,7 +267,7 @@ __END__
  
      // pre-checks for open/print/edit before calling openURLs API
      if (action == sun_lwawt_macosx_CDesktopPeer_OPEN
-@@ -124,7 +141,11 @@
+@@ -128,7 +146,11 @@
          }
          // Additionally set forPrinting=TRUE for print
          if (action == sun_lwawt_macosx_CDesktopPeer_PRINT) {
@@ -271,7 +279,7 @@ __END__
          }
      } else if (action == sun_lwawt_macosx_CDesktopPeer_EDIT) {
          if (appURI == nil
-@@ -139,6 +160,7 @@
+@@ -144,6 +166,7 @@
          }
      }
  
@@ -279,10 +287,10 @@ __END__
      // dispatch semaphores used to wait for the completion handler to update and return status
      dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
      dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(NSEC_PER_SEC)); // 1 second timeout
-@@ -155,6 +177,17 @@
-     }];
- 
+@@ -164,6 +187,18 @@ JNI_COCOA_ENTER(env);
      dispatch_semaphore_wait(semaphore, timeout);
+     dispatch_release(semaphore);
+ 
 +    #else
 +    NSError *error = nil;
 +    [[NSWorkspace sharedWorkspace] openURLs:urls
@@ -294,7 +302,8 @@ __END__
 +        status = (OSStatus)error.code;
 +    }
 +    #endif
- 
++
+     [urlToOpen release];
  JNI_COCOA_EXIT(env);
      return status;
 

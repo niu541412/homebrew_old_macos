@@ -13,11 +13,7 @@ class Btop < Formula
 
   on_macos do
     depends_on "coreutils" => :build
-    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1600
-  end
-
-  on_linux do
-    depends_on "gcc"
+    depends_on "llvm" if DevelopmentTools.clang_build_version <= 1600
   end
 
   fails_with :clang do
@@ -31,9 +27,11 @@ class Btop < Formula
   end
 
   def install
-    inreplace "Makefile", " -lIOReport", ""
-    ENV.append "LDFLAGS", "#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
-    ENV.append "CC", "-D_GNU_SOURCE" if OS.linux? && Hardware::CPU.intel?
+    if OS.mac? && DevelopmentTools.clang_build_version <= 1600
+      inreplace "Makefile", " -lIOReport", ""
+      ENV.append "LDFLAGS", "#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
+    end
+    ENV.append_to_cflags "-D_GNU_SOURCE" if OS.linux? && Hardware::CPU.intel?
 
     system "make", "CXX=#{ENV.cxx}", "STRIP=true", "GPU_SUPPORT=false"
     system "make", "PREFIX=#{prefix}", "install"

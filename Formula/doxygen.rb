@@ -1,9 +1,9 @@
 class Doxygen < Formula
   desc "Generate documentation for several programming languages"
   homepage "https://www.doxygen.nl/"
-  url "https://doxygen.nl/files/doxygen-1.17.0.src.tar.gz"
-  mirror "https://downloads.sourceforge.net/project/doxygen/rel-1.17.0/doxygen-1.17.0.src.tar.gz"
-  sha256 "fa4c3dd78785abc11ccc992bc9c01e7a8c3120fe14b8a8dfd7cefa7014530814"
+  url "https://doxygen.nl/files/doxygen-1.18.0.src.tar.gz"
+  mirror "https://downloads.sourceforge.net/project/doxygen/rel-1.18.0/doxygen-1.18.0.src.tar.gz"
+  sha256 "a1deed70a6785bbec95a2b2a9e419dc7f7b223a9d74a8644ae611c8e2dcdd354"
   license "GPL-2.0-only"
   compatibility_version 1
   head "https://github.com/doxygen/doxygen.git", branch: "master"
@@ -18,23 +18,35 @@ class Doxygen < Formula
 
   depends_on "bison" => :build
   depends_on "cmake" => :build
+  depends_on "fmt"
+  depends_on "spdlog"
   depends_on "llvm" => :build
 
   uses_from_macos "flex" => :build, since: :big_sur
   uses_from_macos "python" => :build, since: :catalina
+  uses_from_macos "sqlite"
 
   patch :DATA
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
-    system "cmake", "-S", ".", "-B", "build",
-                    "-DPython_EXECUTABLE=#{which("python3")}",
-                    "-DCMAKE_EXE_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}",
-                    *std_cmake_args
+    # Remove bundled dependencies
+    rm_r(%w[
+      deps/fmt
+      deps/spdlog
+      deps/sqlite3
+    ])
+
+    args = %W[
+      -DPython_EXECUTABLE=#{which("python3")}
+      -Duse_sys_fmt=ON
+      -Duse_sys_spdlog=ON
+      -Duse_sys_sqlite3=ON
+      -DCMAKE_EXE_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}
+    ]
+
+    system "cmake", "-S", ".", "-B", "build", *args, *std_cmake_args
     system "cmake", "--build", "build"
     system "cmake", "--install", "build"
-
-    system "cmake", "-S", ".", "-B", "build", "-Dbuild_doc=1", *std_cmake_args
-    man1.install buildpath.glob("build/man/*.1")
   end
 
   test do
@@ -42,24 +54,3 @@ class Doxygen < Formula
     system bin/"doxygen", "Doxyfile"
   end
 end
-__END__
---- a/src/dotrunner.cpp
-+++ b/src/dotrunner.cpp
-@@ -397,14 +397,15 @@ bool DotRunner::run(const DotJobs &dotJobs)
-         {
-           if (cmd.numDotFiles>0)
-           {
--            auto process = [this,cmd,dirStr]() -> size_t
-+            std::string tmpDirStr = dirStr;
-+            auto process = [this,cmd,tmpDirStr]() -> size_t
-             {
-               int exitCode;
-               if ((exitCode = Portable::system(m_dotExe, cmd.arguments, FALSE)) != 0)
-               {
-                 err_full(cmd.firstJob->srcFile, 1,
-                     "Problems running dot: exit code={}, command='{}', dir='{}', arguments='{}'",
--                    exitCode, m_dotExe, dirStr, cmd.arguments);
-+                    exitCode, m_dotExe, tmpDirStr, cmd.arguments);
-               }
-               return cmd.numDotFiles;
-             };

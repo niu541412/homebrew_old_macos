@@ -2,27 +2,24 @@ class Exiftool < Formula
   desc "Perl lib for reading and writing EXIF metadata"
   homepage "https://exiftool.org"
   # Ensure release is tagged production before submitting.
-  # https://exiftool.org/history.html
-  url "https://exiftool.org/Image-ExifTool-13.55.tar.gz"
+  # https://exiftool.sourceforge.net/history.html
+  # TODO: Upstream temporarily uses SourceForge due to issues with DreamHost. Check if they resolve this
+  url "https://downloads.sourceforge.net/project/exiftool/Image-ExifTool-13.55.tar.gz"
+  mirror "https://exiftool.org/Image-ExifTool-13.55.tar.gz"
   mirror "https://cpan.metacpan.org/authors/id/E/EX/EXIFTOOL/Image-ExifTool-13.55.tar.gz"
   sha256 "5f4c81d34ad406538c2871ad72dbfceb5d9b412b2f16cbbeb4d712d270846667"
   license any_of: ["Artistic-1.0-Perl", "GPL-1.0-or-later"]
+  revision 1
   compatibility_version 1
+  head "https://git.code.sf.net/p/exiftool/code.git", branch: "master"
 
   livecheck do
-    url "https://exiftool.org/history.html"
-    regex(/production release is.*?href=.*?Image[._-]ExifTool[._-]v?(\d+(?:\.\d+)+)\.t/i)
+    url "https://exiftool.sourceforge.net/history.html"
+    regex(/production\s+release\s+is.*?href=.*?Image[._-]ExifTool[._-]v?(\d+(?:\.\d+)+)\.t/im)
+    strategy :page_match
   end
 
   bottle do
-    sha256 cellar: :any_skip_relocation, arm64_tahoe:   "caf71016613eee3fe2ecf3c8ad6dca5e03b75af0559f9461b736bccf5088bc54"
-    sha256 cellar: :any_skip_relocation, arm64_sequoia: "88b1fe728ce9eda498584e5680569e33a2f6338d873ccbe8cf780de6fb4b3eca"
-    sha256 cellar: :any_skip_relocation, arm64_sonoma:  "04081f56f7ba98e6312e5436cd263a688de687cb54ff73e05e3274d86c47b28d"
-    sha256 cellar: :any_skip_relocation, tahoe:         "6dfd49b4005014c2abd10b651adc0be4f09481458c878adb25612d62d93b316d"
-    sha256 cellar: :any_skip_relocation, sequoia:       "fb744a44b4ca3d40e8f9ef51d42d8229a3720e96eb309847cc4cff8da901d298"
-    sha256 cellar: :any_skip_relocation, sonoma:        "562b8596777c1a6a2f6c3771f480e4fb7210c96cd0163d0e0aa4738edad8c992"
-    sha256 cellar: :any_skip_relocation, arm64_linux:   "e66e5d46417fcb3fc738e9798c7e2d0914777d2bd9fb091595482dfe99da5c4e"
-    sha256 cellar: :any_skip_relocation, x86_64_linux:  "35c7ac97205bcf990c534f904ab84179cb8a7cc86a34588a6414c37176c01a7b"
   end
 
   depends_on "cmake" => :build

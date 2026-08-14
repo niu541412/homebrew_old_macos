@@ -1,10 +1,10 @@
 class Poppler < Formula
   desc "PDF rendering library (based on the xpdf-3.0 code base)"
   homepage "https://poppler.freedesktop.org/"
-  url "https://poppler.freedesktop.org/poppler-26.07.0.tar.xz"
-  sha256 "304832f48f8a47fdca90c6b6d1f684e68f37c10c9a0726f345f4ca9df4ca01e2"
+  url "https://poppler.freedesktop.org/poppler-26.08.0.tar.xz"
+  sha256 "dc906e68cea698109706ac6aa3d2c9d4512fcfcac42d90b8afcda486d1b9abd0"
   license any_of: ["GPL-2.0-only", "GPL-3.0-only"] # see README-XPDF
-  compatibility_version 5
+  compatibility_version 6
   head "https://gitlab.freedesktop.org/poppler/poppler.git", branch: "master"
 
   livecheck do
@@ -36,12 +36,12 @@ class Poppler < Formula
   depends_on "libffi" => :build, since: :catalina
 
   uses_from_macos "gperf" => :build
-  uses_from_macos "curl", since: :monterey # 7.68.0 required by poppler as of https://gitlab.freedesktop.org/poppler/poppler/-/commit/8646a6aa2cb60644b56dc6e6e3b3af30ba920245
+  uses_from_macos "curl", since: :sonoma # needs curl >= 8.5
 
   on_macos do
     depends_on "gettext"
     depends_on "gpgme"
-    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
+    depends_on "llvm" if DevelopmentTools.clang_build_version <= 1100
   end
 
   on_linux do

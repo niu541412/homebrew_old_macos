@@ -1,8 +1,8 @@
 class Folly < Formula
   desc "Collection of reusable C++ library artifacts developed at Facebook"
   homepage "https://github.com/facebook/folly"
-  url "https://github.com/facebook/folly/archive/refs/tags/v2026.07.06.00.tar.gz"
-  sha256 "c54768eab330bc27636697a667e3db1b237a92fd3260bd65ea3008927886ebe9"
+  url "https://github.com/facebook/folly/archive/refs/tags/v2026.07.27.00.tar.gz"
+  sha256 "dcb373984e571468659be8a74c0a43a1cb6548fbe5579a806674db43d7261c4e"
   license "Apache-2.0"
   compatibility_version 1
   head "https://github.com/facebook/folly.git", branch: "main"
@@ -34,12 +34,6 @@ class Folly < Formula
 
   on_linux do
     depends_on "zlib-ng-compat"
-  end
-
-  # Fix fmt 12.2 compat: https://github.com/facebook/folly/pull/2661
-  patch do
-    url "https://github.com/facebook/folly/commit/dd2a73e8a3b7a9e044918507d52a780cb181f63d.patch?full_index=1"
-    sha256 "3b6138a50d31d785817058df5009343b35d52a8386d494e8e5f62202efcc419e"
   end
 
   # Workaround for arm64 Linux error "Missing variable is: CMAKE_ASM_CREATE_SHARED_LIBRARY"

@@ -3,8 +3,8 @@ class Netpbm < Formula
   homepage "https://netpbm.sourceforge.net/"
   # Maintainers: Look at https://sourceforge.net/p/netpbm/code/HEAD/tree/
   # for stable versions and matching revisions.
-  url "https://svn.code.sf.net/p/netpbm/code/stable", revision: "5175"
-  version "11.02.23"
+  url "https://svn.code.sf.net/p/netpbm/code/stable", revision: "5280"
+  version "11.02.27"
   license "GPL-3.0-or-later"
   version_scheme 1
   compatibility_version 1
@@ -41,8 +41,8 @@ class Netpbm < Formula
   resource "html" do
     # Rolling release, latest revision also documents previous software versions
     # NOTE: Keep "revision" and "version" in sync
-    url "https://svn.code.sf.net/p/netpbm/code/userguide", revision: "5177"
-    version "5177"
+    url "https://svn.code.sf.net/p/netpbm/code/userguide", revision: "5275"
+    version "5275"
 
     livecheck do
       url "https://sourceforge.net/p/netpbm/code/HEAD/log/?path=/userguide"
@@ -61,7 +61,7 @@ class Netpbm < Formula
       s.change_make_var! "PNGLIB", "-lpng"
       s.change_make_var! "ZLIB", "-lz"
       s.change_make_var! "JASPERLIB", "-ljasper"
-      s.change_make_var! "JASPERHDR_DIR", Formula["jasper"].opt_include/"jasper"
+      s.change_make_var! "JASPERHDR_DIR", formula_opt_include("jasper")/"jasper"
       s.gsub! "/usr/local/netpbm/rgb.txt", prefix/"misc/rgb.txt"
 
       if OS.mac?
@@ -117,7 +117,7 @@ class Netpbm < Formula
     (testpath/"test.pam").write fwrite
     system bin/"pamdice", "test.pam", "-outstem", testpath/"testing"
     assert_path_exists testpath/"testing_0_0.pam"
-    (testpath/"test.xpm").write <<~EOS
+    (testpath/"test.xpm").write <<~XPM
       /* XPM */
       static char * favicon_xpm[] = {
       "16 16 4 1",
@@ -141,7 +141,7 @@ class Netpbm < Formula
       "oooooooooooooooo",
       "XXXXXXXXXXXXXXXX",
       "XXXXXXXXXXXXXXXX"};
-    EOS
+    XPM
     ppmout = shell_output("#{bin}/xpmtoppm test.xpm")
     refute_predicate ppmout, :empty?
   end

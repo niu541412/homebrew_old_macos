@@ -1,8 +1,8 @@
 class Mold < Formula
   desc "Modern Linker"
   homepage "https://github.com/rui314/mold"
-  url "https://github.com/rui314/mold/archive/refs/tags/v2.41.0.tar.gz"
-  sha256 "0a61abac85d818437b425df856822e9d6e9982baeae5a93bcb02fe6c0060c61a"
+  url "https://github.com/rui314/mold/archive/refs/tags/v2.42.0.tar.gz"
+  sha256 "6c0f3308c5b3159a369202d970922ad819bab1bfcb5a3b3c06a723d19f65373e"
   license "MIT"
   head "https://github.com/rui314/mold.git", branch: "main"
 
@@ -23,7 +23,7 @@ class Mold < Formula
   depends_on "zstd"
 
   on_macos do
-    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1500
+    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1899
   end
 
   on_linux do
@@ -32,13 +32,13 @@ class Mold < Formula
   end
 
   fails_with :clang do
-    build 1500
-    cause "Requires C++20"
+    build 1899
+    cause "Requires C++20 `std::atomic_ref`"
   end
 
   fails_with :gcc do
-    version "7"
-    cause "Requires C++20"
+    version "10"
+    cause "Requires C++20 `std::atomic_ref`"
   end
 
   def install

@@ -1,10 +1,10 @@
 class Pandoc < Formula
   desc "Swiss-army knife of markup format conversion"
   homepage "https://pandoc.org/"
-  url "https://github.com/jgm/pandoc/archive/refs/tags/3.10.tar.gz"
-  sha256 "fc82815542c29802d087c25e2c1421146030806b71255ec40fc0e828fe1df877"
+  url "https://github.com/jgm/pandoc/archive/refs/tags/3.10.2.tar.gz"
+  sha256 "ec4c5d36e355785802601986637369ada24079ac20af6c0ee85c79502d77b3f0"
   license "GPL-2.0-or-later"
-  compatibility_version 4
+  compatibility_version 6
   head "https://github.com/jgm/pandoc.git", branch: "main"
 
   bottle do
@@ -16,7 +16,6 @@ class Pandoc < Formula
 
   uses_from_macos "unzip" => :build # for cabal install
   uses_from_macos "libffi", since: :catalina
-  # uses_from_macos "zlib", since: :catalina
 
   on_linux do
     depends_on "zlib-ng-compat"

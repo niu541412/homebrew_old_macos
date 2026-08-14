@@ -1,10 +1,10 @@
 class AdaUrl < Formula
   desc "WHATWG-compliant and fast URL parser written in modern C++"
-  homepage "https://github.com/ada-url/ada"
-  url "https://github.com/ada-url/ada/archive/refs/tags/v3.4.4.tar.gz"
-  sha256 "77bc5bbc383ed098cc60266ad6ee912de2431bb62d89248c0e17c4e712dcdaf9"
+  homepage "https://ada-url.com"
+  url "https://github.com/ada-url/ada/archive/refs/tags/v4.0.0.tar.gz"
+  sha256 "6d6c7ef7dd2e329320d34eb2ab29ccdc879ee3935af9dfb894a6640e58dc381d"
   license any_of: ["Apache-2.0", "MIT"]
-  compatibility_version 1
+  compatibility_version 2
   head "https://github.com/ada-url/ada.git", branch: "main"
 
   bottle do
@@ -17,7 +17,7 @@ class AdaUrl < Formula
   uses_from_macos "python" => :build
 
   on_macos do
-    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1500
+    depends_on "llvm" if DevelopmentTools.clang_build_version <= 1500
   end
 
   fails_with :clang do
@@ -29,6 +29,8 @@ class AdaUrl < Formula
     version "11"
     cause "Requires C++20"
   end
+
+  deny_network_access!
 
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)

@@ -19,7 +19,10 @@ class Libheif < Formula
   depends_on "libtiff"
   depends_on "webp"
   depends_on "x265"
-  depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
+  
+  on_macos do
+    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
+  end
 
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)

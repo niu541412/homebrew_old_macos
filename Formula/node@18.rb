@@ -55,6 +55,14 @@ class NodeAT18 < Formula
       ENV.append "LDFLAGS", "#{llvm.opt_lib}/c++/#{shared_library("libc++")}"
     end
 
+    # Fix to avoid fdopen() redefinition for vendored `zlib`
+    # Too many commits to backport, so apply a workaround
+    if OS.mac? && DevelopmentTools.clang_build_version >= 1700
+      inreplace "deps/v8/third_party/zlib/zutil.h",
+                "#        define fdopen(fd,mode) NULL /* No fdopen() */",
+                ""
+    end
+
     # make sure subprocesses spawned by make are using our Python 3
     ENV["PYTHON"] = which("python3.13")
 
@@ -84,8 +92,8 @@ class NodeAT18 < Formula
     system "make", "install"
   end
 
-  def post_install
-    (lib/"node_modules/npm/npmrc").atomic_write("prefix = #{HOMEBREW_PREFIX}\n")
+  post_install_steps do
+    write "lib/node_modules/npm/npmrc", "prefix = {{HOMEBREW_PREFIX}}\n", base: :prefix, overwrite: true
   end
 
   test do

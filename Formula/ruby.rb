@@ -3,19 +3,18 @@ class Ruby < Formula
   homepage "https://www.ruby-lang.org/"
   license "Ruby"
   compatibility_version 1
-  head "https://github.com/ruby/ruby.git", branch: "master"
 
   stable do
     # TODO: enable default_user_install when updating to Ruby 4.1
-    url "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.5.tar.gz"
-    sha256 "7d6149079a63f8ae1d326c9fa65c6019ba2dc3155eae7b39159817911c88958e"
+    url "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.6.tar.gz"
+    sha256 "837d299e8f7ddf2be31a229a7a7e019d354979825117989acb3b32b1a9be262a"
 
     # Should be updated only when Ruby is updated (if an update is available).
     # The exception is Rubygem security fixes, which mandate updating this
     # formula & the versioned equivalents and bumping the revisions.
     resource "rubygems" do
-      url "https://rubygems.org/rubygems/rubygems-4.0.11.tgz"
-      sha256 "95fe9d9d5293d022ceb29afac56eee4e2d46f901de309ab46915ff84d5ec68e8"
+      url "https://rubygems.org/rubygems/rubygems-4.0.16.tgz"
+      sha256 "ea9c669526af82874f8f33f69bea1b6ddd99283756e598227a9a890035a5a06a"
 
       livecheck do
         url "https://rubygems.org/pages/download"
@@ -32,9 +31,12 @@ class Ruby < Formula
   bottle do
   end
 
-  keg_only :provided_by_macos
+  head do
+    url "https://github.com/ruby/ruby.git", branch: "master"
 
-  depends_on "autoconf" => :build
+    depends_on "autoconf" => :build
+  end
+
   depends_on "pkgconf" => :build
   depends_on "rust" => :build
   depends_on "libyaml"
@@ -43,7 +45,7 @@ class Ruby < Formula
     depends_on "llvm" if DevelopmentTools.clang_build_version <= 1100
   end
 
-  uses_from_macos "gperf"
+  #uses_from_macos "gperf"
   uses_from_macos "libffi"
   uses_from_macos "libxcrypt"
 
@@ -78,7 +80,7 @@ class Ruby < Formula
 
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
-    paths = %w[libyaml openssl@3].map { |f| Formula[f].opt_prefix }
+    paths = %w[libyaml openssl@3].map { |f| formula_opt_prefix(f) }
     # Add versioned Ruby RPATH so user-installed gems can work when user is switched to versioned Ruby
     paths << versioned_opt_prefix if OS.linux? && !versioned_formula?
 
@@ -119,19 +121,6 @@ class Ruby < Formula
 
     # A newer version of ruby-mode.el is shipped with Emacs
     elisp.install Dir["misc/*.el"].reject { |f| f == "misc/ruby-mode.el" }
-
-    if OS.linux?
-      arch = Utils.safe_popen_read(
-        bin/"ruby", "-rrbconfig", "-e", 'print RbConfig::CONFIG["arch"]'
-      ).chomp
-      # Don't restrict to a specific GCC compiler binary we used (e.g. gcc-5).
-      inreplace lib/"ruby/#{api_version}/#{arch}/rbconfig.rb" do |s|
-        s.gsub! ENV.cxx, "c++"
-        s.gsub! ENV.cc, "cc"
-        # Change e.g. `CONFIG["AR"] = "gcc-ar-11"` to `CONFIG["AR"] = "ar"`
-        s.gsub!(/(CONFIG\[".+"\] = )"(?:gcc|g\+\+)-(.*)-\d+"/, '\\1"\\2"')
-      end
-    end
 
     if build.stable? # Use bundled RubyGems for --HEAD (will be newer)
       # This is easier than trying to keep both current & versioned Ruby

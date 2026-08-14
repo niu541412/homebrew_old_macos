@@ -1,8 +1,8 @@
 class Tbb < Formula
   desc "Rich and complete approach to parallelism in C++"
   homepage "https://uxlfoundation.github.io/oneTBB/"
-  url "https://github.com/uxlfoundation/oneTBB/archive/refs/tags/v2023.0.0.tar.gz"
-  sha256 "f8767b971ec6aea25dde58ae0f593e94e7aa75a739a86f67967012f69e2199b1"
+  url "https://github.com/uxlfoundation/oneTBB/archive/refs/tags/v2023.1.0.tar.gz"
+  sha256 "191288b52e1e6b17198000b64d77d194bb65e791be46ebc606e9b091781e2070"
   license "Apache-2.0"
   compatibility_version 1
 
@@ -16,11 +16,16 @@ class Tbb < Formula
   depends_on "swig" => :build
   depends_on "hwloc"
 
+  on_macos do
+    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
+  end
+  
   def python3
     "python3.14"
   end
 
   def install
+    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     site_packages = Language::Python.site_packages(python3)
     tbb_site_packages = prefix/site_packages/"tbb"
     ENV.append "LDFLAGS", "-Wl,-rpath,#{rpath},-rpath,#{rpath(source: tbb_site_packages)}"
@@ -29,7 +34,6 @@ class Tbb < Formula
       -DTBB_TEST=OFF
       -DTBB4PY_BUILD=ON
       -DPYTHON_EXECUTABLE=#{which(python3)}
-      -DTBB_FILE_TRIM=OFF
     ]
 
     system "cmake", "-S", ".", "-B", "build/shared",
