@@ -79,7 +79,7 @@ class OpenjdkAT23 < Formula
 
     boot_jdk = buildpath/"boot-jdk"
     resource("boot-jdk").stage boot_jdk
-    boot_jdk /= "22.0.2/libexec/openjdk.jdk/Contents/Home" if OS.mac?
+    boot_jdk = Dir[boot_jdk/"**/Contents/Home"].first if OS.mac?
     java_options = ENV.delete("_JAVA_OPTIONS")
 
     args = %W[

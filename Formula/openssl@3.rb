@@ -1,9 +1,10 @@
 class OpensslAT3 < Formula
   desc "Cryptography and SSL/TLS Toolkit"
   homepage "https://openssl-library.org"
-  url "https://github.com/openssl/openssl/releases/download/openssl-3.6.3/openssl-3.6.3.tar.gz"
-  mirror "http://fresh-center.net/linux/misc/openssl-3.6.3.tar.gz"
-  sha256 "243a86649cf6f23eeb6a2ff2456e09e5d77dd9018a54d3d96b0c6bdd6ba6c7f1"
+  url "https://github.com/openssl/openssl/releases/download/openssl-3.6.4/openssl-3.6.4.tar.gz"
+  mirror "http://fresh-center.net/linux/misc/openssl-3.6.4.tar.gz"
+  mirror "http://deb.debian.org/debian/pool/main/o/openssl/openssl_3.6.4.orig.tar.gz"
+  sha256 "9bffaa1ad1e07b354c21bd3324ec02fa15579f45a7d0494b3e74bc449b7333ef"
   license "Apache-2.0"
   compatibility_version 1
 
@@ -26,9 +27,9 @@ class OpensslAT3 < Formula
     end
 
     resource "Test::More" do
-      url "https://cpan.metacpan.org/authors/id/E/EX/EXODIST/Test-Simple-1.302222.tar.gz"
-      mirror "http://cpan.metacpan.org/authors/id/E/EX/EXODIST/Test-Simple-1.302222.tar.gz"
-      sha256 "7cf84a18d6c9450e53ae8b4de5d5fa32c9fe99f3cebbe408fe59433f19921ec2"
+      url "https://cpan.metacpan.org/authors/id/E/EX/EXODIST/Test-Simple-1.302224.tar.gz"
+      mirror "http://cpan.metacpan.org/authors/id/E/EX/EXODIST/Test-Simple-1.302224.tar.gz"
+      sha256 "6c366b8ab03553976dd1813940770b60bdb4396e7bbae8c263baa6e96ec52fd7"
     end
 
     resource "ExtUtils::MakeMaker" do
@@ -42,24 +43,6 @@ class OpensslAT3 < Formula
   link_overwrite "lib/libcrypto*", "lib/libssl*"
   link_overwrite "lib/pkgconfig/libcrypto.pc", "lib/pkgconfig/libssl.pc", "lib/pkgconfig/openssl.pc"
   link_overwrite "share/doc/openssl/*", "share/man/man*/*ssl"
-
-  # Backport commits to avoid test timing failures
-  patch do
-    url "https://github.com/openssl/openssl/commit/9061e9381306a053908177aca8509c262015cdf3.patch?full_index=1"
-    sha256 "9f68feae9abfaabe65f79d2877f3dde7aa0428c669ed6af45dc193544268438e"
-  end
-  patch do
-    url "https://github.com/openssl/openssl/commit/2e2438b494e7f661be5212e4732f7fab86bf6303.patch?full_index=1"
-    sha256 "543a5998951fe540444642123398ffaa6306938be573f95c0bc915f1e6af7a36"
-  end
-  patch do
-    url "https://github.com/openssl/openssl/commit/ea598f5dd23f1d64d8952e20fcf95d9f3a21d654.patch?full_index=1"
-    sha256 "05bb323a3495d68961fa8cf7a989edfb0fa6e6dcc7ccdcc4e55a4e3f946d2762"
-  end
-  patch do
-    url "https://github.com/openssl/openssl/commit/cffb97915813aeeef58ee9a0d33c05d3d45e1fe6.patch?full_index=1"
-    sha256 "fc34b4bf106c44a89ded746e35d587d73e8485393a93b52110ba95b06717dd69"
-  end
 
   # SSLv2 died with 1.1.0, so no-ssl2 no longer required.
   # SSLv3 & zlib are off by default with 1.1.0 but this may not
@@ -82,6 +65,9 @@ class OpensslAT3 < Formula
     args
   end
 
+  # Tests require network access
+  allow_network_access! :build
+
   def install
     if OS.linux?
       ENV.prepend_create_path "PERL5LIB", buildpath/"lib/perl5"
@@ -95,9 +81,6 @@ class OpensslAT3 < Formula
         end
       end
     end
-
-    # This could interfere with how we expect OpenSSL to build.
-    ENV.delete("OPENSSL_LOCAL_CONFIG_DIR")
 
     # This ensures where Homebrew's Perl is needed the Cellar path isn't
     # hardcoded into OpenSSL's scripts, causing them to break every Perl update.
@@ -127,13 +110,10 @@ class OpensslAT3 < Formula
     touch %w[certs private].map { |subdir| openssldir/subdir/".keepme" }
   end
 
-  def openssldir
-    etc/"openssl@3"
-  end
+  def openssldir = pkgetc
 
-  def post_install
-    rm(openssldir/"cert.pem") if (openssldir/"cert.pem").exist?
-    openssldir.install_symlink Formula["ca-certificates"].pkgetc/"cert.pem"
+  post_install_steps do
+    symlink "{{etc}}/ca-certificates/cert.pem", "{{pkgetc}}/cert.pem", overwrite: true
   end
 
   def caveats

@@ -1,15 +1,13 @@
 class Freerdp < Formula
   desc "X11 implementation of the Remote Desktop Protocol (RDP)"
   homepage "https://www.freerdp.com/"
-  url "https://github.com/FreeRDP/FreeRDP/archive/refs/tags/3.30.0.tar.gz"
-  sha256 "21b3f72bd688fcd1dbbef37b7129bfc9701906705572fce2a5a80b1e85ecc0ee"
+  url "https://github.com/FreeRDP/FreeRDP/archive/refs/tags/3.31.0.tar.gz"
+  sha256 "3c66cdd4506b86c451dd0817cb60aa8434c32f56ac1f92aa543f332b376113af"
   license "Apache-2.0"
-  revision 1
   head "https://github.com/FreeRDP/FreeRDP.git", branch: "master"
 
   bottle do
   end
-
 
   depends_on "cmake" => :build
   depends_on "pkgconf" => :build
@@ -63,15 +61,6 @@ class Freerdp < Formula
       -DCMAKE_SHARED_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}
       -DCMAKE_EXE_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}
     ]
-
-    # Native macOS client and server implementations are unmaintained and use APIs that are obsolete on Sequoia.
-    # Ref: https://github.com/FreeRDP/FreeRDP/issues/10558
-    #if OS.mac? && MacOS.version >= :sequoia
-      # As a workaround, force X11 shadow server implementation. Can use -DWITH_SHADOW=OFF if it doesn't work
-    #  inreplace "server/shadow/CMakeLists.txt", "add_subdirectory(Mac)", "add_subdirectory(X11)"
-
-     # args += ["-DWITH_CLIENT_MAC=OFF", "-DWITH_PLATFORM_SERVER=OFF"]
-    #end
 
     system "cmake", "-S", ".", "-B", "build", *args, *std_cmake_args
     system "cmake", "--build", "build"

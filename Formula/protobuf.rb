@@ -1,11 +1,10 @@
 class Protobuf < Formula
   desc "Protocol buffers (Google's data interchange format)"
   homepage "https://protobuf.dev/"
-  url "https://github.com/protocolbuffers/protobuf/releases/download/v35.1/protobuf-35.1.tar.gz"
-  sha256 "f0b6838e7522a8da96126d487068c959bc624926368f3024ac8fd03abd0a1ac4"
+  url "https://github.com/protocolbuffers/protobuf/releases/download/v36.0/protobuf-36.0.tar.gz"
+  sha256 "399931c793f4ac6db81045b00b06dd07c877b48aeecf36c797f65c541fb533e7"
   license "BSD-3-Clause"
-  revision 1
-  compatibility_version 4
+  compatibility_version 5
 
   livecheck do
     url :stable
@@ -27,7 +26,6 @@ class Protobuf < Formula
   end
 
   on_linux do
-    depends_on "llvm" => :build if DevelopmentTools.gcc_version < 13
     depends_on "zlib-ng-compat"
   end
 

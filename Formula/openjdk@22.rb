@@ -1,8 +1,6 @@
 class OpenjdkAT22 < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  #url "https://github.com/openjdk/jdk24u/archive/refs/tags/jdk-24.0.2-ga.tar.gz"
-  #sha256 "d5a1b364de4335d86590d2e91eb8fce0560ade28759734c531915b8293e502e8"
   url "https://github.com/openjdk/jdk22u/archive/refs/tags/jdk-22.0.2-ga.tar.gz"
   sha256 "c423015bda77bea13e0a13f4dc705972c2185c3c6e6e30b183f733f2b95aa1a4"
   license "GPL-2.0-only" => { with: "Classpath-exception-2.0" }
@@ -54,10 +52,6 @@ class OpenjdkAT22 < Formula
       on_intel do
         url "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_macos-x64_bin.tar.gz"
         sha256 "8fd09e15dc406387a0aba70bf5d99692874e999bf9cd9208b452b5d76ac922d3"
-        #url "https://download.java.net/java/GA/jdk23.0.2/6da2a6609d6e406f85c491fcb119101b/7/GPL/openjdk-23.0.2_macos-x64_bin.tar.gz"
-        #sha256 "b4cc7d7b51520e99308e1b4d3f8467790072c42319b9d3838ec8cfd4f69f0bc1"
-        # https://download.java.net/java/GA/jdk24.0.2/fdc5d0102fe0414db21410ad5834341f/12/GPL/openjdk-24.0.2_macos-x64_bin.tar.gz"
-        # sha256 "a2ce194209f0a1c311275cdbaadf586e48295303dbacee3ebdf57d17beecdbb2"
       end
     end
     on_linux do

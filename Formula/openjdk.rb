@@ -1,8 +1,8 @@
 class Openjdk < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  url "https://github.com/openjdk/jdk26u/archive/refs/tags/jdk-26.0.2-ga.tar.gz"
-  sha256 "c8f068a7825eea7c82fb543e59427bcdd580e6aeb82e48b3c7ed6f5e367694a7"
+  url "https://github.com/openjdk/jdk26u/archive/refs/tags/jdk-26.0.2.1-ga.tar.gz"
+  sha256 "91dd5ddd93e156f00a12c28d9b74b5ee1704e9f12d323d412d158b12e91d56d0"
   license "GPL-2.0-only" => { with: "Classpath-exception-2.0" }
   compatibility_version 1
 
@@ -18,7 +18,6 @@ class Openjdk < Formula
 
   depends_on "autoconf" => :build
   depends_on "pkgconf" => :build
-  depends_on xcode: :build # for metal
   depends_on "freetype"
   depends_on "giflib"
   depends_on "harfbuzz"
@@ -31,7 +30,7 @@ class Openjdk < Formula
   uses_from_macos "cups" => :no_linkage
 
   on_macos do
-    depends_on "lld"
+    depends_on xcode: :build # for metal
     depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
   end
 
@@ -56,8 +55,8 @@ class Openjdk < Formula
         sha256 "b2d57405194a312ed4ec6ec08e83b314d3fd2e425e895d704ec5ef8ea6059e17"
       end
       on_intel do
-        url "https://github.com/niu541412/homebrew_old_macos/releases/download/openjdk/openjdk--25.0.4.high_sierra.bottle.tar.gz"
-        sha256 "da78197220859919b270144c8041f459796d0c800e2933d48102ce8cbf77a7c2"
+        url "https://github.com/niu541412/homebrew_old_macos/releases/download/openjdk/openjdk@25--25.0.4.1.high_sierra.bottle.tar.gz"
+        sha256 "e6cb17ecd7c95d203d5f02a5d05f235863d0b392804f6c6e2e7ce95213387423"
       end
     end
     on_linux do
@@ -74,12 +73,12 @@ class Openjdk < Formula
 
   patch :DATA
   def install
-    ENV.O3
+    # ENV.O3
     inreplace "make/autoconf/flags.m4", "MACOSX_VERSION_MIN=11.00.00", "MACOSX_VERSION_MIN=#{MacOS.version}.00"
 
     boot_jdk = buildpath/"boot-jdk"
     resource("boot-jdk").stage boot_jdk
-    boot_jdk /= "25.0.4/libexec/openjdk.jdk/Contents/Home" if OS.mac?
+    boot_jdk = Dir[boot_jdk/"**/Contents/Home"].first if OS.mac?
     java_options = ENV.delete("_JAVA_OPTIONS")
 
     args = %W[
@@ -111,8 +110,6 @@ class Openjdk < Formula
       -Wl,-rpath,#{loader_path.gsub("$", "\\$$")}/server
     ]
     args += if OS.mac?
-      ENV["LLD"] = "#{Formula["lld"].opt_bin}/lld"
-      ENV["ADLC_LDFLAGS"] = "#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
       ldflags << "-headerpad_max_install_names #{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
 
       # Allow unbundling `freetype` on macOS
@@ -133,11 +130,6 @@ class Openjdk < Formula
       ]
     end
     args << "--with-extra-ldflags=#{ldflags.join(" ")}"
-
-    # Workaround for Xcode 16 bug: https://bugs.openjdk.org/browse/JDK-8340341.
-    if DevelopmentTools.clang_build_version == 1600
-      args << "--with-extra-cflags=-mllvm -enable-constraint-elimination=0"
-    end
 
     system "bash", "configure", *args
 

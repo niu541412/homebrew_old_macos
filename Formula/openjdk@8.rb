@@ -1,10 +1,10 @@
 class OpenjdkAT8 < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  url "https://github.com/openjdk/jdk8u/archive/refs/tags/jdk8u502-ga.tar.gz"
-  version "1.8.0-502"
-  BUILD_NUMBER = "b07".freeze # Please update when a new GA release is available: https://wiki.openjdk.org/spaces/jdk8u/overview
-  sha256 "c94a5d41b8c260c07672a4b4d9a7f0e27510d71a7d33d9e9625f5e8341832cbf"
+  url "https://github.com/openjdk/jdk8u/archive/refs/tags/jdk8u504-ga.tar.gz"
+  version "1.8.0-504"
+  BUILD_NUMBER = "b01".freeze # Please update when a new GA release is available: https://wiki.openjdk.org/spaces/jdk8u/overview
+  sha256 "406a990606b3452485b1554d0b9463fa0ef8e34c70cd1033b54ff12dd9a2f611"
   license "GPL-2.0-only"
 
   livecheck do
@@ -176,9 +176,6 @@ class OpenjdkAT8 < Formula
         extra_cflags << "-F#{buildpath}"
         extra_cxxflags << "-F#{buildpath}"
       end
-
-      # Work around for Xcode 16 bug: https://bugs.openjdk.org/browse/JDK-8340341
-      extra_cflags << "-mllvm -enable-constraint-elimination=0" if DevelopmentTools.clang_build_version == 1600
 
       args << "--with-extra-cflags=#{extra_cflags.join(" ")}" unless extra_cflags.empty?
       args << "--with-extra-cxxflags=#{extra_cxxflags.join(" ")}" unless extra_cxxflags.empty?

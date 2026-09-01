@@ -32,6 +32,7 @@ class AdaUrl < Formula
 
   deny_network_access!
 
+  patch :DATA
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     # ld: unknown options: --gc-sections
@@ -83,3 +84,14 @@ class AdaUrl < Formula
     assert_match "search_start 25", output
   end
 end
+__END__
+--- a/include/ada/url_pattern_regex.h
++++ b/include/ada/url_pattern_regex.h
+@@ -7,6 +7,7 @@
+
+ #include <string>
+ #include <string_view>
++#include <vector>
+ 
+ #ifdef ADA_USE_UNSAFE_STD_REGEX_PROVIDER
+ #include <regex>

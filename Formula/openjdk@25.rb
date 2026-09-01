@@ -1,8 +1,8 @@
 class OpenjdkAT25 < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  url "https://github.com/openjdk/jdk25u/archive/refs/tags/jdk-25.0.4-ga.tar.gz"
-  sha256 "85934f45ebfde0024a76e3dce86218236c3712687689bf00f24c559ac1ed0e6a"
+  url "https://github.com/openjdk/jdk25u/archive/refs/tags/jdk-25.0.4.1-ga.tar.gz"
+  sha256 "1e5908f90d732e0ed3f737aac7603863c2cc157e464e036ac0accadb87af4391"
   license "GPL-2.0-only" => { with: "Classpath-exception-2.0" }
   compatibility_version 1
 
@@ -21,7 +21,6 @@ class OpenjdkAT25 < Formula
 
   depends_on "autoconf" => :build
   depends_on "pkgconf" => :build
-  depends_on xcode: :build # for metal
   depends_on "freetype"
   depends_on "giflib"
   depends_on "harfbuzz"
@@ -35,7 +34,7 @@ class OpenjdkAT25 < Formula
   uses_from_macos "zlib"
 
   on_macos do
-    depends_on "lld"
+    depends_on xcode: :build # for metal
     depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
   end
 
@@ -82,7 +81,7 @@ class OpenjdkAT25 < Formula
 
     boot_jdk = buildpath/"boot-jdk"
     resource("boot-jdk").stage boot_jdk
-    boot_jdk /= "24.0.2/libexec/openjdk.jdk/Contents/Home" if OS.mac?
+    boot_jdk = Dir[boot_jdk/"**/Contents/Home"].first if OS.mac?
     java_options = ENV.delete("_JAVA_OPTIONS")
 
     args = %W[
@@ -114,8 +113,6 @@ class OpenjdkAT25 < Formula
       -Wl,-rpath,#{loader_path.gsub("$", "\\$$")}/server
     ]
     args += if OS.mac?
-      ENV["LLD"] = "#{formula_opt_bin("lld")}/lld"
-      ENV["ADLC_LDFLAGS"] = "#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
       ldflags << "-headerpad_max_install_names #{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
 
       # Allow unbundling `freetype` on macOS
@@ -137,15 +134,18 @@ class OpenjdkAT25 < Formula
     end
     args << "--with-extra-ldflags=#{ldflags.join(" ")}"
 
-    # Workaround for Xcode 16 bug: https://bugs.openjdk.org/browse/JDK-8340341.
-    #if DevelopmentTools.clang_build_version == 1600
-    #  args << "--with-extra-cflags=-mllvm -enable-constraint-elimination=0"
-    #end
-
     system "bash", "configure", *args
 
     ENV["MAKEFLAGS"] = "JOBS=#{ENV.make_jobs}"
-    system "make", "images"
+    5.times do |attempt|
+      system "make", "images"
+      break
+    rescue BuildError
+      raise if attempt == 4
+
+      ENV["MAKEFLAGS"] = "JOBS=1"
+      opoo "parallel make images failed; retrying serial incremental build (#{attempt + 2}/5)"
+    end
 
     jdk = libexec
     if OS.mac?

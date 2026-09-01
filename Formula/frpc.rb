@@ -1,10 +1,15 @@
 class Frpc < Formula
   desc "Client app of fast reverse proxy to expose a local server to the internet"
   homepage "https://github.com/fatedier/frp"
-  url "https://github.com/fatedier/frp/archive/refs/tags/v0.70.1.tar.gz"
-  sha256 "67246606f504cb15df72193f1a83911259e92b6a87838cff8850031efd406dc8"
+  url "https://github.com/fatedier/frp/archive/refs/tags/v0.71.0.tar.gz"
+  sha256 "1dd367d6d822a7fce1d3012fce0a6e778bc90c454e2c7baa0eb1e6de6054c61b"
   license "Apache-2.0"
   head "https://github.com/fatedier/frp.git", branch: "dev"
+
+  resource "esbuild" do
+    url "https://github.com/evanw/esbuild/archive/refs/tags/v0.28.1.tar.gz"
+    sha256 "65c756fa87d43178ac4a5242454c2bd0fde325f8ecf77997f8fa4b88f94d5cd2"
+  end
 
   bottle do
   end
@@ -13,30 +18,19 @@ class Frpc < Formula
   depends_on "node" => :build
 
   def install
-    package_json = JSON.parse(File.read("web/package-lock.json"))
-    target = package_json["packages"]["node_modules/esbuild"]
-    if target
-        target["version"] = "0.26.0"
-        target.delete("resolved")
-        target.delete("integrity")
+    resource("esbuild").stage do
+      system "go", "build", "-o", buildpath/"esbuild", "./cmd/esbuild"
     end
-    
-    target = package_json["packages"]["node_modules/@esbuild/darwin-x64"]
-    if target
-        target["version"] = "0.26.0"
-        target.delete("resolved")
-        target.delete("integrity")
-    end
-
-    File.write("web/package-lock.json", JSON.pretty_generate(package_json))
 
     cd "web/frpc" do
       system "npm", "install", *std_npm_args(prefix: false)
-      system "npm", "run", "build"
+      with_env(ESBUILD_BINARY_PATH: buildpath/"esbuild") do
+        system "npm", "run", "build-only"
+      end
     end
 
     ENV["CGO_ENABLED"] = "0"
-    system "go", "build", *std_go_args(ldflags: "-s -w", tags: "frpc"), "./cmd/frpc"
+    system "go", "build", *std_go_args(tags: "frpc"), "./cmd/frpc"
     (etc/"frp").install "conf/frpc.toml"
 
     generate_completions_from_executable(bin/"frpc", "completion")

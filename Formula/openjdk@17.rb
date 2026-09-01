@@ -1,8 +1,8 @@
 class OpenjdkAT17 < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  url "https://github.com/openjdk/jdk17u/archive/refs/tags/jdk-17.0.20-ga.tar.gz"
-  sha256 "ba3ac4b9d7f2c050f46ddcec39b4258660a3f09836f5a71617fd3f7311d06c0b"
+  url "https://github.com/openjdk/jdk17u/archive/refs/tags/jdk-17.0.20.1-ga.tar.gz"
+  sha256 "8e5f18f6f75a759fc9584c3c2f8c44a5737692f3ea348cc1f9e63704b9dd81ee"
   license "GPL-2.0-only" => { with: "Classpath-exception-2.0" }
   compatibility_version 1
 
@@ -21,7 +21,6 @@ class OpenjdkAT17 < Formula
 
   depends_on "autoconf" => :build
   depends_on "pkgconf" => :build
-  depends_on xcode: :build # for metal
 
   depends_on "freetype"
   depends_on "giflib"
@@ -34,6 +33,10 @@ class OpenjdkAT17 < Formula
   uses_from_macos "zip" => :build
   uses_from_macos "cups" => :no_linkage
   uses_from_macos "zlib", since: :catalina
+
+  on_macos do
+    depends_on xcode: :build # for metal
+  end
 
   on_linux do
     depends_on "libxt" => :build
@@ -127,10 +130,6 @@ class OpenjdkAT17 < Formula
       ]
     end
     args << "--with-extra-ldflags=#{ldflags.join(" ")}"
-
-    if DevelopmentTools.clang_build_version == 1600 && MacOS::Xcode.version < "16.2"
-      args << "--with-extra-cflags=-mllvm -enable-constraint-elimination=0"
-end
 
     system "bash", "configure", *args
 

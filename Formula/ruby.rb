@@ -2,6 +2,7 @@ class Ruby < Formula
   desc "Powerful, clean, object-oriented scripting language"
   homepage "https://www.ruby-lang.org/"
   license "Ruby"
+  revision 1
   compatibility_version 1
 
   stable do
@@ -45,13 +46,15 @@ class Ruby < Formula
     depends_on "llvm" if DevelopmentTools.clang_build_version <= 1100
   end
 
-  #uses_from_macos "gperf"
   uses_from_macos "libffi"
   uses_from_macos "libxcrypt"
 
   on_linux do
     depends_on "zlib-ng-compat"
   end
+
+  # TODO: remove when enabling default_user_install
+  link_overwrite "bin/bundle", "bin/bundler"
 
   def determine_api_version
     Utils.safe_popen_read(bin/"ruby", "-e", "print Gem.ruby_api_version")
@@ -157,34 +160,19 @@ class Ruby < Formula
     config_file.write rubygems_config
   end
 
-  def post_install
-    # Since Gem ships Bundle we want to provide that full/expected installation
-    # but to do so we need to handle the case where someone has previously
-    # installed bundle manually via `gem install`.
-    # TODO: remove when enabling default_user_install
-    rm(%W[
-      #{rubygems_bindir}/bundle
-      #{rubygems_bindir}/bundler
-    ].select { |file| File.exist?(file) })
-    rm_r(Dir[HOMEBREW_PREFIX/"lib/ruby/gems/#{api_version}/gems/bundler-*"])
-
-    # Use versioned opt path so user-installed gems can work when user is switched to versioned Ruby.
-    # Needs to be done in postinstall since install names are modified by brew after install method.
-    # TODO: Consider adding a DSL for this to avoid performance cost of post install and binary patching
-    if OS.mac? && !versioned_formula?
-      dylib = (lib/"libruby.dylib").realpath
-      old_dylib_id = dylib.dylib_id
-      new_dylib_id = old_dylib_id.sub("#{opt_prefix}/", "#{versioned_opt_prefix}/")
-      return if old_dylib_id == new_dylib_id
-      return unless File.exist?(new_dylib_id)
-
-      dylib_mode = dylib.stat.mode
-      begin
-        chmod 0664, dylib
-        MachO::Tools.change_dylib_id(dylib, new_dylib_id)
-        MachO.codesign!(dylib) if Hardware::CPU.arm?
-      ensure
-        chmod dylib_mode, dylib
+  # Since Gem ships Bundle we want to provide that full/expected installation
+  # but to do so we need to handle the case where someone has previously
+  # installed bundle manually via `gem install`.
+  # TODO: remove the `remove` step when enabling default_user_install
+  post_install_steps do
+    remove "{{HOMEBREW_PREFIX}}/lib/ruby/gems/{{version.major_minor}}.0/gems/bundler-*", recursive: true
+    on_macos do
+      if_path_exists "opt/ruby@{{version.major_minor}}/lib/libruby.{{version.major_minor}}.dylib",
+                     base: :homebrew_prefix do
+        change_dylib_id "lib/libruby.dylib",
+                        "{{HOMEBREW_PREFIX}}/opt/ruby@{{version.major_minor}}/" \
+                        "lib/libruby.{{version.major_minor}}.dylib",
+                        resolve_source: true
       end
     end
   end

@@ -1,8 +1,8 @@
 class Node < Formula
   desc "Open-source, cross-platform JavaScript runtime environment"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v26.7.0/node-v26.7.0.tar.xz"
-  sha256 "e6b182cbeeab032d1082ca4ac4fe15e3a57de691d3bde78ecf8a761fd56ee356"
+  url "https://nodejs.org/dist/v26.8.1/node-v26.8.1.tar.xz"
+  sha256 "d1698832a1a10f050cdda044a3e3d6a748246811e2e7bc89ba9a8bd693dc45f2"
   license "MIT"
   compatibility_version 1
   head "https://github.com/nodejs/node.git", branch: "main"
@@ -92,6 +92,9 @@ class Node < Formula
     
     ENV.llvm_clang if OS.linux? && deps.map(&:name).any?("llvm")
 
+    # `ncrypto.cc` uses `std::vector` but libc++ 23 dropped the transitive include
+    inreplace "deps/ncrypto/ncrypto.cc",
+              "#include <string_view>", "#include <string_view>\n#include <vector>"
     # make sure subprocesses spawned by make are using our Python 3
     ENV["PYTHON"] = which("python3.14")
 
