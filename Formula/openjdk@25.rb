@@ -31,7 +31,6 @@ class OpenjdkAT25 < Formula
   uses_from_macos "unzip" => :build
   uses_from_macos "zip" => :build
   uses_from_macos "cups" => :no_linkage
-  uses_from_macos "zlib"
 
   on_macos do
     depends_on xcode: :build # for metal

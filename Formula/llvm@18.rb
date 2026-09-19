@@ -34,11 +34,71 @@ class LlvmAT18 < Formula
     depends_on "zlib-ng-compat"
   end
 
-  def python3
-    "python3.14"
+  # Apply MacPorts backports of upstream commits needed to fix macOS 27
+  patch do
+    url "https://raw.githubusercontent.com/macports/macports-ports/3e8ffa3fc0a854820d1917bffacc29624ff66a85/lang/llvm-18/files/0140-llvm-no-cmp-spec.patch"
+    sha256 "bc24230389a5ba0947e07dc1d6e94ecdb2d67b9baf4206be5d967f73b03cd109"
+    type :backport
+    resolves "https://github.com/llvm/llvm-project/pull/160804"
+  end
+  patch do
+    url "https://raw.githubusercontent.com/macports/macports-ports/3e8ffa3fc0a854820d1917bffacc29624ff66a85/lang/llvm-18/files/0141-infinity_nan.patch"
+    sha256 "13b68937e4c9cd1e84264ebd6656670d02bfefb8571d281145e3ccbf065ff3b6"
+    type :backport
+    resolves "https://github.com/llvm/llvm-project/pull/164348"
   end
 
+  # Backport commits for macOS 27 SDK
+  patch do
+    url "https://github.com/llvm/llvm-project/commit/477a65a051ce151895193f8dede1262fdc251132.patch?full_index=1"
+    sha256 "4bbdb4ab0eaefce2403fdfa96929026940f153f8e7421feba288cbc3dd8fe6e2"
+    type :backport
+  end
+  patch do
+    url "https://raw.githubusercontent.com/Homebrew/homebrew-core/refs/heads/main/Patches/llvm/18.x-arm64e.x1-support.patch"
+    type :backport
+    resolves "https://github.com/llvm/llvm-project/pull/222721"
+  end
+
+  patch :DATA
   def install
+    # Apple Clang 10's libc++ has std::optional but lacks its C++17 deduction guides.
+    inreplace "llvm/lib/Support/Program.cpp",
+              "std::optional(SecondsToWait)", "std::optional<unsigned>(SecondsToWait)"
+    inreplace "llvm/lib/Transforms/Utils/MemoryOpRemark.cpp",
+              "std::optional(TySize->getFixedValue())", "std::optional<uint64_t>(TySize->getFixedValue())"
+    inreplace "llvm/lib/Transforms/Scalar/LowerMatrixIntrinsics.cpp",
+              "std::optional(FMF)", "std::optional<FastMathFlags>(FMF)"
+    inreplace "llvm/lib/Transforms/InstCombine/InstructionCombining.cpp",
+              "std::optional(std::pair(L0, R0))",
+              "std::optional<std::pair<Value *, Value *>>(std::pair(L0, R0))"
+    inreplace "llvm/lib/Passes/StandardInstrumentations.cpp",
+              "std::array FileSuffixes =", "std::array<StringRef, 3> FileSuffixes ="
+    inreplace "mlir/lib/Dialect/MemRef/Transforms/ExpandOps.cpp",
+              "std::array shouldBeExpandedKinds =",
+              "std::array<arith::AtomicRMWKind, 4> shouldBeExpandedKinds ="
+    inreplace "mlir/lib/Dialect/ArmSME/Transforms/TileAllocation.cpp",
+              "std::array ZA_B_MASKS =", "std::array<TileMask, 1> ZA_B_MASKS ="
+    inreplace "mlir/lib/Dialect/ArmSME/Transforms/TileAllocation.cpp",
+              "std::array ZA_H_MASKS =", "std::array<TileMask, 2> ZA_H_MASKS ="
+    inreplace "mlir/lib/Dialect/ArmSME/Transforms/TileAllocation.cpp",
+              "std::array ZA_S_MASKS =", "std::array<TileMask, 4> ZA_S_MASKS ="
+    inreplace "mlir/lib/Dialect/ArmSME/Transforms/TileAllocation.cpp",
+              "std::array ZA_D_MASKS =", "std::array<TileMask, 8> ZA_D_MASKS ="
+    inreplace "mlir/lib/Dialect/ArmSME/Transforms/TileAllocation.cpp",
+              "std::array ZA_Q_MASKS =", "std::array<TileMask, 16> ZA_Q_MASKS ="
+    inreplace "mlir/lib/Target/LLVMIR/ModuleImport.cpp",
+              "std::array ExplicitAttributes{", "std::array<StringLiteral, 9> ExplicitAttributes{"
+    inreplace "mlir/lib/Dialect/IRDL/IR/IRDLOps.cpp",
+              "std::optional{getConstraintIndicesForArgs(",
+              "std::optional<SmallVector<unsigned>>{getConstraintIndicesForArgs("
+    inreplace "clang/lib/APINotes/APINotesYAMLCompiler.cpp",
+              "std::optional(Ctx->id)", "std::optional<ContextID>(Ctx->id)"
+    inreplace "mlir/include/mlir/Dialect/SparseTensor/IR/Enums.h",
+              "std::optional(lt)", "std::optional<LevelType>(lt)"
+    inreplace "mlir/lib/Dialect/Vector/IR/VectorOps.cpp",
+              "ArrayRef(extractPosition)", "ArrayRef<int64_t>(extractPosition)"
+
     # The clang bindings need a little help finding our libclang.
     inreplace "clang/bindings/python/clang/cindex.py",
               /^(\s*library_path\s*=\s*)None$/,
@@ -62,6 +122,13 @@ class LlvmAT18 < Formula
                              .select { |name| name.start_with? "python@" }
                              .map { |py| py.delete_prefix("python@") }
 
+    compat_cxxflags = nil
+    if OS.mac? && DevelopmentTools.clang_build_version <= 1000
+      # Do not use ENV: LLVM propagates ENV CXXFLAGS to runtimes, which build
+      # against newly-built libc++ and must not receive this old-SDK shim.
+      compat_cxxflags = "-include #{buildpath}/darwin-cmath-compat.h -D_LIBCPP_DISABLE_AVAILABILITY"
+    end
+
     # compiler-rt has some iOS simulator features that require i386 symbols
     # I'm assuming the rest of clang needs support too for 32-bit compilation
     # to work correctly, but if not, perhaps universal binaries could be
@@ -78,6 +145,7 @@ class LlvmAT18 < Formula
       -DLLVM_ENABLE_EH=ON
       -DLLVM_ENABLE_FFI=ON
       -DLLVM_ENABLE_RTTI=ON
+      -DLLVM_INCLUDE_BENCHMARKS=OFF
       -DLLVM_INCLUDE_DOCS=OFF
       -DLLVM_INCLUDE_TESTS=OFF
       -DLLVM_INSTALL_UTILS=ON
@@ -93,6 +161,8 @@ class LlvmAT18 < Formula
       -DCLANG_VENDOR_UTI=org.homebrew.clang
       -DCMAKE_SHARED_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}
     ]
+    # Xcode 10 accepts the feature probe but does not implement this flag.
+    args << "-DSUPPORTS_FFILE_PREFIX_MAP=OFF" if OS.mac? && DevelopmentTools.clang_build_version <= 1000
 
     runtimes_cmake_args = []
     builtins_cmake_args = []
@@ -112,6 +182,13 @@ class LlvmAT18 < Formula
       args << "-DLIBCXXABI_INSTALL_LIBRARY_DIR=#{libcxx_install_libdir}"
       args << "-DDEFAULT_SYSROOT=#{macos_sdk}" if macos_sdk
       runtimes_cmake_args << "-DCMAKE_INSTALL_RPATH=#{libcxx_rpaths.join("|")}"
+
+      # LLVM's newly bootstrapped llvm-ar cannot create a new archive on 10.13.
+      # This breaks CMake's libunwind feature checks before any runtime is built.
+      if DevelopmentTools.clang_build_version <= 1000
+        runtimes_cmake_args << "-DCMAKE_AR=/usr/bin/ar"
+        runtimes_cmake_args << "-DCMAKE_RANLIB=/usr/bin/ranlib"
+      end
 
       # Disable builds for OSes not supported by the CLT SDK.
       clt_sdk_support_flags = %w[I WATCH TV].map { |os| "-DCOMPILER_RT_ENABLE_#{os}OS=OFF" }
@@ -167,6 +244,8 @@ class LlvmAT18 < Formula
       runtimes_cmake_args << "-DCMAKE_CXX_FLAGS=#{ENV.cxxflags}"
       builtins_cmake_args << "-DCMAKE_CXX_FLAGS=#{ENV.cxxflags}"
     end
+
+    args << "-DCMAKE_CXX_FLAGS=#{[ENV.cxxflags, compat_cxxflags].compact.join(" ")}" if compat_cxxflags
 
     args << "-DRUNTIMES_CMAKE_ARGS=#{runtimes_cmake_args.join(";")}" if runtimes_cmake_args.present?
     args << "-DBUILTINS_CMAKE_ARGS=#{builtins_cmake_args.join(";")}" if builtins_cmake_args.present?
@@ -433,3 +512,53 @@ class LlvmAT18 < Formula
     end
   end
 end
+
+__END__
+--- /dev/null
++++ b/darwin-cmath-compat.h
+@@ -0,0 +1,44 @@
++#include <type_traits>
++#include <math.h>
++#if __cplusplus >= 201103L
++#define HB_NOEXCEPT noexcept
++#else
++#define HB_NOEXCEPT
++#endif
++#ifndef _LIBCPP_MATH_H
++inline float abs(float x) HB_NOEXCEPT { return __builtin_fabsf(x); }
++inline double abs(double x) HB_NOEXCEPT { return __builtin_fabs(x); }
++inline long double abs(long double x) HB_NOEXCEPT { return __builtin_fabsl(x); }
++inline long abs(long x) HB_NOEXCEPT { return __builtin_labs(x); }
++inline long long abs(long long x) HB_NOEXCEPT { return __builtin_llabs(x); }
++#endif
++#undef fpclassify
++#undef isfinite
++#undef isinf
++#undef isnan
++#undef isnormal
++#undef signbit
++#undef isgreater
++#undef isgreaterequal
++#undef isless
++#undef islessequal
++#undef islessgreater
++#undef isunordered
++#define HB_UNARY(name, builtin) inline int name(float x) HB_NOEXCEPT { return __builtin##builtin(x); } inline int name(double x) HB_NOEXCEPT { return __builtin##builtin(x); } inline int name(long double x) HB_NOEXCEPT { return __builtin##builtin(x); }
++HB_UNARY(isfinite, _isfinite)
++HB_UNARY(isinf, _isinf)
++HB_UNARY(isnan, _isnan)
++HB_UNARY(isnormal, _isnormal)
++HB_UNARY(signbit, _signbit)
++#undef HB_UNARY
++inline int fpclassify(float x) HB_NOEXCEPT { return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, x); }
++inline int fpclassify(double x) HB_NOEXCEPT { return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, x); }
++inline int fpclassify(long double x) HB_NOEXCEPT { return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, x); }
++#define HB_BINARY(name, builtin) inline int name(float x, float y) HB_NOEXCEPT { return __builtin##builtin(x, y); } inline int name(double x, double y) HB_NOEXCEPT { return __builtin##builtin(x, y); } inline int name(long double x, long double y) HB_NOEXCEPT { return __builtin##builtin(x, y); }
++HB_BINARY(isgreater, _isgreater)
++HB_BINARY(isgreaterequal, _isgreaterequal)
++HB_BINARY(isless, _isless)
++HB_BINARY(islessequal, _islessequal)
++HB_BINARY(islessgreater, _islessgreater)
++HB_BINARY(isunordered, _isunordered)
++#undef HB_BINARY
++#undef HB_NOEXCEPT

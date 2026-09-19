@@ -2,7 +2,7 @@ class Opencv < Formula
   desc "Open source computer vision library"
   homepage "https://opencv.org/"
   license "Apache-2.0"
-  revision 5
+  revision 8
   compatibility_version 2
 
   stable do
@@ -75,10 +75,6 @@ class Opencv < Formula
     depends_on "glib"
     depends_on "gtk+3"
     depends_on "zlib-ng-compat"
-  end
-
-  def python3
-    "python3.14"
   end
 
   # Drop the Caffe protobuf leftovers so DNN builds against external protobuf.
@@ -167,7 +163,7 @@ class Opencv < Formula
       -DWITH_VTK=OFF
       -DBUILD_opencv_python2=OFF
       -DBUILD_opencv_python3=ON
-      -DPYTHON3_EXECUTABLE=#{which(python3)}
+      -DPYTHON3_EXECUTABLE=#{python3}
       -DCMAKE_SHARED_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}
       -DCMAKE_EXE_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}
     ]
@@ -185,8 +181,8 @@ class Opencv < Formula
         -DOPENEXR_ILMTHREAD_LIBRARY=#{formula_opt_lib("openexr")}/libIlmThread.so
         -DPNG_LIBRARY=#{formula_opt_lib("libpng")}/libpng.so
         -DPROTOBUF_LIBRARY=#{formula_opt_lib("protobuf")}/libprotobuf.so
-        -DPROTOBUF_INCLUDE_DIR=#{Formula["protobuf"].include}
-        -DPROTOBUF_PROTOC_EXECUTABLE=#{Formula["protobuf"].bin}/protoc
+        -DPROTOBUF_INCLUDE_DIR=#{formula_opt_include("protobuf")}
+        -DPROTOBUF_PROTOC_EXECUTABLE=#{formula_opt_bin("protobuf")}/protoc
         -DTIFF_LIBRARY=#{formula_opt_lib("libtiff")}/libtiff.so
         -DWITH_V4L=OFF
         -DZLIB_LIBRARY=#{formula_opt_lib("zlib-ng-compat")}/libz.so
@@ -195,14 +191,14 @@ class Opencv < Formula
 
     # Ref: https://github.com/opencv/opencv/wiki/CPU-optimizations-build-options
     ENV.runtime_cpu_detection
-    if Hardware::CPU.intel? && build.bottle?
-      cpu_baseline = if OS.mac? && MacOS.version.requires_sse42?
-        "SSE4_2"
-      else
-        "SSSE3"
-      end
-      args += %W[-DCPU_BASELINE=#{cpu_baseline} -DCPU_BASELINE_REQUIRE=#{cpu_baseline}]
-    end
+    #if Hardware::CPU.intel? && build.bottle?
+     # cpu_baseline = if OS.mac? && MacOS.version.requires_sse42?
+     #   "SSE4_2"
+     # else
+     #   "SSSE3"
+     # end
+     # args += %W[-DCPU_BASELINE=#{cpu_baseline} -DCPU_BASELINE_REQUIRE=#{cpu_baseline}]
+    #end
 
     system "cmake", "-S", ".", "-B", "build_shared", *args, *std_cmake_args
     inreplace "build_shared/modules/core/version_string.inc", "#{Superenv.shims_path}/", ""

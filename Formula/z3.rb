@@ -29,22 +29,32 @@ class Z3 < Formula
   end
 
   # With an older LLVM toolchain to avoid circular dependencies during the build process.
-  depends_on "llvm@18" => :build if DevelopmentTools.clang_build_version <= 1100
+  depends_on "fmt" => :build
   
   fails_with :gcc do
     version "12"
     cause "Requires C++20 std::format, https://gcc.gnu.org/gcc-13/changes.html#libstdcxx"
   end
 
-  def python3
-    which("python3.14")
-  end
-
-  def llvm
-    Formula["llvm@18"]
-  end
+  deny_network_access!
 
   def install
+    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1400)
+    # macOS 12's libc++ lacks the floating-point `to_chars` implementation that
+    # C++20 `std::format` needs. Use fmt header-only instead, so the generated
+    # binaries retain the formula's macOS 12 deployment target.
+    ENV.append "CXXFLAGS", "-DFMT_HEADER_ONLY"
+    format_sources = %w[
+      src/ast/array_decl_plugin.cpp
+      src/ast/ast.cpp
+      src/ast/bv_decl_plugin.cpp
+      src/ast/datatype_decl_plugin.cpp
+      src/ast/dl_decl_plugin.cpp
+      src/ast/seq_decl_plugin.cpp
+    ]
+    inreplace format_sources, "<format>", "<fmt/format.h>"
+    inreplace format_sources, "std::format(", "fmt::format("
+
     args = %W[
       -DZ3_LINK_TIME_OPTIMIZATION=ON
       -DZ3_INCLUDE_GIT_DESCRIBE=OFF
@@ -58,10 +68,6 @@ class Z3 < Formula
       -DZ3_USE_LIB_GMP=OFF
       -DPYTHON_EXECUTABLE=#{python3}
       -DCMAKE_INSTALL_PYTHON_PKG_DIR=#{Language::Python.site_packages(python3)}
-      -DCMAKE_C_COMPILER=#{llvm.opt_bin}/clang
-      -DCMAKE_CXX_COMPILER=#{llvm.opt_bin}/clang++
-      -DCMAKE_SHARED_LINKER_FLAGS=#{llvm.opt_lib}/c++/#{shared_library("libc++")}
-      -DCMAKE_EXE_LINKER_FLAGS=#{llvm.opt_lib}/c++/#{shared_library("libc++")}
     ]
 
     system "cmake", "-S", ".", "-B", "build", *args, *std_cmake_args

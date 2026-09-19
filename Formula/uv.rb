@@ -1,8 +1,8 @@
 class Uv < Formula
   desc "Extremely fast Python package installer and resolver, written in Rust"
   homepage "https://docs.astral.sh/uv/"
-  url "https://github.com/astral-sh/uv/archive/refs/tags/0.12.8.tar.gz"
-  sha256 "2e0c3e5fd8e9941d1f9195e7285011d0e966d66a0538e9ee196838d026981706"
+  url "https://github.com/astral-sh/uv/archive/refs/tags/0.12.17.tar.gz"
+  sha256 "04bb7ac3d2fca11dd0e23eea26758e8f19987f764a1135f08a51d528c5e29afc"
   license any_of: ["Apache-2.0", "MIT"]
   compatibility_version 1
   head "https://github.com/astral-sh/uv.git", branch: "main"
@@ -20,6 +20,13 @@ class Uv < Formula
   uses_from_macos "python" => :test
   uses_from_macos "bzip2"
   uses_from_macos "xz"
+
+  # downloads wheels in test
+  allow_network_access! :test
+
+  def fetch
+    system "cargo", "fetch", "--locked", "--target", "host-tuple"
+  end
 
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)

@@ -6,8 +6,8 @@ class Rust < Formula
   head "https://github.com/rust-lang/rust.git", branch: "main"
 
   stable do
-    url "https://static.rust-lang.org/dist/rustc-1.98.0-src.tar.gz"
-    sha256 "b226aef375ffbe9fbe2b85fde996b50716d59d55268e240d052396534b75e929"
+    url "https://static.rust-lang.org/dist/rustc-1.98.1-src.tar.gz"
+    sha256 "dc9f8b917b32444d6c7ac43cc1b409013d3a9a633338bb60c14cdae1d15ee65a"
 
     # From https://github.com/rust-lang/rust/blob/#{version}/src/stage0
     # HEAD does not use these as it needs a nightly rust
@@ -138,6 +138,11 @@ class Rust < Formula
       if (resource_version = resource("rustc-bootstrap").version) != bootstrap_version
         odie "Expected #{bootstrap_version} for bootstrap but got #{resource_version}!"
       end
+      # Apply same workaround as MacPorts to build on macOS 27 which hits
+      # https://github.com/rust-lang/rust/issues/157750 in bootstrap
+      # TODO: Remove in 1.99.0
+      odie "Remove CARGO_PROFILE_DEV_STRIP workaround!" if bootstrap_version >= "1.98.0"
+      ENV["CARGO_PROFILE_DEV_STRIP"] = "none" if OS.mac? && MacOS.version >= :golden_gate
 
       cache_date = File.basename(File.dirname(resource("rustc-bootstrap").url))
       build_cache_directory = buildpath/"build/cache"/cache_date

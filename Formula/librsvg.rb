@@ -1,8 +1,8 @@
 class Librsvg < Formula
   desc "Library to render SVG files using Cairo"
   homepage "https://wiki.gnome.org/Projects/LibRsvg"
-  url "https://download.gnome.org/sources/librsvg/2.62/librsvg-2.62.3.tar.xz"
-  sha256 "7eb449b2722a768021356f66dfee3202c229b54ed4e6a70ce40c090e97ff16f2"
+  url "https://download.gnome.org/sources/librsvg/2.63/librsvg-2.63.0.tar.xz"
+  sha256 "cab7f7d1326fb001e4eb9f37990de66d4578a5f48465507471a69322d8b326e3"
   license "LGPL-2.1-or-later"
   compatibility_version 1
 
@@ -46,8 +46,11 @@ class Librsvg < Formula
       llvm-nm = '#{Formula["llvm"].opt_bin}/llvm-nm'
     INI
 
+    gdk_pixbuf_moduledir = formula_opt_lib("gdk-pixbuf").glob("gdk-pixbuf-*/*/loaders").fetch(0)
+    gdk_pixbuf_moduledir = prefix/gdk_pixbuf_moduledir.relative_path_from(formula_opt_prefix("gdk-pixbuf"))
+
     # Set `RPATH` since `cargo-c` doesn't seem to.
-    rpath_flags = [rpath, rpath(source: lib/"gdk-pixbuf-2.0/2.10.0/loaders")].map { |rp| "-rpath,#{rp}" }
+    rpath_flags = [rpath, rpath(source: gdk_pixbuf_moduledir)].map { |rp| "-rpath,#{rp}" }
     ENV.append_to_rustflags "--codegen link-args=-Wl,#{rpath_flags.join(",")}" if OS.mac?
 
     # disable updating gdk-pixbuf cache, we will do this manually in post_install
@@ -64,18 +67,14 @@ class Librsvg < Formula
 
     # Workaround until https://gitlab.gnome.org/GNOME/librsvg/-/merge_requests/1049
     if OS.mac?
-      gdk_pixbuf_moduledir = lib.glob("gdk-pixbuf-*/*/loaders").first
       gdk_pixbuf_modules = gdk_pixbuf_moduledir.glob("*.dylib")
       odie "Try removing .so symlink workaround!" if gdk_pixbuf_modules.empty?
-      gdk_pixbuf_moduledir.install_symlink gdk_pixbuf_modules.to_h { |m| [m, m.sub_ext(".so").basename] }
+      gdk_pixbuf_moduledir.install_symlink gdk_pixbuf_modules.to_h { |m| [m, m.sub_ext(".so").basename.to_s] }
     end
   end
 
-  def post_install
-    # librsvg is not aware GDK_PIXBUF_MODULEDIR must be set
-    # set GDK_PIXBUF_MODULEDIR and update loader cache
-    ENV["GDK_PIXBUF_MODULEDIR"] = "#{HOMEBREW_PREFIX}/lib/gdk-pixbuf-2.0/2.10.0/loaders"
-    system "#{Formula["gdk-pixbuf"].opt_bin}/gdk-pixbuf-query-loaders", "--update-cache"
+  post_install_steps do
+    update_gdk_pixbuf_loaders_cache
   end
 
   test do

@@ -28,6 +28,10 @@ class LlvmAT17 < Formula
   uses_from_macos "libffi"
   uses_from_macos "ncurses"
 
+  on_macos do
+    depends_on maximum_macos: [:tahoe, :build]
+  end
+
   on_linux do
     depends_on "binutils" => :build # needed for LLVMgold plugin
     depends_on "pkgconf" => :build
@@ -37,8 +41,8 @@ class LlvmAT17 < Formula
   # Fix arm64 misoptimisation in some cases.
   # https://github.com/Homebrew/homebrew-core/issues/158957
   patch do
-    url "https://raw.githubusercontent.com/Homebrew/homebrew-core/1cf441a0/Patches/llvm/17.x-arm64-opt.patch"
-    sha256 "0e312207fd9474bd26f4a283ee23d94b334d3ec8732086d30bce95f7c8dc2201"
+    url "https://raw.githubusercontent.com/Homebrew/homebrew-core/refs/heads/main/Patches/llvm/17.x-arm64-opt.patch"
+  end
 
   # Backport commit for newer macOS CLT
   patch do
@@ -50,11 +54,27 @@ class LlvmAT17 < Formula
     end
   end
 
-  def python3
-    "python3.14"
-  end
-
+  patch :DATA
   def install
+    # Apple Clang 10's libc++ has std::optional but lacks the C++17 deduction
+    # guides used by LLVM.
+    inreplace "llvm/lib/Support/Program.cpp",
+              "std::optional(SecondsToWait)", "std::optional<unsigned>(SecondsToWait)"
+    inreplace "llvm/lib/Transforms/Utils/MemoryOpRemark.cpp",
+              "std::optional(TySize->getFixedValue())", "std::optional<uint64_t>(TySize->getFixedValue())"
+    inreplace "mlir/include/mlir/Dialect/SparseTensor/IR/Enums.h",
+              "std::optional(dlt)", "std::optional<DimLevelType>(dlt)"
+    inreplace "llvm/lib/Transforms/Scalar/LowerMatrixIntrinsics.cpp",
+              "std::optional(FMF)", "std::optional<FastMathFlags>(FMF)"
+    inreplace "llvm/lib/Target/X86/X86ISelLowering.cpp",
+              "ArrayRef(Mask).equals", "ArrayRef<int>(Mask).equals"
+    inreplace "llvm/lib/Target/X86/X86ISelLowering.cpp",
+              "ArrayRef(MappedMask).equals", "ArrayRef<int>(MappedMask).equals"
+    inreplace "mlir/lib/Dialect/Vector/IR/VectorOps.cpp",
+              "ArrayRef(extractPosition)", "ArrayRef<int64_t>(extractPosition)"
+    inreplace "mlir/lib/Dialect/Vector/IR/VectorOps.cpp",
+              "ArrayRef(insertedPos)", "ArrayRef<int64_t>(insertedPos)"
+
     # The clang bindings need a little help finding our libclang.
     inreplace "clang/bindings/python/clang/cindex.py",
               /^(\s*library_path\s*=\s*)None$/,
@@ -77,6 +97,14 @@ class LlvmAT17 < Formula
     python_versions = Formula.names
                              .select { |name| name.start_with? "python@" }
                              .map { |py| py.delete_prefix("python@") }
+
+    compat_cxxflags = nil
+    if OS.mac? && DevelopmentTools.clang_build_version <= 1000
+      # Xcode 10's libc++ expects C99 math names absent from the 10.13 SDK.
+      # Keep this out of ENV: LLVM propagates ENV CXXFLAGS to its runtimes,
+      # whose newly-built libc++ must not receive this compatibility header.
+      compat_cxxflags = "-include #{buildpath}/darwin-cmath-compat.h -D_LIBCPP_DISABLE_AVAILABILITY"
+    end
 
     # compiler-rt has some iOS simulator features that require i386 symbols
     # I'm assuming the rest of clang needs support too for 32-bit compilation
@@ -177,6 +205,8 @@ class LlvmAT17 < Formula
       runtimes_cmake_args << "-DCMAKE_CXX_FLAGS=#{ENV.cxxflags}"
       builtins_cmake_args << "-DCMAKE_CXX_FLAGS=#{ENV.cxxflags}"
     end
+
+    args << "-DCMAKE_CXX_FLAGS=#{[ENV.cxxflags, compat_cxxflags].compact.join(" ")}" if compat_cxxflags
 
     args << "-DRUNTIMES_CMAKE_ARGS=#{runtimes_cmake_args.join(";")}" if runtimes_cmake_args.present?
     args << "-DBUILTINS_CMAKE_ARGS=#{builtins_cmake_args.join(";")}" if builtins_cmake_args.present?
@@ -443,3 +473,67 @@ class LlvmAT17 < Formula
     end
   end
 end
+
+__END__
+--- a/lldb/source/Host/macosx/objcxx/HostInfoMacOSX.mm
++++ b/lldb/source/Host/macosx/objcxx/HostInfoMacOSX.mm
+@@ -53,6 +53,11 @@
+ #define CPU_TYPE_ARM64 (CPU_TYPE_ARM | CPU_ARCH_ABI64)
+ #endif
+
++// Kludge: Symbol definition extracted from a modern machine.h
++#ifndef CPU_SUBTYPE_ARM64E
++#define CPU_SUBTYPE_ARM64E        ((cpu_subtype_t) 2)
++#endif
++
+ #ifndef CPU_TYPE_ARM64_32
+ #define CPU_ARCH_ABI64_32 0x02000000
+ #define CPU_TYPE_ARM64_32 (CPU_TYPE_ARM | CPU_ARCH_ABI64_32)
+
+--- /dev/null
++++ b/darwin-cmath-compat.h
+@@ -0,0 +1,44 @@
++#include <math.h>
++#if __cplusplus >= 201103L
++#define HB_NOEXCEPT noexcept
++#else
++#define HB_NOEXCEPT
++#endif
++#ifndef _LIBCPP_MATH_H
++inline float abs(float x) HB_NOEXCEPT { return __builtin_fabsf(x); }
++inline double abs(double x) HB_NOEXCEPT { return __builtin_fabs(x); }
++inline long double abs(long double x) HB_NOEXCEPT { return __builtin_fabsl(x); }
++inline long abs(long x) HB_NOEXCEPT { return __builtin_labs(x); }
++inline long long abs(long long x) HB_NOEXCEPT { return __builtin_llabs(x); }
++#endif
++#undef fpclassify
++#undef isfinite
++#undef isinf
++#undef isnan
++#undef isnormal
++#undef signbit
++#undef isgreater
++#undef isgreaterequal
++#undef isless
++#undef islessequal
++#undef islessgreater
++#undef isunordered
++#define HB_UNARY(name, builtin) inline int name(float x) HB_NOEXCEPT { return __builtin##builtin(x); } inline int name(double x) HB_NOEXCEPT { return __builtin##builtin(x); } inline int name(long double x) HB_NOEXCEPT { return __builtin##builtin(x); }
++HB_UNARY(isfinite, _isfinite)
++HB_UNARY(isinf, _isinf)
++HB_UNARY(isnan, _isnan)
++HB_UNARY(isnormal, _isnormal)
++HB_UNARY(signbit, _signbit)
++#undef HB_UNARY
++inline int fpclassify(float x) HB_NOEXCEPT { return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, x); }
++inline int fpclassify(double x) HB_NOEXCEPT { return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, x); }
++inline int fpclassify(long double x) HB_NOEXCEPT { return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, x); }
++#define HB_BINARY(name, builtin) inline int name(float x, float y) HB_NOEXCEPT { return __builtin##builtin(x, y); } inline int name(double x, double y) HB_NOEXCEPT { return __builtin##builtin(x, y); } inline int name(long double x, long double y) HB_NOEXCEPT { return __builtin##builtin(x, y); }
++HB_BINARY(isgreater, _isgreater)
++HB_BINARY(isgreaterequal, _isgreaterequal)
++HB_BINARY(isless, _isless)
++HB_BINARY(islessequal, _islessequal)
++HB_BINARY(islessgreater, _islessgreater)
++HB_BINARY(isunordered, _isunordered)
++#undef HB_BINARY
++#undef HB_NOEXCEPT

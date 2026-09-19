@@ -21,7 +21,6 @@ class LlvmAT19 < Formula
   depends_on "ninja" => :build
   depends_on "python@3.14" => [:build, :test]
   depends_on "zstd"
-  depends_on "llvm@18" => :build
 
   uses_from_macos "libedit"
   uses_from_macos "libffi"
@@ -54,6 +53,32 @@ class LlvmAT19 < Formula
     sha256 "6d8403fec7be55004e94de90b074c2c166811903ad4921fd76274498c5a60a23"
     type :unofficial
     resolves "https://github.com/llvm/llvm-project/pull/111397"
+  end
+
+  # Apply MacPorts backports of upstream commits needed to fix macOS 27
+  patch do
+    url "https://raw.githubusercontent.com/macports/macports-ports/437657215603f3ec4801195efa6b80e47b9faeab/lang/llvm-20/files/0140-llvm-no-cmp-spec.patch"
+    sha256 "65872f978b5c8c06b8821b327f3e998d521a0630bb4333bff44df5d55349b634"
+    type :backport
+    resolves "https://github.com/llvm/llvm-project/pull/160804"
+  end
+  patch do
+    url "https://raw.githubusercontent.com/macports/macports-ports/437657215603f3ec4801195efa6b80e47b9faeab/lang/llvm-20/files/0141-infinity_nan.patch"
+    sha256 "79331012c6a2ec6cac4b3c2d572cba5825f7f6559a10329730cf19c19c623c17"
+    type :backport
+    resolves "https://github.com/llvm/llvm-project/pull/164348"
+  end
+
+  # Backport commits for macOS 27 SDK
+  patch do
+    url "https://github.com/llvm/llvm-project/commit/477a65a051ce151895193f8dede1262fdc251132.patch?full_index=1"
+    sha256 "4bbdb4ab0eaefce2403fdfa96929026940f153f8e7421feba288cbc3dd8fe6e2"
+    type :backport
+  end
+  patch do
+    url "https://raw.githubusercontent.com/Homebrew/homebrew-core/refs/heads/main/Patches/llvm/19.x-arm64e.x1-support.patch"
+    type :backport
+    resolves "https://github.com/llvm/llvm-project/pull/222721"
   end
 
   def python3
@@ -89,19 +114,12 @@ class LlvmAT19 < Formula
                              .select { |name| name.start_with? "python@" }
                              .map { |py| py.delete_prefix("python@") }
 
-    # https://github.com/Homebrew/homebrew-core/commit/c4f0d87
-    ENV["SDKROOT"] = MacOS.sdk_for_formula(self).path if OS.mac?
-    ENV.libcxx if ENV.compiler == :clang
-
     # compiler-rt has some iOS simulator features that require i386 symbols
     # I'm assuming the rest of clang needs support too for 32-bit compilation
     # to work correctly, but if not, perhaps universal binaries could be
     # limited to compiler-rt. llvm makes this somewhat easier because compiler-rt
     # can almost be treated as an entirely different build from llvm.
     ENV.permit_arch_flags
-
-    ENV["CC"] = "#{formula_opt_bin("llvm@18")}/clang"
-    ENV["CXX"] = "#{formula_opt_bin("llvm@18")}/clang++"
 
     args = %W[
       -DLLVM_ENABLE_PROJECTS=#{projects.join(";")}
@@ -112,6 +130,7 @@ class LlvmAT19 < Formula
       -DLLVM_ENABLE_EH=ON
       -DLLVM_ENABLE_FFI=ON
       -DLLVM_ENABLE_RTTI=ON
+      -DLLVM_INCLUDE_BENCHMARKS=OFF
       -DLLVM_INCLUDE_DOCS=OFF
       -DLLVM_INCLUDE_TESTS=OFF
       -DLLVM_INSTALL_UTILS=ON
@@ -126,8 +145,6 @@ class LlvmAT19 < Formula
       -DCLANG_FORCE_MATCHING_LIBCLANG_SOVERSION=OFF
       -DCLANG_CONFIG_FILE_SYSTEM_DIR=#{clang_config_file_dir.relative_path_from(bin)}
       -DCLANG_CONFIG_FILE_USER_DIR=~/.config/clang
-      -DCMAKE_EXE_LINKER_FLAGS=#{formula_opt_lib("llvm@18")}/c++/#{shared_library("libc++")}
-      -DCMAKE_SHARED_LINKER_FLAGS=#{formula_opt_lib("llvm@18")}/c++/#{shared_library("libc++")}
     ]
 
     if tap.present?

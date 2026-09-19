@@ -1,10 +1,10 @@
 class Openjdk < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  url "https://github.com/openjdk/jdk26u/archive/refs/tags/jdk-26.0.2.1-ga.tar.gz"
-  sha256 "91dd5ddd93e156f00a12c28d9b74b5ee1704e9f12d323d412d158b12e91d56d0"
+  url "https://github.com/openjdk/jdk27u/archive/refs/tags/jdk-27-ga.tar.gz"
+  sha256 "7b0d39b840e008bd0a8e3d2c93d874d48536ec3e4c13045a7a83179042e2011e"
   license "GPL-2.0-only" => { with: "Classpath-exception-2.0" }
-  compatibility_version 1
+  compatibility_version 2
 
   livecheck do
     url :stable
@@ -51,29 +51,28 @@ class Openjdk < Formula
   resource "boot-jdk" do
     on_macos do
       on_arm do
-        url "https://download.java.net/java/GA/jdk26.0.1/458fda22e4c54d5ba572ab8d2b22eb83/8/GPL/openjdk-26.0.1_macos-aarch64_bin.tar.gz"
-        sha256 "b2d57405194a312ed4ec6ec08e83b314d3fd2e425e895d704ec5ef8ea6059e17"
+        url "https://download.java.net/java/GA/jdk26.0.2.1/3b8e6c7ec6274148a7aa15e7e7dfb53c/1/GPL/openjdk-26.0.2.1_macos-aarch64_bin.tar.gz"
+        sha256 "3a61f9bbfbf2e09308aa4b1a5c044fcbc82f6ba49e074be49a7b7911e1f00efd"
       end
       on_intel do
-        url "https://github.com/niu541412/homebrew_old_macos/releases/download/openjdk/openjdk@25--25.0.4.1.high_sierra.bottle.tar.gz"
-        sha256 "e6cb17ecd7c95d203d5f02a5d05f235863d0b392804f6c6e2e7ce95213387423"
+        url "https://github.com/niu541412/homebrew_old_macos/releases/download/openjdk/openjdk--26.0.2.1.high_sierra.bottle.tar.gz"
+        sha256 "aa98e5545eb2733476d58c26c53956f00dda86c41e057383a9798a3e54e6ce75"
       end
     end
     on_linux do
       on_arm do
-        url "https://download.java.net/java/GA/jdk26.0.1/458fda22e4c54d5ba572ab8d2b22eb83/8/GPL/openjdk-26.0.1_linux-aarch64_bin.tar.gz"
-        sha256 "12a3649b2f4a0c9f6491d220bdd04b4fff07cae502b435aaff46eac0e36f4df1"
+        url "https://download.java.net/java/GA/jdk26.0.2.1/3b8e6c7ec6274148a7aa15e7e7dfb53c/1/GPL/openjdk-26.0.2.1_linux-aarch64_bin.tar.gz"
+        sha256 "b96b265a4a1a36c02454148891aa58ca63303cbc2d1b7979c33b4fe99e09117b"
       end
       on_intel do
-        url "https://download.java.net/java/GA/jdk26.0.1/458fda22e4c54d5ba572ab8d2b22eb83/8/GPL/openjdk-26.0.1_linux-x64_bin.tar.gz"
-        sha256 "2f2802d57b5fc414f1ddf6648ba12cc9a6454cf67b32ac95407c018f2e6ab0b0"
+        url "https://download.java.net/java/GA/jdk26.0.2.1/3b8e6c7ec6274148a7aa15e7e7dfb53c/1/GPL/openjdk-26.0.2.1_linux-x64_bin.tar.gz"
+        sha256 "a1489256029b389ce6ee52da0de1d01496c5df1776d6870241fe4823b998ea61"
       end
     end
   end
 
   patch :DATA
   def install
-    # ENV.O3
     inreplace "make/autoconf/flags.m4", "MACOSX_VERSION_MIN=11.00.00", "MACOSX_VERSION_MIN=#{MacOS.version}.00"
 
     boot_jdk = buildpath/"boot-jdk"
@@ -211,9 +210,9 @@ __END__
 +#define VM_MEMORY_MALLOC_PROB_GUARD 13
 +#endif
 +
+ #include "cppstdlib/cstdlib.hpp"
  #include "nmt/memMapPrinter.hpp"
  #include "runtime/os.hpp"
- #include "utilities/align.hpp"
 
 --- a/src/java.desktop/macosx/native/libawt_lwawt/awt/CDesktopPeer.m	
 +++ b/src/java.desktop/macosx/native/libawt_lwawt/awt/CDesktopPeer.m	
@@ -225,10 +224,10 @@ __END__
      NSWorkspaceOpenConfiguration *configuration = [NSWorkspaceOpenConfiguration configuration];
      configuration.activates = YES; // To bring app to foreground
      configuration.promptsUserIfNeeded = YES; // To allow macOS desktop prompts
-@@ -85,6 +86,19 @@
+@@ -84,6 +85,18 @@
+ 
      dispatch_semaphore_wait(semaphore, timeout);
      dispatch_release(semaphore);
- 
 +    #else
 +    NSError *error = nil;
 +    NSWorkspaceLaunchOptions options = NSWorkspaceLaunchDefault;
@@ -241,11 +240,10 @@ __END__
 +        status = (OSStatus)error.code;
 +    }
 +    #endif
-+
+ 
  JNI_COCOA_EXIT(env);
      return status;
- }
-@@ -113,9 +127,13 @@
+@@ -113,9 +126,13 @@
  
      // Prepare NSOpenConfig object
      NSArray<NSURL *> *urls = @[urlToOpen];
@@ -259,7 +257,7 @@ __END__
  
      // pre-checks for open/print/edit before calling openURLs API
      if (action == sun_lwawt_macosx_CDesktopPeer_OPEN
-@@ -128,7 +146,11 @@
+@@ -128,7 +145,11 @@
          }
          // Additionally set forPrinting=TRUE for print
          if (action == sun_lwawt_macosx_CDesktopPeer_PRINT) {
@@ -271,7 +269,7 @@ __END__
          }
      } else if (action == sun_lwawt_macosx_CDesktopPeer_EDIT) {
          if (appURI == nil
-@@ -144,6 +166,7 @@
+@@ -144,6 +165,7 @@
          }
      }
  
@@ -279,10 +277,10 @@ __END__
      // dispatch semaphores used to wait for the completion handler to update and return status
      dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
      dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(NSEC_PER_SEC)); // 1 second timeout
-@@ -164,6 +187,18 @@ JNI_COCOA_ENTER(env);
+@@ -163,6 +185,17 @@
+ 
      dispatch_semaphore_wait(semaphore, timeout);
      dispatch_release(semaphore);
- 
 +    #else
 +    NSError *error = nil;
 +    [[NSWorkspace sharedWorkspace] openURLs:urls
@@ -294,7 +292,7 @@ __END__
 +        status = (OSStatus)error.code;
 +    }
 +    #endif
-+
+ 
      [urlToOpen release];
  JNI_COCOA_EXIT(env);
      return status;
@@ -316,8 +314,8 @@ __END__
      BASIC_LDFLAGS_JVM_ONLY="-mno-omit-leaf-frame-pointer -mstack-alignment=16 \
          -fPIC"
  
--    LDFLAGS_LTO="-flto=auto -fuse-linker-plugin -fno-strict-aliasing"
-+    LDFLAGS_LTO="-flto -fuse-linker-plugin -fno-strict-aliasing"
+-    LDFLAGS_LTO="-flto=auto -fuse-linker-plugin -fno-strict-aliasing $DEBUG_PREFIX_CFLAGS"
++    LDFLAGS_LTO="-flto -fuse-linker-plugin -fno-strict-aliasing $DEBUG_PREFIX_CFLAGS"
      LDFLAGS_CXX_PARTIAL_LINKING="$MACHINE_FLAG -r"
  
      if test "x$OPENJDK_TARGET_OS" = xlinux; then

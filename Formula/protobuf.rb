@@ -1,10 +1,10 @@
 class Protobuf < Formula
   desc "Protocol buffers (Google's data interchange format)"
   homepage "https://protobuf.dev/"
-  url "https://github.com/protocolbuffers/protobuf/releases/download/v36.0/protobuf-36.0.tar.gz"
-  sha256 "399931c793f4ac6db81045b00b06dd07c877b48aeecf36c797f65c541fb533e7"
+  url "https://github.com/protocolbuffers/protobuf/releases/download/v36.1/protobuf-36.1.tar.gz"
+  sha256 "dc74fa582f559cbd31614ddfefb4868f43c919d7184bde514bb47f90c6025eb8"
   license "BSD-3-Clause"
-  compatibility_version 5
+  compatibility_version 6
 
   livecheck do
     url :stable
@@ -18,10 +18,7 @@ class Protobuf < Formula
   depends_on "abseil"
 
   on_macos do
-    # TODO: Try restoring tests on Linux in a future release. Currently they
-    # fail to build as Clang causes an ABI difference in Abseil that impacts
-    # a testcase. Also GCC 13 failed to compile UPB tests in Protobuf 34.0
-    depends_on "googletest" => :build
+    #depends_on "googletest" => :build
     depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
   end
 
@@ -34,6 +31,8 @@ class Protobuf < Formula
     cause "fails handling ABSL_ATTRIBUTE_WARN_UNUSED"
   end
 
+  deny_network_access!
+
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     # Keep `CMAKE_CXX_STANDARD` in sync with the same variable in `abseil.rb`.
@@ -44,7 +43,7 @@ class Protobuf < Formula
       -Dprotobuf_BUILD_LIBPROTOC=ON
       -Dprotobuf_BUILD_SHARED_LIBS=ON
       -Dprotobuf_INSTALL_EXAMPLES=ON
-      -Dprotobuf_BUILD_TESTS=#{OS.mac? ? "ON" : "OFF"}
+      -Dprotobuf_BUILD_TESTS=OFF
       -Dprotobuf_FORCE_FETCH_DEPENDENCIES=OFF
       -Dprotobuf_LOCAL_DEPENDENCIES_ONLY=ON
       -DCMAKE_SHARED_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}

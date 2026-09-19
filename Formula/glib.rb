@@ -3,10 +3,17 @@ class Glib < Formula
 
   desc "Core application library for C"
   homepage "https://docs.gtk.org/glib/"
-  url "https://download.gnome.org/sources/glib/2.88/glib-2.88.3.tar.xz"
-  sha256 "ab24d24e698dfa1e408b7bcdb508f4aafc906185a8b8ce72fdf79bbbdc9b383b"
+  url "https://download.gnome.org/sources/glib/2.90/glib-2.90.0.tar.xz"
+  sha256 "17d15cac2af80a33271127408e0abc2748eb297c595c2a26409e81e14e7d1b8f"
   license "LGPL-2.1-or-later"
   compatibility_version 1
+
+  # FIXME: remove livecheck block once `https://download.gnome.org/sources/glib/cache.json` is fixed
+  livecheck do
+    url "https://download.gnome.org/sources/glib/"
+    regex(%r{href="(\d+(?:\.\d+))/"}i)
+    strategy :page_match
+  end
 
   bottle do
   end
@@ -55,8 +62,11 @@ class Glib < Formula
   # replace several hardcoded paths with homebrew counterparts
   patch do
     url "https://raw.githubusercontent.com/Homebrew/homebrew-core/refs/heads/main/Patches/glib/hardcoded-paths.diff"
-    #file "Patches/glib/hardcoded-paths.diff"
   end
+
+  patch :DATA
+
+  deny_network_access!
 
   def install
     # Avoid the sandbox violation when an empty directory is created outside of the formula prefix.
@@ -109,17 +119,16 @@ class Glib < Formula
 
     # `pkg-config --libs glib-2.0` includes -lintl, and gettext itself does not
     # have a pkgconfig file, so we add gettext lib and include paths here.
-    gettext = Formula["gettext"]
     inreplace lib/"pkgconfig/glib-2.0.pc" do |s|
       s.gsub! "Libs: -L${libdir} -lglib-2.0 -lintl",
-              "Libs: -L${libdir} -lglib-2.0 -L#{gettext.opt_lib} -lintl"
+              "Libs: -L${libdir} -lglib-2.0 -L#{formula_opt_lib("gettext")} -lintl"
       s.gsub! "Cflags: -I${includedir}/glib-2.0 -I${libdir}/glib-2.0/include",
-              "Cflags: -I${includedir}/glib-2.0 -I${libdir}/glib-2.0/include -I#{gettext.opt_include}"
+              "Cflags: -I${includedir}/glib-2.0 -I${libdir}/glib-2.0/include -I#{formula_opt_include("gettext")}"
     end
   end
 
   post_install_steps do
-    mkdir_p "lib/gio/modules", base: :homebrew_prefix
+    mkdir_p "{{HOMEBREW_PREFIX}}/lib/gio/modules"
   end
 
   test do
@@ -187,3 +196,18 @@ class Glib < Formula
     system ENV.cxx, "-o", "typecheck", "typecheck.cpp", "-I#{include}/glib-2.0", "-I#{lib}/glib-2.0/include"
   end
 end
+
+__END__
+--- a/glib/gbitlock.c
++++ b/glib/gbitlock.c
+@@ -186,9 +186,8 @@ bit_lock_contended_class (gconstpointer address)
+ }
+ 
+ #if (defined (i386) || defined (__amd64__))
+-  #if G_GNUC_CHECK_VERSION(4, 5) || \
+-      (defined (__clang_major__) && __clang_major__ >= 9)
++  #if G_GNUC_CHECK_VERSION(4, 5) && !defined (__clang__)
+     #define USE_ASM_GOTO 1
+   #endif
+ #endif
+ 

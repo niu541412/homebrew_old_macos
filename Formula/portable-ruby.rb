@@ -3,10 +3,9 @@ require File.expand_path("#{HOMEBREW_PREFIX}/Homebrew/Library/Taps/homebrew/home
 class PortableRuby < PortableFormula
   desc "Powerful, clean, object-oriented scripting language"
   homepage "https://www.ruby-lang.org/"
-  url "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.6.tar.gz"
-  sha256 "837d299e8f7ddf2be31a229a7a7e019d354979825117989acb3b32b1a9be262a"
+  url "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.7.tar.gz"
+  sha256 "911ace20f90d068ca0e4dda6d0e4f0f81e52e52f2dd4f4004c721e253412e82d"
   license "Ruby"
-  revision 1
 
   # This regex restricts matching to versions other than X.Y.0.
   livecheck do
@@ -28,8 +27,8 @@ class PortableRuby < PortableFormula
   end
 
   resource "msgpack" do
-    url "https://rubygems.org/downloads/msgpack-1.8.4.gem"
-    sha256 "4411c22d350dd1c20250f7eada3cca2695438c2f769cf0782f0cd065d90a3e7b"
+    url "https://rubygems.org/downloads/msgpack-1.8.5.gem"
+    sha256 "97419eaa7b35dfe3e462c0e6c1a3dfdcbfc8756605c09e46e4c6daef127517ba"
 
     livecheck do
       url "https://rubygems.org/api/v1/versions/msgpack.json"
@@ -40,8 +39,8 @@ class PortableRuby < PortableFormula
   end
 
   resource "bootsnap" do
-    url "https://rubygems.org/downloads/bootsnap-1.25.0.gem"
-    sha256 "41059e7d0f9cb4023a33465d095f64b913fc9d1b808d6524c307da945fbcffcf"
+    url "https://rubygems.org/downloads/bootsnap-1.26.0.gem"
+    sha256 "ca96237015e6cd74a02963d5821cf00ac5ea134653b323e8cd6d702a7718bf1b"
 
     livecheck do
       url "https://rubygems.org/api/v1/versions/bootsnap.json"
@@ -93,6 +92,10 @@ class PortableRuby < PortableFormula
       --disable-dependency-tracking
     ]
 
+    # The Intel bottle is cross-built on a GitHub macos-15 runner whose Xcode
+    # ships <stdckdint.h>, so configure bakes HAVE_STDCKDINT_H into the shipped
+    # config.h and native gem builds on older Xcode/CLT fail to find it.
+    args << "ac_cv_header_stdckdint_h=no" if OS.mac? && Hardware::CPU.intel?
     # We don't specify OpenSSL as we want it to use the pkg-config, which `--with-openssl-dir` will disable
     args += %W[
       --with-libyaml-dir=#{libyaml.opt_prefix}

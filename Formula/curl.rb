@@ -2,13 +2,13 @@ class Curl < Formula
   desc "Get a file from an HTTP, HTTPS or FTP server"
   homepage "https://curl.se"
   # Don't forget to update both instances of the version in the GitHub mirror URL.
-  url "https://curl.se/download/curl-8.18.0.tar.bz2"
-  mirror "https://github.com/curl/curl/releases/download/curl-8_18_0/curl-8.18.0.tar.bz2"
-  mirror "http://fresh-center.net/linux/www/curl-8.18.0.tar.bz2"
-  mirror "http://fresh-center.net/linux/www/legacy/curl-8.18.0.tar.bz2"
-  sha256 "ffd671a3dad424fb68e113a5b9894c5d1b5e13a88c6bdf0d4af6645123b31faf"
+  url "https://curl.se/download/curl-8.22.0.tar.bz2"
+  mirror "https://github.com/curl/curl/releases/download/curl-8_22_0/curl-8.22.0.tar.bz2"
+  mirror "http://fresh-center.net/linux/www/curl-8.22.0.tar.bz2"
+  mirror "http://fresh-center.net/linux/www/legacy/curl-8.22.0.tar.bz2"
+  sha256 "5d956a6a22b3c279f50c421ee5d3c9e9d660cb6f115dcf881b579e952130549c"
   license "curl"
-  revision 2
+  compatibility_version 1
 
   livecheck do
     url "https://curl.se/download/"
@@ -33,6 +33,7 @@ class Curl < Formula
   depends_on "libnghttp2"
   depends_on "libnghttp3"
   depends_on "libngtcp2"
+  depends_on "libpsl"
   depends_on "libssh2"
   depends_on "openssl@3"
   depends_on "zstd"
@@ -48,13 +49,6 @@ class Curl < Formula
     depends_on "zlib-ng-compat"
   end
 
-
-  on_macos do
-    if Formula["rtmpdump"].linked_keg.exist?
-      odie "rtmp is linked and might interfere with the build!"
-    end
-  end
-  
   def install
     tag_name = "curl-#{version.to_s.tr(".", "_")}"
     if build.stable? && stable.mirrors.grep(%r{\Ahttps?://(www\.)?github\.com/}).first.exclude?(tag_name)
@@ -69,7 +63,7 @@ class Curl < Formula
 
     args = %W[
       --disable-silent-rules
-      --with-ssl=#{Formula["openssl@3"].opt_prefix}
+      --with-ssl=#{formula_opt_prefix("openssl@3")}
       --without-ca-bundle
       --without-ca-path
       --with-ca-fallback
@@ -77,7 +71,7 @@ class Curl < Formula
       --with-libssh2
       --with-nghttp3
       --with-ngtcp2
-      --without-libpsl
+      --with-libpsl
       --with-zsh-functions-dir=#{zsh_completion}
       --with-fish-functions-dir=#{fish_completion}
     ]
@@ -88,7 +82,7 @@ class Curl < Formula
         --with-gssapi
       ]
     else
-      ["--with-gssapi=#{Formula["krb5"].opt_prefix}"]
+      ["--with-gssapi=#{formula_opt_prefix("krb5")}"]
     end
 
     args += if OS.mac? && MacOS.version >= :ventura
@@ -121,7 +115,7 @@ class Curl < Formula
 
     # Check dependencies linked correctly
     curl_features = shell_output("#{bin}/curl-config --features").split("\n")
-    %w[brotli GSS-API HTTP2 HTTP3 IDN libz SSL zstd].each do |feature|
+    %w[brotli GSS-API HTTP2 HTTP3 IDN libz PSL SSL zstd].each do |feature|
       assert_includes curl_features, feature
     end
     curl_protocols = shell_output("#{bin}/curl-config --protocols").split("\n")

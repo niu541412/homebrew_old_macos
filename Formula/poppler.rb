@@ -1,10 +1,10 @@
 class Poppler < Formula
   desc "PDF rendering library (based on the xpdf-3.0 code base)"
   homepage "https://poppler.freedesktop.org/"
-  url "https://poppler.freedesktop.org/poppler-26.08.0.tar.xz"
-  sha256 "dc906e68cea698109706ac6aa3d2c9d4512fcfcac42d90b8afcda486d1b9abd0"
+  url "https://poppler.freedesktop.org/poppler-26.09.0.tar.xz"
+  sha256 "8059eadb6805340768f138c465b57f8164c92b4a0773c37ef031ea6c0d987b2e"
   license any_of: ["GPL-2.0-only", "GPL-3.0-only"] # see README-XPDF
-  compatibility_version 6
+  compatibility_version 7
   head "https://gitlab.freedesktop.org/poppler/poppler.git", branch: "master"
 
   livecheck do
@@ -25,6 +25,7 @@ class Poppler < Formula
   depends_on "freetype"
   depends_on "glib"
   depends_on "gpgmepp"
+  depends_on "harfbuzz"
   depends_on "jpeg-turbo"
   depends_on "libpng"
   depends_on "libtiff"
@@ -60,6 +61,8 @@ class Poppler < Formula
       regex(/href=.*?poppler-data[._-]v?(\d+(?:\.\d+)+)\.t/i)
     end
   end
+
+  deny_network_access!
 
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)

@@ -27,7 +27,6 @@ class LlvmAT16 < Formula
   depends_on "python@3.13" => [:build, :test]
   depends_on "xz"
   depends_on "zstd"
-  depends_on "llvm@15" => :build
 
   uses_from_macos "libedit"
   uses_from_macos "libffi"
@@ -63,11 +62,11 @@ class LlvmAT16 < Formula
     sha256 "b540ef6e3728d7881d95775a163314fac6e2f9207f5d5e8b79c8c73c73ba4dc3"
     type :backport
   end
-  
-  #Fix build with python 3.13
+
+  # Fix Python 3.13 support.
   patch do
-      url "https://github.com/llvm/llvm-project/commit/ed87035da34be675df7ea78bdf5f7631d81ab2db.patch?full_index=1"
-      sha256 "13e02dc0d042ce0ff8127cddb69539775e490cc6c1cb6e21710367f3430936dc"
+    url "https://github.com/llvm/llvm-project/commit/ed87035da34be675df7ea78bdf5f7631d81ab2db.patch?full_index=1"
+    sha256 "13e02dc0d042ce0ff8127cddb69539775e490cc6c1cb6e21710367f3430936dc"
   end
 
   def python3
@@ -76,6 +75,36 @@ class LlvmAT16 < Formula
 
   patch :DATA
   def install
+    # Apple Clang 10's libc++ has std::optional but not the C++17 deduction
+    # guides used by LLVM 16.
+    inreplace "llvm/lib/Support/Program.cpp",
+              "std::optional(SecondsToWait)", "std::optional<unsigned>(SecondsToWait)"
+    inreplace "llvm/lib/Transforms/Utils/MemoryOpRemark.cpp",
+              "std::optional(TySize->getFixedValue())", "std::optional<uint64_t>(TySize->getFixedValue())"
+    inreplace "mlir/include/mlir/Dialect/SparseTensor/IR/Enums.h",
+              "std::optional(dlt)", "std::optional<DimLevelType>(dlt)"
+    inreplace "mlir/lib/Dialect/SparseTensor/IR/SparseTensorDialect.cpp",
+              "std::optional(dim.value().getZExtValue())", "std::optional<unsigned>(dim.value().getZExtValue())"
+    # Apple Clang 10's libc++ lacks C++17 tuple deduction guides.
+    inreplace "llvm/lib/Target/AMDGPU/AsmParser/AMDGPUAsmParser.cpp",
+              "std::tuple(", "std::make_tuple("
+    # Avoid ArrayRef's C++17 deduction syntax in a condition, which Apple
+    # Clang 10 parses as a declaration.
+    inreplace "llvm/lib/Target/X86/X86ISelLowering.cpp",
+              "ArrayRef(Mask).equals", "ArrayRef<int>(Mask).equals"
+    inreplace "llvm/lib/Target/X86/X86ISelLowering.cpp",
+              "ArrayRef(MappedMask).equals", "ArrayRef<int>(MappedMask).equals"
+    inreplace "lldb/source/Plugins/Process/gdb-remote/GDBRemoteCommunicationServerLLGS.cpp",
+              "ArrayRef(reg_bytes, reg_size)", "ArrayRef<uint8_t>(reg_bytes, reg_size)"
+    inreplace "mlir/lib/Dialect/Vector/IR/VectorOps.cpp",
+              "ArrayRef(extractPosition)", "ArrayRef<int64_t>(extractPosition)"
+    inreplace "mlir/lib/Dialect/Vector/IR/VectorOps.cpp",
+              "ArrayRef(insertedPos)", "ArrayRef<int64_t>(insertedPos)"
+    # Python 3.13 removed the old PyInt compatibility aliases. LLVM 16's
+    # LLDB SWIG typemaps use them with Python 3 semantics, so PyLong is the
+    # direct replacement.
+    inreplace "lldb/bindings/python/python-typemaps.swig", "PyInt_", "PyLong_"
+
     # The clang bindings need a little help finding our libclang.
     inreplace "clang/bindings/python/clang/cindex.py",
               /^(\s*library_path\s*=\s*)None$/,
@@ -106,8 +135,15 @@ class LlvmAT16 < Formula
                              .map { |py| py.delete_prefix("python@") }
     site_packages = Language::Python.site_packages(python3).delete_prefix("lib/")
 
-    # Apple's libstdc++ is too old to build LLVM
-    ENV.libcxx if ENV.compiler == :clang
+    compat_cxxflags = nil
+    # The patch below adds this compatibility header to the source tree.
+    if OS.mac? && DevelopmentTools.clang_build_version <= 1000
+      # Xcode 10's libc++ headers mark several fully header-only C++17 APIs
+      # as macOS 10.14+, although they are usable with the 10.13 SDK.
+      # Do not put these in ENV: LLVM forwards ENV CXXFLAGS to its runtimes,
+      # which use the newly-built libc++ and must not see this old-SDK shim.
+      compat_cxxflags = "-include #{buildpath}/darwin-cmath-compat.h -D_LIBCPP_DISABLE_AVAILABILITY"
+    end
 
     # compiler-rt has some iOS simulator features that require i386 symbols
     # I'm assuming the rest of clang needs support too for 32-bit compilation
@@ -116,10 +152,6 @@ class LlvmAT16 < Formula
     # can almost be treated as an entirely different build from llvm.
     ENV.permit_arch_flags
 
-    llvm = Formula["llvm@15"]
-    ENV["CC"] = "#{llvm.opt_bin}/clang"
-    ENV["CXX"] = "#{llvm.opt_bin}/clang++"
-    
     # we install the lldb Python module into libexec to prevent users from
     # accidentally importing it with a non-Homebrew Python or a Homebrew Python
     # in a non-default prefix. See https://lldb.llvm.org/resources/caveats.html
@@ -157,6 +189,10 @@ class LlvmAT16 < Formula
 
     if OS.mac?
       macos_sdk = MacOS.sdk_path
+      python_version = Language::Python.major_minor_version python3
+      args += %W[
+        -DPython3_INCLUDE_DIR=#{Formula["python@#{python_version}"].opt_frameworks}/Python.framework/Versions/#{python_version}/include/python#{python_version}
+      ]
       args << "-DFFI_INCLUDE_DIR=#{macos_sdk}/usr/include/ffi"
       args << "-DFFI_LIBRARY_DIR=#{macos_sdk}/usr/lib"
 
@@ -224,6 +260,9 @@ class LlvmAT16 < Formula
       runtimes_cmake_args << "-DCMAKE_CXX_FLAGS=#{ENV.cxxflags}"
       builtins_cmake_args << "-DCMAKE_CXX_FLAGS=#{ENV.cxxflags}"
     end
+
+    # Deliberately apply the compatibility layer only to the outer build.
+    args << "-DCMAKE_CXX_FLAGS=#{[ENV.cxxflags, compat_cxxflags].compact.join(" ")}" if compat_cxxflags
 
     args << "-DRUNTIMES_CMAKE_ARGS=#{runtimes_cmake_args.join(";")}" if runtimes_cmake_args.present?
     args << "-DBUILTINS_CMAKE_ARGS=#{builtins_cmake_args.join(";")}" if builtins_cmake_args.present?
@@ -552,3 +591,51 @@ __END__
  #ifndef CPU_TYPE_ARM64_32
  #define CPU_ARCH_ABI64_32 0x02000000
  #define CPU_TYPE_ARM64_32 (CPU_TYPE_ARM | CPU_ARCH_ABI64_32)
+
+--- /dev/null
++++ b/darwin-cmath-compat.h
+@@ -0,0 +1,44 @@
++#include <math.h>
++#if __cplusplus >= 201103L
++#define HB_NOEXCEPT noexcept
++#else
++#define HB_NOEXCEPT
++#endif
++#ifndef _LIBCPP_MATH_H
++inline float abs(float x) HB_NOEXCEPT { return __builtin_fabsf(x); }
++inline double abs(double x) HB_NOEXCEPT { return __builtin_fabs(x); }
++inline long double abs(long double x) HB_NOEXCEPT { return __builtin_fabsl(x); }
++inline long abs(long x) HB_NOEXCEPT { return __builtin_labs(x); }
++inline long long abs(long long x) HB_NOEXCEPT { return __builtin_llabs(x); }
++#endif
++#undef fpclassify
++#undef isfinite
++#undef isinf
++#undef isnan
++#undef isnormal
++#undef signbit
++#undef isgreater
++#undef isgreaterequal
++#undef isless
++#undef islessequal
++#undef islessgreater
++#undef isunordered
++#define HB_UNARY(name, builtin) inline int name(float x) HB_NOEXCEPT { return __builtin##builtin(x); } inline int name(double x) HB_NOEXCEPT { return __builtin##builtin(x); } inline int name(long double x) HB_NOEXCEPT { return __builtin##builtin(x); }
++HB_UNARY(isfinite, _isfinite)
++HB_UNARY(isinf, _isinf)
++HB_UNARY(isnan, _isnan)
++HB_UNARY(isnormal, _isnormal)
++HB_UNARY(signbit, _signbit)
++#undef HB_UNARY
++inline int fpclassify(float x) HB_NOEXCEPT { return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, x); }
++inline int fpclassify(double x) HB_NOEXCEPT { return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, x); }
++inline int fpclassify(long double x) HB_NOEXCEPT { return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, x); }
++#define HB_BINARY(name, builtin) inline int name(float x, float y) HB_NOEXCEPT { return __builtin##builtin(x, y); } inline int name(double x, double y) HB_NOEXCEPT { return __builtin##builtin(x, y); } inline int name(long double x, long double y) HB_NOEXCEPT { return __builtin##builtin(x, y); }
++HB_BINARY(isgreater, _isgreater)
++HB_BINARY(isgreaterequal, _isgreaterequal)
++HB_BINARY(isless, _isless)
++HB_BINARY(islessequal, _islessequal)
++HB_BINARY(islessgreater, _islessgreater)
++HB_BINARY(isunordered, _isunordered)
++#undef HB_BINARY
++#undef HB_NOEXCEPT

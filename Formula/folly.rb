@@ -1,10 +1,9 @@
 class Folly < Formula
   desc "Collection of reusable C++ library artifacts developed at Facebook"
   homepage "https://github.com/facebook/folly"
-  url "https://github.com/facebook/folly/archive/refs/tags/v2026.07.27.00.tar.gz"
-  sha256 "dcb373984e571468659be8a74c0a43a1cb6548fbe5579a806674db43d7261c4e"
+  url "https://github.com/facebook/folly/archive/refs/tags/v2026.09.14.00.tar.gz"
+  sha256 "0b6153196c7fcb9f51636e3d0a68dce86f0e2ca5c94ea32925f6c6d474a57d68"
   license "Apache-2.0"
-  revision 1
   compatibility_version 1
   head "https://github.com/facebook/folly.git", branch: "main"
 
@@ -43,7 +42,7 @@ class Folly < Formula
 
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
-    args = %W[
+    args = %w[
       -DFOLLY_USE_JEMALLOC=OFF
     ]
 
@@ -162,6 +161,29 @@ index e07e58745..1429f54e9 100644
 
  } // namespace fs
  } // namespace folly
+
+--- a/folly/result/epitaph.cpp
++++ b/folly/result/epitaph.cpp
+@@ -14,6 +14,8 @@
+  * limitations under the License.
+  */
+ 
++#include <vector>
++
+ #include <folly/result/epitaph.h>
+ 
+ #include <folly/Portability.h> // FOLLY_HAS_RESULT
+
+--- a/folly/result/rich_error_code.h
++++ b/folly/result/rich_error_code.h
+@@ -16,6 +16,7 @@
+ 
+ #pragma once
+ 
++#include <exception>
+ #include <optional>
+ #include <fmt/core.h>
+ 
 --- a/folly/io/FsUtil.cpp
 +++ b/folly/io/FsUtil.cpp
 @@ -103,6 +103,7 @@
