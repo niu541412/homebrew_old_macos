@@ -2,7 +2,7 @@ class Opencv < Formula
   desc "Open source computer vision library"
   homepage "https://opencv.org/"
   license "Apache-2.0"
-  revision 8
+  revision 10
   compatibility_version 2
 
   stable do
@@ -191,14 +191,6 @@ class Opencv < Formula
 
     # Ref: https://github.com/opencv/opencv/wiki/CPU-optimizations-build-options
     ENV.runtime_cpu_detection
-    #if Hardware::CPU.intel? && build.bottle?
-     # cpu_baseline = if OS.mac? && MacOS.version.requires_sse42?
-     #   "SSE4_2"
-     # else
-     #   "SSSE3"
-     # end
-     # args += %W[-DCPU_BASELINE=#{cpu_baseline} -DCPU_BASELINE_REQUIRE=#{cpu_baseline}]
-    #end
 
     system "cmake", "-S", ".", "-B", "build_shared", *args, *std_cmake_args
     inreplace "build_shared/modules/core/version_string.inc", "#{Superenv.shims_path}/", ""

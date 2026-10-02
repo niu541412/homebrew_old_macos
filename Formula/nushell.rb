@@ -1,8 +1,8 @@
 class Nushell < Formula
   desc "Modern shell for the GitHub era"
   homepage "https://www.nushell.sh"
-  url "https://github.com/nushell/nushell/archive/refs/tags/0.115.1.tar.gz"
-  sha256 "06df93281a0f858019d09ea6cf821b19a7cd9017cdfb9e898cfe8dd4bd8101c2"
+  url "https://github.com/nushell/nushell/archive/refs/tags/0.116.0.tar.gz"
+  sha256 "1174d023ffc8083750daec8ee2dfe6486a8ef9f5c22396aa675b61d1bb0fad2d"
   license "MIT"
   head "https://github.com/nushell/nushell.git", branch: "main"
 
@@ -30,6 +30,12 @@ class Nushell < Formula
     depends_on "libx11"
     depends_on "libxcb"
     depends_on "zlib-ng-compat"
+  end
+
+  deny_network_access!
+
+  def fetch
+    system "cargo", "fetch", *std_cargo_fetch_args
   end
 
   def install

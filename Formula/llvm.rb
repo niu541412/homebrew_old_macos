@@ -6,8 +6,8 @@ class Llvm < Formula
   head "https://github.com/llvm/llvm-project.git", branch: "main"
 
   stable do
-    url "https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.1/llvm-project-23.1.1.src.tar.xz"
-    sha256 "ebe9be46fe8756d58c5b198ffad0fa2a766257add81a4dc52179bfacc7888ee6"
+    url "https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.2/llvm-project-23.1.2.src.tar.xz"
+    sha256 "c98bbef08a2b4c2613cd50e9aa9ae7b69b1fe6c16b2c40373bc0ab6116fdf78a"
 
     # Fix triple config loading for clang-cl
     patch do
@@ -15,6 +15,14 @@ class Llvm < Formula
       sha256 "f6dafd762737eb79761ab7ef814a9fc802ec4bb8d20f46691f07178053b0eb36"
       type :unofficial
       resolves "https://github.com/llvm/llvm-project/pull/111397"
+    end
+
+    # Backport fix for macOS 27 SDK
+    patch do
+      url "https://github.com/llvm/llvm-project/commit/b8007a8e4020b8bca2b12e941660e10bf5bf6716.patch?full_index=1"
+      sha256 "e41e300eb6f5cca9172ab344e572c3fb24f0d05885ae23dd7cb4f9c2528839f7"
+      type :backport
+      resolves "https://github.com/llvm/llvm-project/pull/222721"
     end
   end
 
@@ -49,13 +57,9 @@ class Llvm < Formula
     depends_on "zlib-ng-compat"
   end
 
-  def python3
-    "python3.14"
-  end
+  def clang_config_file_dir = etc/"clang"
 
-  def clang_config_file_dir
-    etc/"clang"
-  end
+  deny_network_access!
 
   patch :DATA
   def install
@@ -207,37 +211,24 @@ class Llvm < Formula
     pgo_build = build.stable? && build.bottle? && OS.mac? && !versioned_formula?
     lto_build = pgo_build && OS.mac?
 
-    if ENV.cflags.present?
-      args << "-DCMAKE_C_FLAGS=#{ENV.cflags}" unless pgo_build
-      runtimes_cmake_args << "-DCMAKE_C_FLAGS=#{ENV.cflags}"
-      builtins_cmake_args << "-DCMAKE_C_FLAGS=#{ENV.cflags}"
-    end
-
-    if ENV.cxxflags.present?
-      args << "-DCMAKE_CXX_FLAGS=#{ENV.cxxflags}" unless pgo_build
-      runtimes_cmake_args << "-DCMAKE_CXX_FLAGS=#{ENV.cxxflags}"
-      builtins_cmake_args << "-DCMAKE_CXX_FLAGS=#{ENV.cxxflags}"
-    end
-
-    args << "-DRUNTIMES_CMAKE_ARGS=#{runtimes_cmake_args.join(";")}" if runtimes_cmake_args.present?
-    args << "-DBUILTINS_CMAKE_ARGS=#{builtins_cmake_args.join(";")}" if builtins_cmake_args.present?
-
     llvmpath = buildpath/"llvm"
     if pgo_build
       # We build LLVM a few times first for optimisations. See
       # https://github.com/Homebrew/homebrew-core/issues/77975
-
       # PGO build adapted from:
       # https://llvm.org/docs/HowToBuildWithPGO.html#building-clang-with-pgo
       # https://github.com/llvm/llvm-project/blob/33ba8bd2/llvm/utils/collect_and_build_with_pgo.py
       # https://github.com/facebookincubator/BOLT/blob/01f471e7/docs/OptimizingClang.md
+      stage1 = buildpath/"stage1"
+      stage2 = buildpath/"stage2"
+      stage2_profdata = buildpath/"stage2-profdata"
 
       # We build the basic parts of a toolchain to profile.
       # The extra targets on macOS are part of a default Compiler-RT build.
-      extra_args = [
-        "-DLLVM_TARGETS_TO_BUILD=Native#{";AArch64;ARM;X86" if OS.mac?}",
-        "-DLLVM_ENABLE_PROJECTS=clang;lld",
-        "-DLLVM_ENABLE_RUNTIMES=compiler-rt",
+      extra_args = %W[
+        -DLLVM_TARGETS_TO_BUILD=Native#{";AArch64;ARM;X86" if OS.mac?}
+        -DLLVM_ENABLE_PROJECTS=clang;lld
+        -DLLVM_ENABLE_RUNTIMES=compiler-rt
       ]
 
       # Our stage1 compiler includes the minimum necessary to bootstrap.
@@ -250,7 +241,7 @@ class Llvm < Formula
 
         args << "-DLLVM_ENABLE_LTO=Thin" if lto_build
         # LTO creates object files not recognised by Apple libtool.
-        args << "-DCMAKE_LIBTOOL=#{llvmpath}/stage1/bin/llvm-libtool-darwin"
+        args << "-DCMAKE_LIBTOOL=#{stage1}/bin/llvm-libtool-darwin"
 
         # These are needed to enable LTO.
         ["llvm-libtool-darwin", "LTO"]
@@ -272,15 +263,13 @@ class Llvm < Formula
       # and use system Clang instead, but this stage does not take too long, and we want
       # to avoid incompatibilities from generating profile data with a newer Clang than
       # the one we consume the data with.
-      mkdir llvmpath/"stage1" do
-        system "cmake", "-G", "Ninja", "..", *extra_args, *std_cmake_args
-        system "cmake", "--build", ".", "--target", *stage1_targets
-      end
+      system "cmake", "-S", llvmpath, "-B", stage1, "-G", "Ninja", *extra_args, *std_cmake_args
+      system "cmake", "--build", stage1, "--target", *stage1_targets
 
       # Barring the stage where we generate the profile data, there is no benefit to
       # rebuilding these.
-      extra_args << "-DCLANG_TABLEGEN=#{llvmpath}/stage1/bin/clang-tblgen"
-      extra_args << "-DLLVM_TABLEGEN=#{llvmpath}/stage1/bin/llvm-tblgen"
+      extra_args << "-DCLANG_TABLEGEN=#{stage1}/bin/clang-tblgen"
+      extra_args << "-DLLVM_TABLEGEN=#{stage1}/bin/llvm-tblgen"
 
       if OS.linux?
         # Make sure brewed glibc will be used if it is installed.
@@ -314,80 +303,83 @@ class Llvm < Formula
         extra_args << "-DCMAKE_CXX_FLAGS=#{cxxflags.join(" ")}"
       end
 
+      # LLVM Profile runs out of static counters
+      # https://reviews.llvm.org/D92669, https://reviews.llvm.org/D93281
+      # Without this, the build produces many warnings of the form
+      # LLVM Profile Warning: Unable to track new values: Running out of static counters.
+      instrumented_cflags = cflags + %w[-Xclang -mllvm -Xclang -vp-counters-per-site=6]
+      instrumented_cxxflags = cxxflags + %w[-Xclang -mllvm -Xclang -vp-counters-per-site=6]
+      instrumented_extra_args = extra_args.reject { |s| s[/CMAKE_C(XX)?_FLAGS/] }
+
       # Next, build an instrumented stage2 compiler
-      mkdir llvmpath/"stage2" do
-        # LLVM Profile runs out of static counters
-        # https://reviews.llvm.org/D92669, https://reviews.llvm.org/D93281
-        # Without this, the build produces many warnings of the form
-        # LLVM Profile Warning: Unable to track new values: Running out of static counters.
-        instrumented_cflags = cflags + %w[-Xclang -mllvm -Xclang -vp-counters-per-site=6]
-        instrumented_cxxflags = cxxflags + %w[-Xclang -mllvm -Xclang -vp-counters-per-site=6]
-        instrumented_extra_args = extra_args.reject { |s| s[/CMAKE_C(XX)?_FLAGS/] }
-
-        system "cmake", "-G", "Ninja", "..",
-                        "-DCMAKE_C_COMPILER=#{llvmpath}/stage1/bin/clang",
-                        "-DCMAKE_CXX_COMPILER=#{llvmpath}/stage1/bin/clang++",
-                        "-DLLVM_BUILD_INSTRUMENTED=IR",
-                        "-DLLVM_BUILD_RUNTIME=NO",
-                        "-DCMAKE_C_FLAGS=#{instrumented_cflags.join(" ")}",
-                        "-DCMAKE_CXX_FLAGS=#{instrumented_cxxflags.join(" ")}",
-                        *instrumented_extra_args, *std_cmake_args
-        system "cmake", "--build", ".", "--target", "clang", "lld", "runtimes"
-
+      system "cmake", "-S", llvmpath, "-B", stage2, "-G", "Ninja",
+                      "-DCMAKE_C_COMPILER=#{stage1}/bin/clang",
+                      "-DCMAKE_CXX_COMPILER=#{stage1}/bin/clang++",
+                      "-DLLVM_BUILD_INSTRUMENTED=IR",
+                      "-DLLVM_BUILD_RUNTIME=NO",
+                      "-DCMAKE_C_FLAGS=#{instrumented_cflags.join(" ")}",
+                      "-DCMAKE_CXX_FLAGS=#{instrumented_cxxflags.join(" ")}",
+                      *instrumented_extra_args, *std_cmake_args
+      system "cmake", "--build", stage2, "--target", "clang", "lld", "runtimes"
+      begin
         # We run some `check-*` targets to increase profiling
         # coverage. These do not need to succeed.
         # NOTE: If using `Unix Makefiles` generator, `-k 0` needs to replaced with `--keep-going`.
-        begin
-          system "cmake", "--build", ".", "--target", "check-clang", "check-llvm", "--", "-k", "0"
-        rescue BuildError
-          nil
-        end
+        system "cmake", "--build", stage2, "--target", "check-clang", "check-llvm", "--", "-k", "0"
+      rescue BuildError
+        nil
       end
 
       # Then, generate the profile data
-      mkdir llvmpath/"stage2-profdata" do
-        system "cmake", "-G", "Ninja", "..",
-                        "-DCMAKE_C_COMPILER=#{llvmpath}/stage2/bin/clang",
-                        "-DCMAKE_CXX_COMPILER=#{llvmpath}/stage2/bin/clang++",
-                        "-DLLVM_BUILD_RUNTIMES=OFF",
-                        *extra_args.reject { |s| s["TABLEGEN"] },
-                        *std_cmake_args
-
+      system "cmake", "-S", llvmpath, "-B", stage2_profdata, "-G", "Ninja",
+                      "-DCMAKE_C_COMPILER=#{stage2}/bin/clang",
+                      "-DCMAKE_CXX_COMPILER=#{stage2}/bin/clang++",
+                      "-DLLVM_BUILD_RUNTIMES=OFF",
+                      *extra_args.reject { |s| s["TABLEGEN"] },
+                      *std_cmake_args
+      begin
         # This build is for profiling, so it is safe to ignore errors.
         # NOTE: If using `Unix Makefiles` generator, `-k 0` needs to replaced with `--keep-going`.
-        begin
-          system "cmake", "--build", ".", "--", "-k", "0"
-        rescue BuildError
-          nil
-        end
+        system "cmake", "--build", stage2_profdata, "--", "-k", "0"
+      rescue BuildError
+        nil
       end
 
       # Merge the generated profile data
-      profpath = llvmpath/"stage2/profiles"
+      profpath = stage2/"profiles"
       pgo_profile = profpath/"pgo_profile.prof"
-      system llvmpath/"stage1/bin/llvm-profdata", "merge", "-output=#{pgo_profile}", *profpath.glob("*.profraw")
+      system stage1/"bin/llvm-profdata", "merge", "-output=#{pgo_profile}", *profpath.glob("*.profraw")
 
       # Make sure to build with our profiled compiler and use the profile data
-      args << "-DCMAKE_C_COMPILER=#{llvmpath}/stage1/bin/clang"
-      args << "-DCMAKE_CXX_COMPILER=#{llvmpath}/stage1/bin/clang++"
+      args << "-DCMAKE_C_COMPILER=#{stage1}/bin/clang"
+      args << "-DCMAKE_CXX_COMPILER=#{stage1}/bin/clang++"
       args << "-DLLVM_PROFDATA_FILE=#{pgo_profile}"
       # `llvm-tblgen` is an install target, so let's build that.
-      args << "-DCLANG_TABLEGEN=#{llvmpath}/stage1/bin/clang-tblgen"
+      args << "-DCLANG_TABLEGEN=#{stage1}/bin/clang-tblgen"
 
       # Silence some warnings
-      cflags << "-Wno-backend-plugin"
-      cxxflags << "-Wno-backend-plugin"
-
-      args << "-DCMAKE_C_FLAGS=#{cflags.join(" ")}"
-      args << "-DCMAKE_CXX_FLAGS=#{cxxflags.join(" ")}"
+      ENV.append_to_cflags "-Wno-backend-plugin"
     end
+
+    if ENV.cflags.present?
+      args << "-DCMAKE_C_FLAGS=#{ENV.cflags}"
+      runtimes_cmake_args << "-DCMAKE_C_FLAGS=#{ENV.cflags}"
+      builtins_cmake_args << "-DCMAKE_C_FLAGS=#{ENV.cflags}"
+    end
+
+    if ENV.cxxflags.present?
+      args << "-DCMAKE_CXX_FLAGS=#{ENV.cxxflags}"
+      runtimes_cmake_args << "-DCMAKE_CXX_FLAGS=#{ENV.cxxflags}"
+      builtins_cmake_args << "-DCMAKE_CXX_FLAGS=#{ENV.cxxflags}"
+    end
+
+    args << "-DRUNTIMES_CMAKE_ARGS=#{runtimes_cmake_args.join(";")}" if runtimes_cmake_args.present?
+    args << "-DBUILTINS_CMAKE_ARGS=#{builtins_cmake_args.join(";")}" if builtins_cmake_args.present?
 
     # Now, we can build.
-    mkdir llvmpath/"build" do
-      system "cmake", "-G", "Ninja", "..", *(std_cmake_args + args)
-      system "cmake", "--build", "."
-      system "cmake", "--build", ".", "--target", "install"
-    end
+    system "cmake", "-S", llvmpath, "-B", "build", "-G", "Ninja", *args, *std_cmake_args
+    system "cmake", "--build", "build"
+    system "cmake", "--build", "build", "--target", "install"
 
     clang_config_file_dir.mkpath
     touch clang_config_file_dir/".keepme"
@@ -449,23 +441,53 @@ class Llvm < Formula
 
     return unless lto_build
 
-    # Convert LTO-generated bitcode in our static archives to MachO. Adapted from Fedora:
-    # https://src.fedoraproject.org/rpms/redhat-rpm-config/blob/rawhide/f/brp-llvm-compile-lto-elf
-    lib.glob("*.a").each do |static_archive|
-      mktemp do
-        system bin/"llvm-ar", "x", static_archive
-        rebuilt_files = []
+    lib.glob("*.a").each { |static_archive| convert_lto_archive(static_archive) }
+  end
 
-        Pathname.glob("*.o").each do |bc_file|
-          file_type = Utils.safe_popen_read("file", "--brief", bc_file)
-          next unless file_type.match?(/^LLVM (IR )?bitcode/)
+  # Convert LTO-generated bitcode in our static archives to Mach-O.
+  # Archives with unique member names keep flat extraction and replacement.
+  # Only archives containing duplicate names require per-occurrence extraction
+  # and rebuilding: flat extraction overwrites same-named members, while
+  # `llvm-ar r` replaces only the first matching member.
+  #
+  # Adapted from Fedora:
+  # https://src.fedoraproject.org/rpms/redhat-rpm-config/blob/1c5e204554732b224956618610a990e7acd74f62/f/brp-llvm-compile-lto-elf
+  def convert_lto_archive(static_archive)
+    mktemp do
+      members = Utils.safe_popen_read(bin/"llvm-ar", "t", static_archive).split("\n")
+      has_duplicates = members.uniq.length != members.length
 
-          rebuilt_files << bc_file
-          system bin/"clang", "-fno-lto", "-Wno-unused-command-line-argument",
-                              "-x", "ir", bc_file, "-c", "-o", bc_file
+      member_files = if has_duplicates
+        occurrences = Hash.new(0)
+        members.each_with_index.map do |member, index|
+          member_dir = Pathname.pwd/index.to_s
+          member_dir.mkpath
+          occurrences[member] += 1
+          system bin/"llvm-ar", "xN", occurrences[member].to_s, static_archive, member,
+                 "--output=#{member_dir}"
+          member_dir/member
         end
+      else
+        system bin/"llvm-ar", "x", static_archive
+        Pathname.glob("*.o")
+      end
 
-        system bin/"llvm-ar", "r", static_archive, *rebuilt_files if rebuilt_files.present?
+      converted_files = member_files.select do |bc_file|
+        file_type = Utils.safe_popen_read("file", "--brief", bc_file)
+        next false unless file_type.match?(/^LLVM (IR )?bitcode/)
+
+        system bin/"clang", "-fno-lto", "-Wno-unused-command-line-argument",
+                            "-x", "ir", bc_file, "-c", "-o", bc_file
+        true
+      end
+      next if converted_files.empty?
+
+      if has_duplicates
+        rebuilt_archive = Pathname.pwd/static_archive.basename
+        system bin/"llvm-ar", "qcs", rebuilt_archive, *member_files
+        mv rebuilt_archive, static_archive
+      else
+        system bin/"llvm-ar", "r", static_archive, *converted_files
       end
     end
   end
@@ -547,6 +569,24 @@ class Llvm < Formula
     assert_equal "-lLLVM-#{soversion}", shell_output("#{bin}/llvm-config --libs").chomp
     assert_equal (lib/shared_library("libLLVM-#{soversion}")).to_s,
                  shell_output("#{bin}/llvm-config --libfiles").chomp
+
+    if OS.mac?
+      # Regression: duplicate archive members must all be converted from bitcode to Mach-O.
+      # Assumes clang/lib/Driver/ToolChains/{AMDGPU.cpp, Arch/AMDGPU.cpp} produce exactly
+      # two AMDGPU.cpp.o members in libclangDriver.a. Upstream source/target restructuring
+      # or object-naming changes may invalidate the archive name, member name, or count.
+      archive = lib/"libclangDriver.a"
+      member = "AMDGPU.cpp.o"
+      members = Utils.safe_popen_read(bin/"llvm-ar", "t", archive).split("\n")
+      assert_equal 2, members.count(member)
+
+      (1..2).each do |instance|
+        mkdir testpath/"archive-member-#{instance}" do
+          system bin/"llvm-ar", "xN", instance.to_s, archive, member
+          assert_match(/^Mach-O/, Utils.safe_popen_read("file", "--brief", member))
+        end
+      end
+    end
 
     (testpath/"test.c").write <<~'C'
       #include <stdio.h>

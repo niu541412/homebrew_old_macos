@@ -1,8 +1,8 @@
 class Ccache < Formula
   desc "Object-file caching compiler wrapper"
   homepage "https://ccache.dev/"
-  url "https://github.com/ccache/ccache/releases/download/v4.14/ccache-4.14.tar.xz"
-  sha256 "b093ac5d38204cb4d9f29b0bbd570675aa5a592a78e6675b2c506dbe045234e7"
+  url "https://github.com/ccache/ccache/releases/download/v4.14.1/ccache-4.14.1.tar.xz"
+  sha256 "29f10de481ac2c41c91bfabead63d803bd2fe823e09752aade5b0b8704cc4f30"
   license "GPL-3.0-or-later"
   compatibility_version 1
   head "https://github.com/ccache/ccache.git", branch: "master"
@@ -26,10 +26,15 @@ class Ccache < Formula
   depends_on "zstd"
   depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
 
+  #on_macos do
+  #  depends_on "gcc" => :build
+  #end
+
   on_linux do
     depends_on "zlib-ng-compat"
   end
 
+  deny_network_access!
   patch :DATA
   def install
     args = []

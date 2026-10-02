@@ -1,10 +1,9 @@
 class Onnx < Formula
   desc "Open standard for machine learning interoperability"
   homepage "https://onnx.ai/"
-  url "https://github.com/onnx/onnx/archive/refs/tags/v1.22.0.tar.gz"
-  sha256 "70bb8b25cf31ea9b1d9f94baacfdc8c4fa27a760f9a10f5d93881bc9eede5fbc"
+  url "https://github.com/onnx/onnx/archive/refs/tags/v1.23.1.tar.gz"
+  sha256 "c8732e2711faba94caf208b75d0c28c2ea473ab0bf57a01b1176e5f0d51a6c06"
   license "Apache-2.0"
-  revision 4
   compatibility_version 1
 
   bottle do
@@ -33,7 +32,10 @@ class Onnx < Formula
   end
 
   def install
-    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
+    if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
+      ENV.llvm_clang
+      ENV.append "CXXFLAGS", "-D_LIBCPP_DISABLE_AVAILABILITY"
+    end
     # FIXME: From v1.22+, onnx internals are hidden by default, which breaks
     # onnxruntime's usage of onnx as a dependency. We need to make them visible again.
     inreplace "CMakeLists.txt", "CXX_VISIBILITY_PRESET hidden", "CXX_VISIBILITY_PRESET default"
@@ -53,6 +55,11 @@ class Onnx < Formula
   end
 
   test do
+    if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
+      ENV.llvm_clang
+      ENV.append "CXXFLAGS", "-D_LIBCPP_DISABLE_AVAILABILITY"
+    end
+
     # https://github.com/onnx/onnx/blob/main/onnx/test/cpp/ir_test.cc
     (testpath/"test.cpp").write <<~CPP
       #include <cassert>
@@ -118,6 +125,9 @@ class Onnx < Formula
 
     ENV.delete "CPATH"
     args = ["-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=ON"]
+    if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
+      args << "-DCMAKE_EXE_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
+    end
     args << "-DCMAKE_BUILD_RPATH=#{lib};#{HOMEBREW_PREFIX}/lib" if OS.linux?
     system "cmake", "-S", ".", "-B", "build", *args
     system "cmake", "--build", "build"

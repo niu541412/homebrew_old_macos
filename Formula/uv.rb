@@ -1,8 +1,8 @@
 class Uv < Formula
   desc "Extremely fast Python package installer and resolver, written in Rust"
   homepage "https://docs.astral.sh/uv/"
-  url "https://github.com/astral-sh/uv/archive/refs/tags/0.12.17.tar.gz"
-  sha256 "04bb7ac3d2fca11dd0e23eea26758e8f19987f764a1135f08a51d528c5e29afc"
+  url "https://github.com/astral-sh/uv/archive/refs/tags/0.12.22.tar.gz"
+  sha256 "056ef9a33d6812a51153799ce5b35b08f02f4f37b32a26d22e99245a1f16b77c"
   license any_of: ["Apache-2.0", "MIT"]
   compatibility_version 1
   head "https://github.com/astral-sh/uv.git", branch: "main"
@@ -25,7 +25,7 @@ class Uv < Formula
   allow_network_access! :test
 
   def fetch
-    system "cargo", "fetch", "--locked", "--target", "host-tuple"
+    system "cargo", "fetch", *std_cargo_fetch_args
   end
 
   def install

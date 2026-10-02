@@ -1,8 +1,8 @@
 class Freerdp < Formula
   desc "X11 implementation of the Remote Desktop Protocol (RDP)"
   homepage "https://www.freerdp.com/"
-  url "https://github.com/FreeRDP/FreeRDP/archive/refs/tags/3.31.1.tar.gz"
-  sha256 "254de9fe176758e9787347469fb310523782f03c61130508b51b266e374eb6c1"
+  url "https://github.com/FreeRDP/FreeRDP/archive/refs/tags/3.32.1.tar.gz"
+  sha256 "8803dd26ec9660550252f255cf2d672a785ddd8f544bb475834993e96807c87f"
   license "Apache-2.0"
   head "https://github.com/FreeRDP/FreeRDP.git", branch: "master"
 
@@ -40,13 +40,22 @@ class Freerdp < Formula
     depends_on "icu4c@78"
     depends_on "krb5"
     depends_on "libfuse"
+    depends_on "pulseaudio"
     depends_on "systemd"
     depends_on "wayland"
     depends_on "zlib-ng-compat"
   end
 
+  deny_network_access!
+
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
+
+    # FreeRDP's SDL client uses std::free but does not include the header
+    # that declares it in namespace std on older macOS SDKs.
+    inreplace "client/SDL/common/sdl_common_utils.hpp", "#include <memory>",
+              "#include <cstdlib>\n\\0"
+
     args = %W[
       -DBUILD_SHARED_LIBS=ON
       -DCMAKE_INSTALL_NAME_DIR=#{lib}

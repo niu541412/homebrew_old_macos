@@ -1,8 +1,8 @@
 class Sk < Formula
   desc "Fuzzy Finder in rust!"
   homepage "https://github.com/skim-rs/skim"
-  url "https://github.com/skim-rs/skim/archive/refs/tags/v5.7.0.tar.gz"
-  sha256 "3a239d8ee284206e5a3891b2fd4e9dfe9150d120a63912b4b764bec2e6ef3966"
+  url "https://github.com/skim-rs/skim/archive/refs/tags/v5.7.3.tar.gz"
+  sha256 "0b3f43eef53db02ab2c3411befe194ee60a727b4128f34b4273a240b76122038"
   license "MIT"
   head "https://github.com/skim-rs/skim.git", branch: "master"
 
@@ -15,9 +15,15 @@ class Sk < Formula
   end
 
   depends_on "rust" => :build
-  
+
   on_macos do
     depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
+  end
+
+  deny_network_access!
+
+  def fetch
+    system "cargo", "fetch", *std_cargo_fetch_args
   end
 
   def install

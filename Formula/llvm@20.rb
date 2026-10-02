@@ -22,7 +22,6 @@ class LlvmAT20 < Formula
   depends_on "ninja" => :build
   depends_on "python@3.14" => [:build, :test]
   depends_on "zstd"
-  depends_on "llvm@19" => :build
 
   uses_from_macos "libedit"
   uses_from_macos "libffi"
@@ -41,8 +40,30 @@ class LlvmAT20 < Formula
     resolves "https://github.com/llvm/llvm-project/pull/111397"
   end
 
-  def python3
-    "python3.14"
+  # Apply MacPorts backports of upstream commits needed to fix macOS 27
+  patch do
+    url "https://raw.githubusercontent.com/macports/macports-ports/437657215603f3ec4801195efa6b80e47b9faeab/lang/llvm-20/files/0140-llvm-no-cmp-spec.patch"
+    sha256 "65872f978b5c8c06b8821b327f3e998d521a0630bb4333bff44df5d55349b634"
+    type :backport
+    resolves "https://github.com/llvm/llvm-project/pull/160804"
+  end
+  patch do
+    url "https://raw.githubusercontent.com/macports/macports-ports/437657215603f3ec4801195efa6b80e47b9faeab/lang/llvm-20/files/0141-infinity_nan.patch"
+    sha256 "79331012c6a2ec6cac4b3c2d572cba5825f7f6559a10329730cf19c19c623c17"
+    type :backport
+    resolves "https://github.com/llvm/llvm-project/pull/164348"
+  end
+
+  # Backport commits for macOS 27 SDK
+  patch do
+    url "https://github.com/llvm/llvm-project/commit/477a65a051ce151895193f8dede1262fdc251132.patch?full_index=1"
+    sha256 "4bbdb4ab0eaefce2403fdfa96929026940f153f8e7421feba288cbc3dd8fe6e2"
+    type :backport
+  end
+  patch do
+    url "https://raw.githubusercontent.com/Homebrew/homebrew-core/refs/heads/main/Patches/llvm/21.x-arm64e.x1-support.patch"
+    type :backport
+    resolves "https://github.com/llvm/llvm-project/pull/222721"
   end
 
   def clang_config_file_dir
@@ -55,6 +76,81 @@ class LlvmAT20 < Formula
     inreplace "clang/bindings/python/clang/cindex.py",
               /^(\s*library_path\s*=\s*)None$/,
               "\\1'#{lib}'"
+
+    if OS.mac? && DevelopmentTools.clang_build_version <= 1000
+      inreplace "llvm/lib/Transforms/Utils/MemoryOpRemark.cpp",
+                "std::optional(TySize->getFixedValue())", "std::optional<uint64_t>(TySize->getFixedValue())"
+      inreplace "llvm/lib/Transforms/InstCombine/InstructionCombining.cpp",
+                "std::optional(std::pair(L0, R0))", "std::optional<std::pair<Value *, Value *>>(std::pair(L0, R0))"
+      inreplace "llvm/lib/Transforms/Scalar/LowerMatrixIntrinsics.cpp",
+                "std::optional(FMF)", "std::optional<FastMathFlags>(FMF)"
+      inreplace "llvm/lib/Passes/StandardInstrumentations.cpp",
+                "std::array FileSuffixes =", "std::array<StringRef, 3> FileSuffixes ="
+      inreplace "llvm/lib/CodeGen/SelectionDAG/LegalizeFloatTypes.cpp",
+                "std::array Ops{", "std::array<SDValue, 3> Ops{"
+      inreplace "llvm/lib/CodeGen/SelectionDAG/LegalizeFloatTypes.cpp",
+                "std::array OpsVT{", "std::array<EVT, 3> OpsVT{"
+      inreplace "llvm/lib/Target/NVPTX/NVPTXTargetTransformInfo.cpp",
+                "std::optional{false}", "std::optional<bool>{false}"
+      inreplace "llvm/tools/llvm-exegesis/llvm-exegesis.cpp",
+                "std::optional(BenchmarkProcessCPU.getValue())",
+                "std::optional<int>(BenchmarkProcessCPU.getValue())"
+      inreplace "clang/lib/APINotes/APINotesYAMLCompiler.cpp",
+                "std::optional(Ctx->id)", "std::optional<ContextID>(Ctx->id)"
+      inreplace "clang/lib/APINotes/APINotesReader.cpp",
+                "std::optional(Copyable == kSwiftConforms)",
+                "std::optional<bool>(Copyable == kSwiftConforms)"
+      inreplace "clang/lib/APINotes/APINotesReader.cpp",
+                "std::optional(Escapable == kSwiftConforms)",
+                "std::optional<bool>(Escapable == kSwiftConforms)"
+      inreplace "clang/lib/Sema/SemaAPINotes.cpp",
+                "std::optional(QT)", "std::optional<QualType>(QT)"
+      inreplace "clang/lib/Driver/ToolChains/Clang.cpp",
+                "std::array VecLibImpliesNoMathErrno{",
+                "std::array<llvm::StringLiteral, 2> VecLibImpliesNoMathErrno{"
+      inreplace "mlir/lib/Interfaces/ValueBoundsOpInterface.cpp",
+                "std::optional(dim)", "std::optional<int64_t>(dim)"
+      inreplace "mlir/include/mlir/Dialect/SparseTensor/IR/Enums.h",
+                "std::optional(LevelType(ltBits))", "std::optional<LevelType>(LevelType(ltBits))"
+      inreplace "clang-tools-extra/clangd/refactor/Rename.cpp",
+                "std::optional(SymbolRange(SelectorPieces))",
+                "std::optional<SymbolRange>(SymbolRange(SelectorPieces))"
+      inreplace "mlir/lib/Dialect/MemRef/Transforms/ExpandOps.cpp",
+                "std::array shouldBeExpandedKinds =",
+                "std::array<arith::AtomicRMWKind, 4> shouldBeExpandedKinds ="
+      inreplace "mlir/lib/Conversion/GPUCommon/GPUOpsLowering.cpp",
+                "std::array attrs{", "std::array<NamedAttribute, 2> attrs{"
+      inreplace "mlir/lib/Dialect/ArmSME/Transforms/EnableArmStreaming.cpp",
+                "return std::array{TypeID::get<Ops>()...};",
+                "return std::array<TypeID, sizeof...(Ops)>{TypeID::get<Ops>()...};"
+      inreplace "mlir/lib/Dialect/ArmSME/Transforms/TileAllocation.cpp",
+                "std::array ZA_B_MASKS =", "std::array<TileMask, 1> ZA_B_MASKS ="
+      inreplace "mlir/lib/Dialect/ArmSME/Transforms/TileAllocation.cpp",
+                "std::array ZA_H_MASKS =", "std::array<TileMask, 2> ZA_H_MASKS ="
+      inreplace "mlir/lib/Dialect/ArmSME/Transforms/TileAllocation.cpp",
+                "std::array ZA_S_MASKS =", "std::array<TileMask, 4> ZA_S_MASKS ="
+      inreplace "mlir/lib/Dialect/ArmSME/Transforms/TileAllocation.cpp",
+                "std::array ZA_D_MASKS =", "std::array<TileMask, 8> ZA_D_MASKS ="
+      inreplace "mlir/lib/Dialect/ArmSME/Transforms/TileAllocation.cpp",
+                "std::array ZA_Q_MASKS =", "std::array<TileMask, 16> ZA_Q_MASKS ="
+      inreplace "mlir/lib/Dialect/IRDL/IR/IRDLOps.cpp",
+                "std::optional{getConstraintIndicesForArgs(",
+                "std::optional<SmallVector<unsigned>>{getConstraintIndicesForArgs("
+      inreplace "mlir/lib/Target/LLVMIR/ModuleImport.cpp",
+                "std::array kExplicitAttributes{",
+                "std::array<StringLiteral, 26> kExplicitAttributes{"
+      inreplace "mlir/include/mlir/Dialect/Utils/ReshapeOpsUtils.h",
+                "/// Common verifier for reshape-like types. Fills `expandedType` and\n///`collapsedType` with the proper `src` or `result` type.",
+                <<~EOS
+                  LogicalResult reshapeLikeShapesAreCompatible(
+                      function_ref<LogicalResult(const Twine &)> emitError,
+                      ArrayRef<int64_t> collapsedShape, ArrayRef<int64_t> expandedShape,
+                      ArrayRef<ReassociationIndices> reassociationMaps, bool isExpandingReshape);
+
+                  /// Common verifier for reshape-like types. Fills `expandedType` and
+                  ///`collapsedType` with the proper `src` or `result` type.
+                EOS
+    end
 
     projects = %w[
       clang
@@ -74,19 +170,12 @@ class LlvmAT20 < Formula
                              .select { |name| name.start_with? "python@" }
                              .map { |py| py.delete_prefix("python@") }
 
-    # https://github.com/Homebrew/homebrew-core/commit/c4f0d87
-    ENV["SDKROOT"] = MacOS.sdk_for_formula(self).path if OS.mac?
-    ENV.libcxx if ENV.compiler == :clang
-
     # compiler-rt has some iOS simulator features that require i386 symbols
     # I'm assuming the rest of clang needs support too for 32-bit compilation
     # to work correctly, but if not, perhaps universal binaries could be
     # limited to compiler-rt. llvm makes this somewhat easier because compiler-rt
     # can almost be treated as an entirely different build from llvm.
     ENV.permit_arch_flags
-
-    ENV["CC"] = "#{formula_opt_bin("llvm@19")}/clang"
-    ENV["CXX"] = "#{formula_opt_bin("llvm@19")}/clang++"
 
     args = %W[
       -DLLVM_ENABLE_PROJECTS=#{projects.join(";")}
@@ -97,6 +186,7 @@ class LlvmAT20 < Formula
       -DLLVM_ENABLE_EH=OFF
       -DLLVM_ENABLE_FFI=ON
       -DLLVM_ENABLE_RTTI=ON
+      -DLLVM_INCLUDE_BENCHMARKS=OFF
       -DLLVM_INCLUDE_DOCS=OFF
       -DLLVM_INCLUDE_TESTS=OFF
       -DLLVM_INSTALL_UTILS=ON
@@ -111,8 +201,6 @@ class LlvmAT20 < Formula
       -DCLANG_FORCE_MATCHING_LIBCLANG_SOVERSION=OFF
       -DCLANG_CONFIG_FILE_SYSTEM_DIR=#{clang_config_file_dir.relative_path_from(bin)}
       -DCLANG_CONFIG_FILE_USER_DIR=~/.config/clang
-      -DCMAKE_EXE_LINKER_FLAGS=#{formula_opt_lib("llvm@19")}/c++/#{shared_library("libc++")}
-      -DCMAKE_SHARED_LINKER_FLAGS=#{formula_opt_lib("llvm@19")}/c++/#{shared_library("libc++")}
     ]
 
     if tap.present?
@@ -125,6 +213,14 @@ class LlvmAT20 < Formula
 
     runtimes_cmake_args = []
     builtins_cmake_args = []
+
+    compat_cxxflags = nil
+    if OS.mac? && DevelopmentTools.clang_build_version <= 1000
+      # Xcode 10's SDK lacks C99 math classification functions required by
+      # its libc++ <cmath>. Keep this out of ENV so it is not inherited by
+      # the newly built runtimes.
+      compat_cxxflags = "-include #{buildpath}/darwin-cmath-compat.h -D_LIBCPP_DISABLE_AVAILABILITY"
+    end
 
     if OS.mac?
       macos_sdk = MacOS.sdk_path
@@ -197,6 +293,9 @@ class LlvmAT20 < Formula
       runtimes_cmake_args << "-DCMAKE_CXX_FLAGS=#{ENV.cxxflags}"
       builtins_cmake_args << "-DCMAKE_CXX_FLAGS=#{ENV.cxxflags}"
     end
+
+    args << "-DCMAKE_CXX_FLAGS=#{[ENV.cxxflags, compat_cxxflags].compact.join(" ")}" if compat_cxxflags
+    args << "-DSUPPORTS_FFILE_PREFIX_MAP=OFF" if OS.mac? && DevelopmentTools.clang_build_version <= 1000
 
     args << "-DRUNTIMES_CMAKE_ARGS=#{runtimes_cmake_args.join(";")}" if runtimes_cmake_args.present?
     args << "-DBUILTINS_CMAKE_ARGS=#{builtins_cmake_args.join(";")}" if builtins_cmake_args.present?
@@ -536,54 +635,63 @@ class LlvmAT20 < Formula
 end
 
 __END__
---- a/lldb/source/Host/macosx/objcxx/HostInfoMacOSX.mm
-+++ b/lldb/source/Host/macosx/objcxx/HostInfoMacOSX.mm
-@@ -56,6 +56,10 @@
- #define CPU_TYPE_ARM64 (CPU_TYPE_ARM | CPU_ARCH_ABI64)
- #endif
 
-+#ifndef CPU_SUBTYPE_ARM64E
-+#define CPU_SUBTYPE_ARM64E ((cpu_subtype_t) 2)
-+#endif
-+
- #ifndef CPU_TYPE_ARM64_32
- #define CPU_ARCH_ABI64_32 0x02000000
- #define CPU_TYPE_ARM64_32 (CPU_TYPE_ARM | CPU_ARCH_ABI64_32)
-
---- a/compiler-rt/lib/builtins/os_version_check.c
-+++ b/compiler-rt/lib/builtins/os_version_check.c
-@@ -13,6 +13,7 @@
- 
- #ifdef __APPLE__
- 
-+#include <AvailabilityMacros.h>
- #include <TargetConditionals.h>
- #include <dispatch/dispatch.h>
- #include <dlfcn.h>
-@@ -86,9 +87,11 @@
-                                             CFStringEncoding);
- typedef void (*CFReleaseFuncTy)(CFTypeRef);
- 
-+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 101500
- extern __attribute__((weak_import))
- bool _availability_version_check(uint32_t count,
-                                  dyld_build_version_t versions[]);
-+#endif
- 
- static void _initializeAvailabilityCheck(bool LoadPlist) {
-   if (AvailabilityVersionCheck && !LoadPlist) {
-@@ -98,8 +101,14 @@
-   }
- 
-   // Use the new API if it's is available.
-+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 101500
-   if (_availability_version_check)
-     AvailabilityVersionCheck = &_availability_version_check;
+--- /dev/null
++++ b/darwin-cmath-compat.h
+@@ -0,0 +1,44 @@
++#include <type_traits>
++#include <math.h>
++#if __cplusplus >= 201103L
++#define HB_NOEXCEPT noexcept
 +#else
-+  // __attribute__((weak_import)) does not prevent Undefined symbol error on 10.14
-+  AvailabilityVersionCheck = (AvailabilityVersionCheckFuncTy)dlsym(
-+      RTLD_DEFAULT, "_availability_version_check");
++#define HB_NOEXCEPT
 +#endif
- 
-   if (AvailabilityVersionCheck && !LoadPlist) {
-     // New API is supported and we're not being asked to load the plist,
++#ifndef _LIBCPP_MATH_H
++inline float abs(float x) HB_NOEXCEPT { return __builtin_fabsf(x); }
++inline double abs(double x) HB_NOEXCEPT { return __builtin_fabs(x); }
++inline long double abs(long double x) HB_NOEXCEPT { return __builtin_fabsl(x); }
++inline long abs(long x) HB_NOEXCEPT { return __builtin_labs(x); }
++inline long long abs(long long x) HB_NOEXCEPT { return __builtin_llabs(x); }
++#endif
++#undef fpclassify
++#undef isfinite
++#undef isinf
++#undef isnan
++#undef isnormal
++#undef signbit
++#undef isgreater
++#undef isgreaterequal
++#undef isless
++#undef islessequal
++#undef islessgreater
++#undef isunordered
++#define HB_UNARY(name, builtin) inline int name(float x) HB_NOEXCEPT { return __builtin##builtin(x); } inline int name(double x) HB_NOEXCEPT { return __builtin##builtin(x); } inline int name(long double x) HB_NOEXCEPT { return __builtin##builtin(x); }
++HB_UNARY(isfinite, _isfinite)
++HB_UNARY(isinf, _isinf)
++HB_UNARY(isnan, _isnan)
++HB_UNARY(isnormal, _isnormal)
++HB_UNARY(signbit, _signbit)
++#undef HB_UNARY
++inline int fpclassify(float x) HB_NOEXCEPT { return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, x); }
++inline int fpclassify(double x) HB_NOEXCEPT { return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, x); }
++inline int fpclassify(long double x) HB_NOEXCEPT { return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, x); }
++#define HB_BINARY(name, builtin) inline int name(float x, float y) HB_NOEXCEPT { return __builtin##builtin(x, y); } inline int name(double x, double y) HB_NOEXCEPT { return __builtin##builtin(x, y); } inline int name(long double x, long double y) HB_NOEXCEPT { return __builtin##builtin(x, y); }
++HB_BINARY(isgreater, _isgreater)
++HB_BINARY(isgreaterequal, _isgreaterequal)
++HB_BINARY(isless, _isless)
++HB_BINARY(islessequal, _islessequal)
++HB_BINARY(islessgreater, _islessgreater)
++HB_BINARY(isunordered, _isunordered)
++#undef HB_BINARY
++#undef HB_NOEXCEPT
+
+--- a/llvm/lib/Support/Program.cpp
++++ b/llvm/lib/Support/Program.cpp
+@@ -43,7 +43,7 @@ int sys::ExecuteAndWait(StringRef Program, ArrayRef<StringRef> Args,
+       *ExecutionFailed = false;
+     ProcessInfo Result = Wait(
+-        PI, SecondsToWait == 0 ? std::nullopt : std::optional(SecondsToWait),
++        PI, SecondsToWait == 0 ? std::nullopt : std::optional<unsigned>(SecondsToWait),
+         ErrMsg, ProcStat);
+     return Result.ReturnCode;
+   }

@@ -11,9 +11,6 @@ class LlvmAT19 < Formula
     skip "No longer developed or maintained"
   end
 
-  bottle do
-  end
-
   keg_only :versioned_formula
 
   # https://llvm.org/docs/GettingStarted.html#requirement
@@ -81,10 +78,6 @@ class LlvmAT19 < Formula
     resolves "https://github.com/llvm/llvm-project/pull/222721"
   end
 
-  def python3
-    "python3.14"
-  end
-
   def clang_config_file_dir
     etc/"clang"
   end
@@ -95,6 +88,66 @@ class LlvmAT19 < Formula
     inreplace "clang/bindings/python/clang/cindex.py",
               /^(\s*library_path\s*=\s*)None$/,
               "\\1'#{lib}'"
+
+    # Xcode 10's libc++ predates deduction guides for std::optional.
+    inreplace "llvm/lib/Support/Program.cpp",
+              "std::optional(SecondsToWait)", "std::optional<unsigned>(SecondsToWait)"
+    inreplace "llvm/lib/Transforms/Utils/MemoryOpRemark.cpp",
+              "std::optional(TySize->getFixedValue())", "std::optional<uint64_t>(TySize->getFixedValue())"
+    inreplace "llvm/lib/Transforms/InstCombine/InstructionCombining.cpp",
+              "std::optional(std::pair(L0, R0))", "std::optional<std::pair<Value *, Value *>>(std::pair(L0, R0))"
+    inreplace "llvm/lib/Transforms/Scalar/LowerMatrixIntrinsics.cpp",
+              "std::optional(FMF)", "std::optional<FastMathFlags>(FMF)"
+    inreplace "llvm/lib/Passes/StandardInstrumentations.cpp",
+              "std::array FileSuffixes =", "std::array<StringRef, 3> FileSuffixes ="
+    inreplace "clang/lib/APINotes/APINotesYAMLCompiler.cpp",
+              "std::optional(Ctx->id)", "std::optional<ContextID>(Ctx->id)"
+    inreplace "clang/lib/APINotes/APINotesReader.cpp",
+              "std::optional(false)", "std::optional<bool>(false)"
+    inreplace "clang/lib/APINotes/APINotesReader.cpp",
+              "std::optional(true)", "std::optional<bool>(true)"
+    inreplace "clang/lib/Sema/SemaAPINotes.cpp",
+              "std::optional(QT)", "std::optional<QualType>(QT)"
+    inreplace "mlir/lib/Interfaces/ValueBoundsOpInterface.cpp",
+              "std::optional(dim)", "std::optional<int64_t>(dim)"
+    inreplace "mlir/include/mlir/Dialect/SparseTensor/IR/Enums.h",
+              "std::optional(LevelType(ltBits))", "std::optional<LevelType>(LevelType(ltBits))"
+    inreplace "clang-tools-extra/clangd/refactor/Rename.cpp",
+              "std::optional(SymbolRange(SelectorPieces))",
+              "std::optional<SymbolRange>(SymbolRange(SelectorPieces))"
+    inreplace "mlir/lib/Dialect/MemRef/Transforms/ExpandOps.cpp",
+              "std::array shouldBeExpandedKinds =",
+              "std::array<arith::AtomicRMWKind, 4> shouldBeExpandedKinds ="
+    inreplace "mlir/lib/Dialect/ArmSME/Transforms/EnableArmStreaming.cpp",
+              "return std::array{TypeID::get<Ops>()...};",
+              "return std::array<TypeID, sizeof...(Ops)>{TypeID::get<Ops>()...};"
+    inreplace "mlir/lib/Dialect/ArmSME/Transforms/TileAllocation.cpp",
+              "std::array ZA_B_MASKS =", "std::array<TileMask, 1> ZA_B_MASKS ="
+    inreplace "mlir/lib/Dialect/ArmSME/Transforms/TileAllocation.cpp",
+              "std::array ZA_H_MASKS =", "std::array<TileMask, 2> ZA_H_MASKS ="
+    inreplace "mlir/lib/Dialect/ArmSME/Transforms/TileAllocation.cpp",
+              "std::array ZA_S_MASKS =", "std::array<TileMask, 4> ZA_S_MASKS ="
+    inreplace "mlir/lib/Dialect/ArmSME/Transforms/TileAllocation.cpp",
+              "std::array ZA_D_MASKS =", "std::array<TileMask, 8> ZA_D_MASKS ="
+    inreplace "mlir/lib/Dialect/ArmSME/Transforms/TileAllocation.cpp",
+              "std::array ZA_Q_MASKS =", "std::array<TileMask, 16> ZA_Q_MASKS ="
+    inreplace "mlir/lib/Dialect/IRDL/IR/IRDLOps.cpp",
+              "std::optional{getConstraintIndicesForArgs(",
+              "std::optional<SmallVector<unsigned>>{getConstraintIndicesForArgs("
+    inreplace "mlir/lib/Target/LLVMIR/ModuleImport.cpp",
+              "std::array kExplicitAttributes{",
+              "std::array<StringLiteral, 26> kExplicitAttributes{"
+    inreplace "mlir/include/mlir/Dialect/Utils/ReshapeOpsUtils.h",
+              "/// Common verifier for reshape-like types. Fills `expandedType` and\n///`collapsedType` with the proper `src` or `result` type.",
+              <<~EOS
+                LogicalResult reshapeLikeShapesAreCompatible(
+                    function_ref<LogicalResult(const Twine &)> emitError,
+                    ArrayRef<int64_t> collapsedShape, ArrayRef<int64_t> expandedShape,
+                    ArrayRef<ReassociationIndices> reassociationMaps, bool isExpandingReshape);
+
+                /// Common verifier for reshape-like types. Fills `expandedType` and
+                ///`collapsedType` with the proper `src` or `result` type.
+              EOS
 
     projects = %w[
       clang
@@ -158,6 +211,14 @@ class LlvmAT19 < Formula
     runtimes_cmake_args = []
     builtins_cmake_args = []
 
+    compat_cxxflags = nil
+    if OS.mac? && DevelopmentTools.clang_build_version <= 1000
+      # Xcode 10's SDK lacks C99 math classification functions required by
+      # its libc++ <cmath>. Keep this out of ENV so it is not inherited by
+      # the newly built runtimes.
+      compat_cxxflags = "-include #{buildpath}/darwin-cmath-compat.h -D_LIBCPP_DISABLE_AVAILABILITY"
+    end
+
     if OS.mac?
       macos_sdk = MacOS.sdk_path
       args << "-DFFI_INCLUDE_DIR=#{macos_sdk}/usr/include/ffi"
@@ -174,6 +235,12 @@ class LlvmAT19 < Formula
       args << "-DLIBUNWIND_INSTALL_LIBRARY_DIR=#{libunwind_install_libdir}"
       args << "-DLIBCXXABI_INSTALL_LIBRARY_DIR=#{libcxx_install_libdir}"
       runtimes_cmake_args << "-DCMAKE_INSTALL_RPATH=#{libcxx_rpaths.join("|")}"
+
+      # The bootstrap llvm-ar cannot create new archives on 10.13.
+      if DevelopmentTools.clang_build_version <= 1000
+        runtimes_cmake_args << "-DCMAKE_AR=/usr/bin/ar"
+        runtimes_cmake_args << "-DCMAKE_RANLIB=/usr/bin/ranlib"
+      end
 
       # Disable builds for OSes not supported by the CLT SDK.
       clt_sdk_support_flags = %w[I WATCH TV].map { |os| "-DCOMPILER_RT_ENABLE_#{os}OS=OFF" }
@@ -229,6 +296,9 @@ class LlvmAT19 < Formula
       runtimes_cmake_args << "-DCMAKE_CXX_FLAGS=#{ENV.cxxflags}"
       builtins_cmake_args << "-DCMAKE_CXX_FLAGS=#{ENV.cxxflags}"
     end
+
+    args << "-DCMAKE_CXX_FLAGS=#{[ENV.cxxflags, compat_cxxflags].compact.join(" ")}" if compat_cxxflags
+    args << "-DSUPPORTS_FFILE_PREFIX_MAP=OFF" if OS.mac? && DevelopmentTools.clang_build_version <= 1000
 
     args << "-DRUNTIMES_CMAKE_ARGS=#{runtimes_cmake_args.join(";")}" if runtimes_cmake_args.present?
     args << "-DBUILTINS_CMAKE_ARGS=#{builtins_cmake_args.join(";")}" if builtins_cmake_args.present?
@@ -568,16 +638,52 @@ class LlvmAT19 < Formula
 end
 
 __END__
---- a/lldb/source/Host/macosx/objcxx/HostInfoMacOSX.mm
-+++ b/lldb/source/Host/macosx/objcxx/HostInfoMacOSX.mm
-@@ -56,6 +56,10 @@
- #define CPU_TYPE_ARM64 (CPU_TYPE_ARM | CPU_ARCH_ABI64)
- #endif
 
-+#ifndef CPU_SUBTYPE_ARM64E
-+#define CPU_SUBTYPE_ARM64E ((cpu_subtype_t) 2)
+--- /dev/null
++++ b/darwin-cmath-compat.h
+@@ -0,0 +1,44 @@
++#include <type_traits>
++#include <math.h>
++#if __cplusplus >= 201103L
++#define HB_NOEXCEPT noexcept
++#else
++#define HB_NOEXCEPT
 +#endif
-+
- #ifndef CPU_TYPE_ARM64_32
- #define CPU_ARCH_ABI64_32 0x02000000
- #define CPU_TYPE_ARM64_32 (CPU_TYPE_ARM | CPU_ARCH_ABI64_32)
++#ifndef _LIBCPP_MATH_H
++inline float abs(float x) HB_NOEXCEPT { return __builtin_fabsf(x); }
++inline double abs(double x) HB_NOEXCEPT { return __builtin_fabs(x); }
++inline long double abs(long double x) HB_NOEXCEPT { return __builtin_fabsl(x); }
++inline long abs(long x) HB_NOEXCEPT { return __builtin_labs(x); }
++inline long long abs(long long x) HB_NOEXCEPT { return __builtin_llabs(x); }
++#endif
++#undef fpclassify
++#undef isfinite
++#undef isinf
++#undef isnan
++#undef isnormal
++#undef signbit
++#undef isgreater
++#undef isgreaterequal
++#undef isless
++#undef islessequal
++#undef islessgreater
++#undef isunordered
++#define HB_UNARY(name, builtin) inline int name(float x) HB_NOEXCEPT { return __builtin##builtin(x); } inline int name(double x) HB_NOEXCEPT { return __builtin##builtin(x); } inline int name(long double x) HB_NOEXCEPT { return __builtin##builtin(x); }
++HB_UNARY(isfinite, _isfinite)
++HB_UNARY(isinf, _isinf)
++HB_UNARY(isnan, _isnan)
++HB_UNARY(isnormal, _isnormal)
++HB_UNARY(signbit, _signbit)
++#undef HB_UNARY
++inline int fpclassify(float x) HB_NOEXCEPT { return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, x); }
++inline int fpclassify(double x) HB_NOEXCEPT { return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, x); }
++inline int fpclassify(long double x) HB_NOEXCEPT { return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, x); }
++#define HB_BINARY(name, builtin) inline int name(float x, float y) HB_NOEXCEPT { return __builtin##builtin(x, y); } inline int name(double x, double y) HB_NOEXCEPT { return __builtin##builtin(x, y); } inline int name(long double x, long double y) HB_NOEXCEPT { return __builtin##builtin(x, y); }
++HB_BINARY(isgreater, _isgreater)
++HB_BINARY(isgreaterequal, _isgreaterequal)
++HB_BINARY(isless, _isless)
++HB_BINARY(islessequal, _islessequal)
++HB_BINARY(islessgreater, _islessgreater)
++HB_BINARY(isunordered, _isunordered)
++#undef HB_BINARY
++#undef HB_NOEXCEPT

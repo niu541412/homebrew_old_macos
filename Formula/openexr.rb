@@ -1,11 +1,10 @@
 class Openexr < Formula
   desc "High dynamic-range image file format"
   homepage "https://www.openexr.com/"
-  url "https://github.com/AcademySoftwareFoundation/openexr/archive/refs/tags/v3.4.15.tar.gz"
-  sha256 "445ed5b0ea4d9cf98be3a4f219e419628b123b61dec65ccb743ab9b07fbebdaa"
+  url "https://github.com/AcademySoftwareFoundation/openexr/archive/refs/tags/v3.5.1.tar.gz"
+  sha256 "61559d6d0657f228f8dd5e3165ed6b74437b95e81849ad41c6d3493c0c144c1d"
   license "BSD-3-Clause"
-  revision 1
-  compatibility_version 1
+  compatibility_version 2
 
   bottle do
   end
@@ -16,6 +15,7 @@ class Openexr < Formula
   depends_on "imath"
   depends_on "libdeflate"
   depends_on "openjph"
+  depends_on "zstd"
 
   on_macos do
     depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
@@ -32,6 +32,7 @@ class Openexr < Formula
   link_overwrite "lib/libIlmThread.dylib"
   link_overwrite "lib/libIlmThread.so"
 
+  patch :DATA
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     system "cmake", "-S", ".", "-B", "build", *std_cmake_args, 
@@ -52,3 +53,18 @@ class Openexr < Formula
     end
   end
 end
+
+__END__
+--- a/src/lib/OpenEXRCore/internal_zstd.c
++++ b/src/lib/OpenEXRCore/internal_zstd.c
+@@ -225,7 +225,9 @@ ensure_tls_resources (size_t required_size)
+ #if defined(_WIN32) || defined(_WIN64)
+         tls->shuffle_buf = (uint8_t*) _aligned_malloc (aligned_size, 64);
+ #else
+-        tls->shuffle_buf = (uint8_t*) aligned_alloc (64, aligned_size);
++        void* aligned_ptr = NULL;
++        if (posix_memalign (&aligned_ptr, 64, aligned_size) == 0)
++            tls->shuffle_buf = (uint8_t*) aligned_ptr;
+ #endif
+         if (!tls->shuffle_buf) return false;
+         tls->shuffle_buf_size = overshoot;
