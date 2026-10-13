@@ -2,7 +2,7 @@ class Opencv < Formula
   desc "Open source computer vision library"
   homepage "https://opencv.org/"
   license "Apache-2.0"
-  revision 10
+  revision 11
   compatibility_version 2
 
   stable do
@@ -103,6 +103,11 @@ class Opencv < Formula
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     resource("contrib").stage buildpath/"opencv_contrib"
+
+    inreplace "opencv_contrib/modules/gapi/include/opencv2/gapi/gasync_context.hpp",
+              "#include <opencv2/gapi/own/exports.hpp>", "\\0\n\n#include <atomic>"
+    inreplace "opencv_contrib/modules/gapi/include/opencv2/gapi/infer/ie.hpp",
+              "#include <map>", "\\0\n#include <iterator>"
 
     # Finish PR #29425's file renames that `patch` leaves undone, then drop the emptied Caffe sources.
     { "modules/dnn/src/caffe/caffe_io.hpp"      => "modules/dnn/src/protobuf_io.hpp",

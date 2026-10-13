@@ -1,20 +1,10 @@
 class Subversion < Formula
   desc "Version control system designed to be a better CVS"
   homepage "https://subversion.apache.org/"
+  url "https://www.apache.org/dyn/closer.lua?path=subversion/subversion-1.15.0.tar.bz2"
+  mirror "https://archive.apache.org/dist/subversion/subversion-1.15.0.tar.bz2"
+  sha256 "dfb7b1e5270c7def971ccbd5938b0c03b1b5bd60b6674a2d8a74a9560839fb8c"
   license "Apache-2.0"
-  revision 4
-
-  stable do
-    url "https://www.apache.org/dyn/closer.lua?path=subversion/subversion-1.14.5.tar.bz2"
-    mirror "https://archive.apache.org/dist/subversion/subversion-1.14.5.tar.bz2"
-    sha256 "e78a29e7766b8b7b354497d08f71a55641abc53675ce1875584781aae35644a1"
-
-    # Fix -flat_namespace being used on Big Sur and later.
-    patch do
-      url "https://raw.githubusercontent.com/Homebrew/homebrew-core/1cf441a0/Patches/libtool/configure-big_sur.diff"
-      sha256 "35acd6aebc19843f1a2b3a63e880baceb0f5278ab1ace661e57a502d9d78c93c"
-    end
-  end
 
   bottle do
   end
@@ -38,7 +28,7 @@ class Subversion < Formula
   depends_on "lz4"
   depends_on "utf8proc"
 
-  uses_from_macos "perl" => [:build, :test]
+  uses_from_macos "perl" => [:build, :test], since: :catalina
   uses_from_macos "ruby" => :build
   uses_from_macos "expat"
   uses_from_macos "sqlite", since: :catalina
@@ -48,16 +38,17 @@ class Subversion < Formula
   end
 
   on_linux do
+    depends_on "cyrus-sasl"
     depends_on "zlib-ng-compat"
   end
 
   resource "py3c" do
     url "https://github.com/encukou/py3c/archive/refs/tags/v1.4.tar.gz"
     sha256 "abc745079ef906148817f4472c3fb4bc41d62a9ea51a746b53e09819494ac006"
-  end
 
-  def python3
-    "python3.14"
+    livecheck do
+      url :url
+    end
   end
 
   def install
@@ -66,10 +57,15 @@ class Subversion < Formula
 
     # Use existing system zlib and sqlite
     if OS.mac?
-      zlib = sqlite = MacOS.sdk_for_formula(self).path/"usr"
+      if MacOS.version <= :high_sierra
+        zlib = Pathname("/usr")
+        sqlite = formula_opt_prefix("sqlite")
+      else
+        zlib = sqlite = MacOS.sdk_for_formula(self).path/"usr"
+      end
     else
-      zlib = Formula["zlib"].opt_prefix
-      sqlite = Formula["sqlite"].opt_prefix
+      zlib = formula_opt_prefix("zlib")
+      sqlite = formula_opt_prefix("sqlite")
     end
 
     perl = DevelopmentTools.locate("perl")
@@ -79,15 +75,15 @@ class Subversion < Formula
       --enable-optimize
       --disable-mod-activation
       --disable-plaintext-password-storage
-      --with-apr-util=#{Formula["apr-util"].opt_prefix}
-      --with-apr=#{Formula["apr"].opt_prefix}
+      --with-apr-util=#{formula_opt_prefix("apr-util")}
+      --with-apr=#{formula_opt_prefix("apr")}
       --with-apxs=no
       --with-ruby-sitedir=#{lib}/ruby
       --with-py3c=#{py3c_prefix}
-      --with-serf=#{Formula["apache-serf"].opt_prefix}
+      --with-serf=#{formula_opt_prefix("apache-serf")}
       --with-sqlite=#{sqlite}
       --with-swig-perl=#{perl}
-      --with-swig-python=#{which(python3)}
+      --with-swig-python=#{python3}
       --with-swig-ruby=#{ruby}
       --with-zlib=#{zlib}
       --without-apache-libexecdir

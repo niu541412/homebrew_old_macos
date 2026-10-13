@@ -1,10 +1,9 @@
 class Folly < Formula
   desc "Collection of reusable C++ library artifacts developed at Facebook"
   homepage "https://github.com/facebook/folly"
-  url "https://github.com/facebook/folly/archive/refs/tags/v2026.09.21.00.tar.gz"
-  sha256 "a8d82032b316d4f69b3f20ac3645c4bb12744a25f7cb53b99a9e05e8f3675fb6"
+  url "https://github.com/facebook/folly/archive/refs/tags/v2026.10.12.00.tar.gz"
+  sha256 "95108eb46030a249326343a468c543bc0d1e5599a4f37e31f241501877fc0c8c"
   license "Apache-2.0"
-  revision 1
   compatibility_version 1
   head "https://github.com/facebook/folly.git", branch: "main"
 
@@ -22,7 +21,7 @@ class Folly < Formula
   depends_on "libevent"
   depends_on "libsodium"
   depends_on "lz4"
-  depends_on "openssl@3"
+  depends_on "openssl@4"
   depends_on "snappy"
   depends_on "xz"
   depends_on "zstd"
@@ -37,8 +36,6 @@ class Folly < Formula
     depends_on "zlib-ng-compat"
   end
 
-  # Workaround for arm64 Linux error "Missing variable is: CMAKE_ASM_CREATE_SHARED_LIBRARY"
-  # Ref: https://github.com/facebook/folly/pull/2562#issuecomment-3988207056
   patch :DATA
 
   def install
@@ -83,22 +80,6 @@ class Folly < Formula
 end
 
 __END__
-diff --git a/folly/external/aor/CMakeLists.txt b/folly/external/aor/CMakeLists.txt
-index e07e58745..1429f54e9 100644
---- a/folly/external/aor/CMakeLists.txt
-+++ b/folly/external/aor/CMakeLists.txt
-@@ -20,6 +20,10 @@
- # Linux ELF directives (.size, etc.) that Darwin's assembler doesn't support
- if(IS_AARCH64_ARCH)
- 
-+if(BUILD_SHARED_LIBS)
-+  set(CMAKE_ASM_CREATE_SHARED_LIBRARY ${CMAKE_C_CREATE_SHARED_LIBRARY})
-+endif()
-+
- folly_add_library(
-   NAME memcpy_aarch64
-   SRCS
-
 --- a/folly/io/async/fdsock/AsyncFdSocket.h
 +++ b/folly/io/async/fdsock/AsyncFdSocket.h
 @@ -20,6 +20,16 @@
@@ -162,29 +143,6 @@ index e07e58745..1429f54e9 100644
 
  } // namespace fs
  } // namespace folly
-
---- a/folly/result/epitaph.cpp
-+++ b/folly/result/epitaph.cpp
-@@ -14,6 +14,8 @@
-  * limitations under the License.
-  */
- 
-+#include <vector>
-+
- #include <folly/result/epitaph.h>
- 
- #include <folly/Portability.h> // FOLLY_HAS_RESULT
-
---- a/folly/result/rich_error_code.h
-+++ b/folly/result/rich_error_code.h
-@@ -16,6 +16,7 @@
- 
- #pragma once
- 
-+#include <exception>
- #include <optional>
- #include <fmt/core.h>
- 
 --- a/folly/io/FsUtil.cpp
 +++ b/folly/io/FsUtil.cpp
 @@ -103,6 +103,7 @@

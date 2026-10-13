@@ -1,10 +1,10 @@
 class Pandoc < Formula
   desc "Swiss-army knife of markup format conversion"
   homepage "https://pandoc.org/"
-  url "https://github.com/jgm/pandoc/archive/refs/tags/3.11.tar.gz"
-  sha256 "61d05e7fc57e995a61367bee1bb73a8bb278cda3c787b7e4e27b30037e17aeed"
+  url "https://github.com/jgm/pandoc/archive/refs/tags/3.12.1.tar.gz"
+  sha256 "cf9b3725b90e471aa70c99ac3b351adcb6e40cd904d36fcbb0f70d712e135686"
   license "GPL-2.0-or-later"
-  compatibility_version 7
+  compatibility_version 9
   head "https://github.com/jgm/pandoc.git", branch: "main"
 
   bottle do
@@ -20,6 +20,8 @@ class Pandoc < Formula
   on_linux do
     depends_on "zlib-ng-compat"
   end
+
+  allow_network_access! :build
 
   def install
     # Workaround to build aeson with GHC 9.14, https://github.com/haskell/aeson/issues/1155

@@ -1,10 +1,10 @@
 class Poppler < Formula
   desc "PDF rendering library (based on the xpdf-3.0 code base)"
   homepage "https://poppler.freedesktop.org/"
-  url "https://poppler.freedesktop.org/poppler-26.09.0.tar.xz"
-  sha256 "8059eadb6805340768f138c465b57f8164c92b4a0773c37ef031ea6c0d987b2e"
+  url "https://poppler.freedesktop.org/poppler-26.10.0.tar.xz"
+  sha256 "6792cb7c69205007ad87d2e936cecc5b3a31fac29ab54ffc3175fdb6b2a6ce35"
   license any_of: ["GPL-2.0-only", "GPL-3.0-only"] # see README-XPDF
-  compatibility_version 7
+  compatibility_version 8
   head "https://gitlab.freedesktop.org/poppler/poppler.git", branch: "master"
 
   livecheck do
@@ -20,6 +20,7 @@ class Poppler < Formula
   depends_on "gobject-introspection" => :build
   depends_on "pkgconf" => :build
 
+  depends_on "brotli"
   depends_on "cairo"
   depends_on "fontconfig"
   depends_on "freetype"

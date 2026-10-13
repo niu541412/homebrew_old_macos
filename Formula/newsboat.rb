@@ -1,10 +1,15 @@
 class Newsboat < Formula
   desc "RSS/Atom feed reader for text terminals"
   homepage "https://newsboat.org/"
-  url "https://newsboat.org/releases/2.44/newsboat-2.44.tar.xz"
-  sha256 "8cb376b14c44809750a41b74c239a47092edb8e496f657c38af9b852dd8e4ea4"
+  url "https://newsboat.org/releases/2.45/newsboat-2.45.tar.xz"
+  sha256 "defe303d2518f3c4241780a9165e8750e9984e3f10aa341b7dde107579e34b3d"
   license "MIT"
   head "https://github.com/newsboat/newsboat.git", branch: "master"
+
+  livecheck do
+    url :homepage
+    regex(/href=.*?newsboat[._-]v?(\d+(?:\.\d+)+)\.t/i)
+  end
 
   bottle do
   end
@@ -15,8 +20,8 @@ class Newsboat < Formula
   depends_on "rust" => :build
   depends_on "xz" => :build
   depends_on "json-c"
+  depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
 
-  depends_on "llvm" if DevelopmentTools.clang_build_version <= 1100
   uses_from_macos "curl", since: :catalina
   uses_from_macos "libxml2"
   uses_from_macos "libxslt"
@@ -47,8 +52,19 @@ class Newsboat < Formula
         revision: "bbb2404580e845df2556560112c8aefa27494d66"
   end
 
+  deny_network_access!
+
+  def fetch
+    system "cargo", "fetch", *std_cargo_fetch_args
+  end
+
   def install
-    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
+    if OS.mac? && DevelopmentTools.clang_build_version <= 1100
+      ENV.llvm_clang
+      ENV["MACOSX_DEPLOYMENT_TARGET"] = MacOS.version.to_s
+      ENV["PKG_CONFIG_SYSTEM_INCLUDE_PATH"] = "/usr/include"
+    end
+
     resource("libstfl").stage do
       if OS.mac?
         ENV.append "LDLIBS", "-liconv"
@@ -86,7 +102,7 @@ class Newsboat < Formula
     end
 
     inreplace "Makefile", "-Werror ", ""
-    
+
     gettext = Formula["gettext"]
 
     ENV["GETTEXT_BIN_DIR"] = gettext.opt_bin.to_s

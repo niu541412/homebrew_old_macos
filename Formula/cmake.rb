@@ -1,10 +1,10 @@
 class Cmake < Formula
   desc "Cross-platform make"
   homepage "https://www.cmake.org/"
-  url "https://github.com/Kitware/CMake/releases/download/v4.4.3/cmake-4.4.3.tar.gz"
-  mirror "http://fresh-center.net/linux/misc/cmake-4.4.3.tar.gz"
-  mirror "http://fresh-center.net/linux/misc/legacy/cmake-4.4.3.tar.gz"
-  sha256 "c46400618b4f1f2b43507f24fb22f3ae830c3416cf23b776e16e1d413aa892f0"
+  url "https://github.com/Kitware/CMake/releases/download/v4.4.4/cmake-4.4.4.tar.gz"
+  mirror "http://fresh-center.net/linux/misc/cmake-4.4.4.tar.gz"
+  mirror "http://fresh-center.net/linux/misc/legacy/cmake-4.4.4.tar.gz"
+  sha256 "bd24c30d80a7744ae84b845ff080cc8453b06c622ef01066564108e9cefc44cf"
   license "BSD-3-Clause"
   compatibility_version 1
   head "https://gitlab.kitware.com/cmake/cmake.git", branch: "master"
@@ -26,13 +26,10 @@ class Cmake < Formula
     depends_on "openssl@3"
   end
 
-  conflicts_with cask: "cmake-app"
-
   deny_network_access!
 
   def install
     ENV["SDKROOT"] = MacOS.sdk_path if OS.mac? && MacOS.version == :high_sierra
-
     args = %W[
       --prefix=#{prefix}
       --no-system-libs

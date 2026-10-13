@@ -5,7 +5,7 @@ class Mysql < Formula
   mirror "https://repo.mysql.com/apt/ubuntu/pool/mysql-innovation/m/mysql-community/mysql-community_26.7.0.orig.tar.gz"
   sha256 "95e949183b94bbe39e70c6355e6c90d2a640a62ede996ca5f7a6a3e0827a3260"
   license "GPL-2.0-only" => { with: "Universal-FOSS-exception-1.0" }
-  revision 2
+  revision 4
 
   livecheck do
     url "https://dev.mysql.com/downloads/mysql/?tpl=files&os=src",
@@ -22,7 +22,7 @@ class Mysql < Formula
   depends_on "abseil"
   depends_on "icu4c@78"
   depends_on "lz4"
-  depends_on "openssl@3"
+  depends_on "openssl@4"
   depends_on "protobuf"
   depends_on "zlib-ng-compat" # Zlib 1.2.13+
   depends_on "zstd"
@@ -53,6 +53,17 @@ class Mysql < Formula
     cause "fails handling PROTOBUF_FUTURE_ADD_EARLY_WARN_UNUSED"
   end
 
+  # Backports to support OpenSSL 4
+  patch do
+    url  "https://raw.githubusercontent.com/Homebrew/homebrew-core/refs/heads/main/Patches/mysql/26.7.0.diff"
+    type :backport # https://github.com/mysql/mysql-server/commit/04ba58a223afc1339c75b080825042ad17a85b43
+  end
+  patch do
+    url "https://github.com/mysql/mysql-server/commit/a045c23214ec225c49d9bc4caeea78d3d1f99ba9.patch?full_index=1"
+    sha256 "b597781554b7fbcf4e13402dc8dca97bea59e059ed6e40e4eb71cd5c26a91ad9"
+    type :backport
+  end
+
   # Patch out check for Homebrew `boost`.
   # This should not be necessary when building inside `brew`.
   # https://github.com/Homebrew/homebrew-test-bot/pull/820
@@ -73,7 +84,9 @@ class Mysql < Formula
       # Disable ABI checking
       inreplace "cmake/abi_check.cmake", "RUN_ABI_CHECK 1", "RUN_ABI_CHECK 0"
     elsif MacOS.version <= :ventura
+      ENV.llvm_clang
       ENV.append "LDFLAGS", "-L#{formula_opt_lib("llvm")}/unwind -lunwind"
+      ENV.append "CXXFLAGS", "-include new"
       # When using Homebrew's superenv shims, we need to use HOMEBREW_LIBRARY_PATHS
       # rather than LDFLAGS for libc++ in order to correctly link to LLVM's libc++.
       ENV.prepend_path "HOMEBREW_LIBRARY_PATHS", formula_opt_lib("llvm")/"c++"
@@ -95,7 +108,7 @@ class Mysql < Formula
       -DMYSQL_DATADIR=#{datadir}
       -DSYSCONFDIR=#{etc}
       -DBISON_EXECUTABLE=#{formula_opt_bin("bison")}/bison
-      -DOPENSSL_ROOT_DIR=#{formula_opt_prefix("openssl@3")}
+      -DOPENSSL_ROOT_DIR=#{formula_opt_prefix("openssl@4")}
       -DWITH_ICU=#{icu4c.opt_prefix}
       -DWITH_SYSTEM_LIBS=ON
       -DWITH_EDITLINE=system
@@ -256,3 +269,90 @@ index 438dff720c5..47863c17e23 100644
  IF(WITH_AUTHENTICATION_WEBAUTHN OR
    WITH_AUTHENTICATION_CLIENT_PLUGINS)
    IF(WITH_FIDO STREQUAL "system" AND
+--- a/cmake/component.cmake
++++ b/cmake/component.cmake
+@@ -98,10 +98,6 @@ MACRO(MYSQL_ADD_COMPONENT component_arg)
+     # For APPLE: adjust path dependecy for SSL shared libraries.
+     SET_PATH_TO_CUSTOM_SSL_FOR_APPLE(${target})
+ 
+-    IF(APPLE)
+-      TARGET_LINK_OPTIONS(${target} PRIVATE LINKER:-no_warn_duplicate_libraries)
+-    ENDIF()
+-
+     IF(WIN32_CLANG AND WITH_ASAN)
+       TARGET_LINK_LIBRARIES(${target}
+         "${ASAN_LIB_DIR}/clang_rt.asan_dll_thunk-x86_64.lib")
+--- a/cmake/plugin.cmake
++++ b/cmake/plugin.cmake
+@@ -323,10 +323,6 @@ MACRO(MYSQL_ADD_PLUGIN plugin_arg)
+       DEPENDS ${target})
+   ENDIF()
+ 
+-  IF(BUILD_PLUGIN AND ARG_MODULE_ONLY AND APPLE)
+-    TARGET_LINK_OPTIONS(${target} PRIVATE LINKER:-no_warn_duplicate_libraries)
+-  ENDIF()
+-
+   IF(BUILD_PLUGIN)
+     ADD_DEPENDENCIES(plugin_all ${target})
+     TARGET_COMPILE_FEATURES(${target} PUBLIC cxx_std_20)
+--- a/cmake/libutils.cmake
++++ b/cmake/libutils.cmake
+@@ -358,7 +358,6 @@ MACRO(MERGE_LIBRARIES_SHARED TARGET_ARG)
+ 
+   IF(APPLE)
+     SET_TARGET_PROPERTIES(${TARGET} PROPERTIES MACOSX_RPATH ON)
+-    TARGET_LINK_OPTIONS(${TARGET} PRIVATE LINKER:-no_warn_duplicate_libraries)
+   ENDIF()
+ 
+   TARGET_LINK_OPTIONS(${TARGET} PRIVATE ${export_link_flags})
+@@ -710,10 +709,6 @@ FUNCTION(ADD_SHARED_LIBRARY TARGET_ARG)
+     ENDIF()
+   ENDIF()
+ 
+-  IF(APPLE)
+-    TARGET_LINK_OPTIONS(${TARGET} PRIVATE LINKER:-no_warn_duplicate_libraries)
+-  ENDIF()
+-
+   ADD_OBJDUMP_TARGET(show_${TARGET} "$<TARGET_FILE:${TARGET}>"
+     DEPENDS ${TARGET})
+ 
+--- a/cmake/mysql_add_executable.cmake
++++ b/cmake/mysql_add_executable.cmake
+@@ -224,10 +224,6 @@ FUNCTION(MYSQL_ADD_EXECUTABLE target_arg)
+     MACOS_ADD_DEVELOPER_ENTITLEMENTS(${target})
+   ENDIF()
+ 
+-  IF(APPLE)
+-    TARGET_LINK_OPTIONS(${target} PRIVATE LINKER:-no_warn_duplicate_libraries)
+-  ENDIF()
+-
+   IF(WIN32_CLANG AND WITH_ASAN)
+     TARGET_LINK_LIBRARIES(${target}
+       "${ASAN_LIB_DIR}/clang_rt.asan-x86_64.lib"
+--- a/router/cmake/Plugin.cmake
++++ b/router/cmake/Plugin.cmake
+@@ -89,10 +89,6 @@ FUNCTION(add_harness_plugin NAME)
+   # .dylib, which we do not want, so we reset it here.
+   ADD_LIBRARY(${NAME} SHARED ${_option_SOURCES})
+   TARGET_COMPILE_FEATURES(${NAME} PUBLIC cxx_std_20)
+-  IF(APPLE)
+-    TARGET_LINK_OPTIONS(${NAME} PRIVATE LINKER:-no_warn_duplicate_libraries)
+-  ENDIF()
+-
+   # add plugin to build-all target
+   ADD_DEPENDENCIES(mysqlrouter_all ${NAME})
+   IF(_option_OUTPUT_NAME)
+--- a/storage/ndb/src/common/portlib/NdbTimestamp.cpp
++++ b/storage/ndb/src/common/portlib/NdbTimestamp.cpp
+@@ -168,7 +168,11 @@ void NdbTimestamp_Reset() {
+ 
+ std::timespec NdbTimestamp_GetCurrentTime() {
+   std::timespec ts;
++#ifdef HAVE_CLOCK_GETTIME
++  require(clock_gettime(CLOCK_REALTIME, &ts) == 0);
++#else
+   require(std::timespec_get(&ts, TIME_UTC) == TIME_UTC);
++#endif
+   return ts;
+ }
+ 

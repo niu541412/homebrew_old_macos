@@ -1,8 +1,8 @@
 class Mold < Formula
   desc "Modern Linker"
   homepage "https://github.com/rui314/mold"
-  url "https://github.com/rui314/mold/archive/refs/tags/v2.42.1.tar.gz"
-  sha256 "0580221bfdad7148ceeafd0ad3c1c7b3ca9e66b45950405230cc3f81a205c816"
+  url "https://github.com/rui314/mold/archive/refs/tags/v3.0.0.tar.gz"
+  sha256 "1dee837e227b0c3f2661def602ef8ddc0b889ae5b1d28c1ddec5f29e08e5ceb5"
   license "MIT"
   head "https://github.com/rui314/mold.git", branch: "main"
 
@@ -17,55 +17,45 @@ class Mold < Formula
   bottle do
   end
 
-  depends_on "cmake" => :build
-  depends_on "blake3"
-  depends_on "tbb"
-  depends_on "zstd"
+  depends_on "rust" => :build
 
   on_macos do
-    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1899
+    depends_on "llvm" if DevelopmentTools.clang_build_version <= 1100
   end
 
   on_linux do
-    depends_on "mimalloc"
     depends_on "zlib-ng-compat"
+
+    # Some arch-aarch64-* tests depend on Clang. For instance:
+    # https://github.com/rui314/mold/blob/v3.0.0/tests/arch-aarch64-tlsle-ldst.sh#L121
+    on_arm do
+      depends_on "llvm" => :test
+    end
   end
 
-  fails_with :clang do
-    build 1899
-    cause "Requires C++20 `std::atomic_ref`"
-  end
+  deny_network_access!
 
-  fails_with :gcc do
-    version "10"
-    cause "Requires C++20 `std::atomic_ref`"
+  def fetch
+    system "cargo", "fetch", *std_cargo_fetch_args
   end
 
   def install
-    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
-    # Avoid embedding libdir in the binary.
-    # This helps make the bottle relocatable.
-    inreplace "lib/config.h.in", "@CMAKE_INSTALL_FULL_LIBDIR@", ""
-    # Ensure we're using Homebrew-provided versions of these dependencies.
-    %w[blake3 mimalloc tbb zlib zstd].each { |dir| rm_r(buildpath/"third-party"/dir) }
-    args = %w[
-      -DMOLD_LTO=ON
-      -DMOLD_USE_MIMALLOC=ON
-      -DMOLD_USE_SYSTEM_MIMALLOC=ON
-      -DMOLD_USE_SYSTEM_TBB=ON
-      -DCMAKE_SKIP_INSTALL_RULES=OFF
-    ]
-    args << "-DCMAKE_EXE_LINKER_FLAGS=#{formula_opt_lib("llvm")}/c++/#{shared_library("libc++")}"
+    if DevelopmentTools.clang_build_version <= 1000
+      ENV.llvm_clang
+      ENV["MACOSX_DEPLOYMENT_TARGET"] = MacOS.version.to_s
+    end
 
-    system "cmake", "-S", ".", "-B", "build", *args, *std_cmake_args
-    system "cmake", "--build", "build"
-    system "cmake", "--install", "build"
+    ENV["MOLD_LIBDIR"] = opt_lib
+    system "cargo", "install", *std_cargo_args(path: "cli")
 
-    pkgshare.install "test"
-  end
+    # https://github.com/rui314/mold/blob/main/install-mold.sh
+    (lib/"mold").install "target/release/mold-wrapper.so" if OS.linux?
+    man1.install "docs/mold.1"
+    bin.install_symlink bin/"mold" => "ld.mold"
+    (libexec/"mold").install_symlink bin/"mold" => "ld"
+    man1.install_symlink man1/"mold.1" => "ld.mold.1"
 
-  def caveats
-    "Support for Mach-O targets has been removed."
+    pkgshare.install "tests"
   end
 
   test do
@@ -91,29 +81,29 @@ class Mold < Formula
 
     return unless OS.linux?
 
-    cp_r pkgshare/"test", testpath
+    cp_r pkgshare/"tests", testpath
 
     # Remove non-native tests.
     arch = Hardware::CPU.arch.to_s
     arch = "aarch64" if arch == "arm64"
-    testpath.glob("test/arch-*.sh")
+    testpath.glob("tests/arch-*.sh")
             .reject { |f| f.basename(".sh").to_s.match?(/^arch-#{arch}-/) }
             .each(&:unlink)
 
-    inreplace testpath.glob("test/*.sh") do |s|
-      s.gsub!(%r{(\./|`pwd`/)?mold-wrapper}, lib/"mold/mold-wrapper", audit_result: false)
-      s.gsub!(%r{(\.|`pwd`)/mold}, bin/"mold", audit_result: false)
-      s.gsub!(/-B(\.|`pwd`)/, "-B#{libexec}/mold", audit_result: false)
+    inreplace testpath.glob("tests/*.sh") do |s|
+      s.gsub!(%r{(\./|`pwd`/|\$PWD/)?mold-wrapper}, lib/"mold/mold-wrapper", audit_result: false)
+      s.gsub!(%r{(\.|`pwd`|\$PWD)/mold}, bin/"mold", audit_result: false)
+      s.gsub!(/-B(\.|`pwd`|\$PWD)/, "-B#{libexec}/mold", audit_result: false)
     end
 
     # The `inreplace` rules above do not work well on this test. To avoid adding
     # too much complexity to the regex rules, it is manually tested below
     # instead.
-    (testpath/"test/mold-wrapper2.sh").unlink
+    (testpath/"tests/mold-wrapper2.sh").unlink
     assert_match "mold-wrapper.so",
       shell_output("#{bin}/mold -run bash -c 'echo $LD_PRELOAD'")
 
     # Run the remaining tests.
-    testpath.glob("test/*.sh").each { |t| system "bash", t }
+    testpath.glob("tests/*.sh").each { |t| system "bash", t }
   end
 end

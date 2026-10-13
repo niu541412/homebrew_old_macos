@@ -2,27 +2,19 @@ class Llvm < Formula
   desc "Next-gen compiler infrastructure"
   homepage "https://llvm.org/"
   license "Apache-2.0" => { with: "LLVM-exception" }
+  revision 1
   compatibility_version 2
   head "https://github.com/llvm/llvm-project.git", branch: "main"
 
   stable do
-    url "https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.2/llvm-project-23.1.2.src.tar.xz"
-    sha256 "c98bbef08a2b4c2613cd50e9aa9ae7b69b1fe6c16b2c40373bc0ab6116fdf78a"
+    url "https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.3/llvm-project-23.1.3.src.tar.xz"
+    sha256 "c44186a7762ed28954be72e5ff6df9808e0779d4f1bf014ecc4e7e211d31ee34"
 
     # Fix triple config loading for clang-cl
     patch do
-      url "https://github.com/llvm/llvm-project/compare/1381ad497b9a6d3da630cbef53cbfa9ddf117bb6...40a8c7c0ff3f688b690e4c74db734de67f0f89e9.diff"
-      sha256 "f6dafd762737eb79761ab7ef814a9fc802ec4bb8d20f46691f07178053b0eb36"
+      url "https://raw.githubusercontent.com/Homebrew/homebrew-core/refs/heads/main/Patches/llvm/pull-111397.diff"
       type :unofficial
       resolves "https://github.com/llvm/llvm-project/pull/111397"
-    end
-
-    # Backport fix for macOS 27 SDK
-    patch do
-      url "https://github.com/llvm/llvm-project/commit/b8007a8e4020b8bca2b12e941660e10bf5bf6716.patch?full_index=1"
-      sha256 "e41e300eb6f5cca9172ab344e572c3fb24f0d05885ae23dd7cb4f9c2528839f7"
-      type :backport
-      resolves "https://github.com/llvm/llvm-project/pull/222721"
     end
   end
 
@@ -62,6 +54,7 @@ class Llvm < Formula
   deny_network_access!
 
   patch :DATA
+
   def install
     # The clang bindings need a little help finding keg-only libclang.
     inreplace "clang/bindings/python/clang/cindex.py",
