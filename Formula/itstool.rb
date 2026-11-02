@@ -4,14 +4,12 @@ class Itstool < Formula
   url "https://files.itstool.org/itstool/itstool-2.0.7.tar.bz2"
   sha256 "6b9a7cd29a12bb95598f5750e8763cee78836a1a207f85b74d8b3275b27e87ca"
   license "GPL-3.0-or-later"
-  revision 2
+  revision 3
 
   livecheck do
     url "https://itstool.org/download.html"
     regex(/href=.*?itstool[._-]v?(\d+(?:\.\d+)+)\.t/i)
   end
-
-  no_autobump! because: :requires_manual_review
 
   bottle do
   end
@@ -26,38 +24,36 @@ class Itstool < Formula
   depends_on "doxygen" => :build # for libxml2 python bindings
   depends_on "pkgconf" => :build # for libxml2 python bindings
   depends_on "python-setuptools" => :build # for libxml2 python bindings
-  depends_on "icu4c@78" => :build
+#  depends_on "icu4c@78" => :build
   depends_on "libxml2"
-  depends_on "python@3.14"
+  depends_on "python@3.15"
 
   # Need deprecated libxml2 python bindings. May switch to lxml in future:
   # Ref: https://github.com/itstool/itstool/pull/57
   resource "libxml2" do
     url "https://download.gnome.org/sources/libxml2/2.15/libxml2-2.15.1.tar.xz"
     sha256 "c008bac08fd5c7b4a87f7b8a71f283fa581d80d80ff8d2efd3b26224c39bc54c"
-  end
 
-  def python3
-    "python3.14"
+    # Track the version of libxml2 formula. This is not the same as `formula "libxml2"`.
+    livecheck do
+      url "https://formulae.brew.sh/api/formula/libxml2.json"
+      strategy :json do |json|
+        json.dig("versions", "stable")
+      end
+    end
   end
 
   def install
     resource("libxml2").stage do
       # We need to insert our include dir first
-      includes = [Formula["libxml2"].opt_include]
-      puts "llvm: #{includes}"
+      includes = [formula_opt_include("libxml2")]
       includes << (OS.mac? ? "#{MacOS.sdk_for_formula(self).path}/usr/include" : HOMEBREW_PREFIX/"include")
-      puts "llvm: #{includes}"
-      puts "PWD: #{Pathname.pwd}"
       inreplace "python/setup.py.in", "includes_dir = [",
                                       "includes_dir = [#{includes.map { |inc| "'#{inc}'," }.join(" ")}"
 
-      puts "PWD: #{Pathname.pwd}"
       # Run configure to generate setup.py and Doxygen XML
       system "./configure", "--disable-silent-rules",
                             "--with-history",
-                            "--with-http",
-                            "--with-icu",
                             "--with-legacy", # https://gitlab.gnome.org/GNOME/libxml2/-/issues/751#note_2157870
                             "--with-python",
                             *std_configure_args(prefix: libexec)
@@ -72,7 +68,7 @@ class Itstool < Formula
     end
 
     configure = build.head? ? "./autogen.sh" : "./configure"
-    system configure, "--prefix=#{libexec}", "PYTHON=#{which(python3)}"
+    system configure, "--prefix=#{libexec}", "PYTHON=#{python3}"
     system "make", "install"
 
     bin.install Dir[libexec/"bin/*"]

@@ -1,11 +1,10 @@
 class Simdutf < Formula
   desc "Unicode conversion routines, fast"
   homepage "https://simdutf.github.io/simdutf/"
-  url "https://github.com/simdutf/simdutf/archive/refs/tags/v9.2.1.tar.gz"
-  sha256 "582f9d0dcf578f6d4766fa29ea12a7f2f02bd3c6ad9e0cf35a8e0ec8478eba4b"
+  url "https://github.com/simdutf/simdutf/archive/refs/tags/v9.3.3.tar.gz"
+  sha256 "441e374e8629bd8469f6d5cde9f0fa17ef3ad158aeb077791606d8aa73b565ef"
   license any_of: ["Apache-2.0", "MIT"]
-  revision 1
-  compatibility_version 6
+  compatibility_version 7
   head "https://github.com/simdutf/simdutf.git", branch: "master"
 
   livecheck do
@@ -18,7 +17,7 @@ class Simdutf < Formula
 
   depends_on "aklomp-base64" => :build
   depends_on "cmake" => :build
-  depends_on "icu4c@78"
+  depends_on "icu4c@79"
   depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
 
   uses_from_macos "python" => :build

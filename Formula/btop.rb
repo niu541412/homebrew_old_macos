@@ -1,8 +1,8 @@
 class Btop < Formula
   desc "Resource monitor. C++ version and continuation of bashtop and bpytop"
   homepage "https://github.com/aristocratos/btop"
-  url "https://github.com/aristocratos/btop/archive/refs/tags/v1.4.7.tar.gz"
-  sha256 "933de2e4d1b2211a638be463eb6e8616891bfba73aef5d38060bd8319baeefc6"
+  url "https://github.com/aristocratos/btop/archive/refs/tags/v1.4.8.tar.gz"
+  sha256 "67e07c21b770a6d884c5e50ba1d2cfc90732ea57459367d8732ec7ecbeb3be5f"
   license "Apache-2.0"
   head "https://github.com/aristocratos/btop.git", branch: "main"
 
@@ -13,7 +13,7 @@ class Btop < Formula
 
   on_macos do
     depends_on "coreutils" => :build
-    depends_on "llvm" if DevelopmentTools.clang_build_version <= 1600
+    depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1600
   end
 
   fails_with :clang do

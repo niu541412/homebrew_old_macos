@@ -1,11 +1,10 @@
 class MysqlClient < Formula
   desc "Open source relational database management system"
   homepage "https://github.com/mysql/mysql-server"
-  url "https://cdn.mysql.com/Downloads/MySQL-26.7/mysql-26.7.0.tar.gz"
-  mirror "https://repo.mysql.com/apt/ubuntu/pool/mysql-innovation/m/mysql-community/mysql-community_26.7.0.orig.tar.gz"
-  sha256 "95e949183b94bbe39e70c6355e6c90d2a640a62ede996ca5f7a6a3e0827a3260"
+  url "https://cdn.mysql.com/Downloads/MySQL-26.10/mysql-26.10.0.tar.gz"
+  mirror "https://repo.mysql.com/apt/ubuntu/pool/mysql-innovation/m/mysql-community/mysql-community_26.10.0.orig.tar.gz"
+  sha256 "984507622ddfa4d84ad23fc56ec5b5f18f4fda328af5a23e5f5b1a062301ea2c"
   license "GPL-2.0-only" => { with: "Universal-FOSS-exception-1.0" }
-  revision 1
   compatibility_version 1
 
   livecheck do
@@ -47,17 +46,6 @@ class MysqlClient < Formula
   fails_with :gcc do
     version "9"
     cause "Requires C++20"
-  end
-
-  # Backports to support OpenSSL 4
-  patch do
-    url  "https://raw.githubusercontent.com/Homebrew/homebrew-core/refs/heads/main/Patches/mysql/26.7.0.diff"
-    type :backport # https://github.com/mysql/mysql-server/commit/04ba58a223afc1339c75b080825042ad17a85b43
-  end
-  patch do
-    url "https://github.com/mysql/mysql-server/commit/a045c23214ec225c49d9bc4caeea78d3d1f99ba9.patch?full_index=1"
-    sha256 "b597781554b7fbcf4e13402dc8dca97bea59e059ed6e40e4eb71cd5c26a91ad9"
-    type :backport
   end
 
   deny_network_access!

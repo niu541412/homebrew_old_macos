@@ -5,6 +5,7 @@ class LlvmAT21 < Formula
   sha256 "4633a23617fa31a3ea51242586ea7fb1da7140e426bd62fc164261fe036aa142"
   # The LLVM Project is under the Apache License v2.0 with LLVM Exceptions
   license "Apache-2.0" => { with: "LLVM-exception" }
+  revision 1
   compatibility_version 1
 
   livecheck do
@@ -20,7 +21,7 @@ class LlvmAT21 < Formula
   # https://llvm.org/docs/GettingStarted.html#requirement
   depends_on "cmake" => :build
   depends_on "ninja" => :build
-  depends_on "python@3.14" => [:build, :test]
+  depends_on "python@3.15" => [:build, :test]
   depends_on "zstd"
 
   uses_from_macos "libedit"
@@ -34,8 +35,7 @@ class LlvmAT21 < Formula
 
   # Fix triple config loading for clang-cl
   patch do
-    url "https://github.com/llvm/llvm-project/compare/1381ad497b9a6d3da630cbef53cbfa9ddf117bb6...40a8c7c0ff3f688b690e4c74db734de67f0f89e9.diff"
-    sha256 "f6dafd762737eb79761ab7ef814a9fc802ec4bb8d20f46691f07178053b0eb36"
+    url "https://raw.githubusercontent.com/Homebrew/homebrew-core/refs/heads/main/Patches/llvm/pull-111397.diff"
     type :unofficial
     resolves "https://github.com/llvm/llvm-project/pull/111397"
   end
@@ -71,6 +71,7 @@ class LlvmAT21 < Formula
   end
 
   patch :DATA
+
   def install
     # The clang bindings need a little help finding our libclang.
     inreplace "clang/bindings/python/clang/cindex.py",

@@ -1,8 +1,8 @@
 class OpenjdkAT21 < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  url "https://github.com/openjdk/jdk21u/archive/refs/tags/jdk-21.0.12.1-ga.tar.gz"
-  sha256 "9c719670e7be6080a46ebeb1223a375bd53818ba7c5ae11f11a02907b593775f"
+  url "https://github.com/openjdk/jdk21u/archive/refs/tags/jdk-21.0.13.0.3-ga.tar.gz"
+  sha256 "09f7bd8b26af3b838144e02de7c291770714def3c6ab42d609ce543c66d84893"
   license "GPL-2.0-only" => { with: "Classpath-exception-2.0" }
   compatibility_version 1
 
@@ -31,7 +31,6 @@ class OpenjdkAT21 < Formula
   uses_from_macos "unzip" => :build
   uses_from_macos "zip" => :build
   uses_from_macos "cups" => :no_linkage
-  uses_from_macos "zlib", since: :catalina
 
   on_macos do
     depends_on xcode: :build # for metal
@@ -75,6 +74,7 @@ class OpenjdkAT21 < Formula
   end
 
   patch :DATA
+
   def install
     inreplace "make/autoconf/flags.m4", "MACOSX_VERSION_MIN=11.00.00", "MACOSX_VERSION_MIN=#{MacOS.version}.00"
 

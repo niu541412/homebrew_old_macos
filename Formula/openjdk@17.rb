@@ -1,8 +1,8 @@
 class OpenjdkAT17 < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  url "https://github.com/openjdk/jdk17u/archive/refs/tags/jdk-17.0.20.1-ga.tar.gz"
-  sha256 "8e5f18f6f75a759fc9584c3c2f8c44a5737692f3ea348cc1f9e63704b9dd81ee"
+  url "https://github.com/openjdk/jdk17u/archive/refs/tags/jdk-17.0.21.0.3-ga.tar.gz"
+  sha256 "9a56ccc3dce235a5b0e85fe9929eab71fda90f8586de21e334e20065db241236"
   license "GPL-2.0-only" => { with: "Classpath-exception-2.0" }
   compatibility_version 1
 
@@ -16,7 +16,7 @@ class OpenjdkAT17 < Formula
 
   keg_only :versioned_formula
 
-  deprecate! date: "2026-09-30", because: :unmaintained
+  deprecate! date: "2027-09-30", because: :unmaintained
   disable! date: "2029-09-30", because: :unmaintained
 
   depends_on "autoconf" => :build
@@ -32,7 +32,6 @@ class OpenjdkAT17 < Formula
   uses_from_macos "unzip" => :build
   uses_from_macos "zip" => :build
   uses_from_macos "cups" => :no_linkage
-  uses_from_macos "zlib", since: :catalina
 
   on_macos do
     depends_on xcode: :build # for metal
@@ -76,6 +75,7 @@ class OpenjdkAT17 < Formula
   end
 
   patch :DATA
+
   def install
     inreplace "make/autoconf/flags.m4", "MACOSX_VERSION_MIN=11.00.00", "MACOSX_VERSION_MIN=#{MacOS.version}.00"
     

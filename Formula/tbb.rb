@@ -1,8 +1,8 @@
 class Tbb < Formula
   desc "Rich and complete approach to parallelism in C++"
   homepage "https://uxlfoundation.github.io/oneTBB/"
-  url "https://github.com/uxlfoundation/oneTBB/archive/refs/tags/v2023.1.0.tar.gz"
-  sha256 "191288b52e1e6b17198000b64d77d194bb65e791be46ebc606e9b091781e2070"
+  url "https://github.com/uxlfoundation/oneTBB/archive/refs/tags/v2023.2.0.tar.gz"
+  sha256 "80cb62e62defeee67ea1885a6f72d97ac81404f8fde9cded62fb51524808a30c"
   license "Apache-2.0"
   compatibility_version 1
 
@@ -12,7 +12,7 @@ class Tbb < Formula
   depends_on "cmake" => :build
   depends_on "pkgconf" => :build
   depends_on "python-setuptools" => :build
-  depends_on "python@3.14" => [:build, :test]
+  depends_on "python@3.15" => [:build, :test]
   depends_on "swig" => :build
   depends_on "hwloc"
 
@@ -20,10 +20,6 @@ class Tbb < Formula
     depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
   end
   
-  def python3
-    "python3.14"
-  end
-
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     site_packages = Language::Python.site_packages(python3)
@@ -32,9 +28,12 @@ class Tbb < Formula
 
     args = %W[
       -DTBB_TEST=OFF
+      -DTCM_TEST=OFF
       -DTBB4PY_BUILD=ON
-      -DPYTHON_EXECUTABLE=#{which(python3)}
+      -DPYTHON_EXECUTABLE=#{python3}
     ]
+    # TCM links with GNU ld's `--version-script`, which Apple's linker doesn't support
+    args << "-DTCM_BUILD=OFF" if OS.mac?
 
     system "cmake", "-S", ".", "-B", "build/shared",
                     "-DBUILD_SHARED_LIBS=ON",

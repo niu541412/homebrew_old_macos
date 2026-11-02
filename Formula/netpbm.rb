@@ -1,22 +1,13 @@
 class Netpbm < Formula
   desc "Image manipulation"
   homepage "https://netpbm.sourceforge.net/"
-  # Maintainers: Look at https://sourceforge.net/p/netpbm/code/HEAD/tree/
-  # for stable versions and matching revisions.
-  url "https://svn.code.sf.net/p/netpbm/code/stable", revision: "5358"
-  version "11.02.30"
+  # We track "super stable" release series as subversion checkouts are not allowed for stable url
+  url "https://downloads.sourceforge.net/project/netpbm/super_stable/10.86.51/netpbm-10.86.51.tgz"
+  sha256 "17d41387e7343da10925690b813ba91c6bd901b417e51500ba4272556a4e5302"
   license "GPL-3.0-or-later"
-  version_scheme 1
-  compatibility_version 1
+  version_scheme 2
+  compatibility_version 2
   head "https://svn.code.sf.net/p/netpbm/code/trunk"
-
-  livecheck do
-    url "https://sourceforge.net/p/netpbm/code/HEAD/log/?path=/stable"
-    regex(/Release\s+v?(\d+(?:\.\d+)+)/i)
-    strategy :page_match
-  end
-
-  no_autobump! because: :incompatible_version_format
 
   bottle do
   end
@@ -37,19 +28,6 @@ class Netpbm < Formula
   end
 
   conflicts_with "jbigkit", because: "both install `pbm.5` and `pgm.5` files"
-
-  resource "html" do
-    # Rolling release, latest revision also documents previous software versions
-    # NOTE: Keep "revision" and "version" in sync
-    url "https://svn.code.sf.net/p/netpbm/code/userguide", revision: "5348"
-    version "5348"
-
-    livecheck do
-      url "https://sourceforge.net/p/netpbm/code/HEAD/log/?path=/userguide"
-      regex(/\[r?(\d+)\]/i)
-      strategy :page_match
-    end
-  end
 
   deny_network_access!
 
@@ -100,18 +78,6 @@ class Netpbm < Formula
     # Generate unversioned library symlink (upstream does not do this)
     libnetpbm = lib.glob(shared_library("libnetpbm", "*")).reject(&:symlink?).first.basename
     lib.install_symlink libnetpbm => shared_library("libnetpbm")
-
-    resource("html").stage buildpath/"userguide"
-    make_args = %W[
-      USERGUIDE=#{buildpath}/userguide
-      -f
-      #{buildpath}/buildtools/manpage.mk
-    ]
-    mkdir buildpath/"netpbmdoc" do
-      system "make", *make_args, "manpages"
-      [man1, man3, man5].map(&:mkpath)
-      system "make", "MANDIR=#{man}", *make_args, "installman"
-    end
   end
 
   test do

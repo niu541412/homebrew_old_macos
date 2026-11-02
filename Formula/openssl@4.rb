@@ -1,9 +1,9 @@
 class OpensslAT4 < Formula
   desc "Cryptography and SSL/TLS Toolkit"
   homepage "https://openssl-library.org"
-  url "https://github.com/openssl/openssl/releases/download/openssl-4.0.3/openssl-4.0.3.tar.gz"
-  mirror "http://fresh-center.net/linux/misc/openssl-4.0.3.tar.gz"
-  sha256 "325b5c806167c13b40b1ffeadfe0248197c00eccc4cf123ec1e28d2d2fd216d9"
+  url "https://github.com/openssl/openssl/releases/download/openssl-4.1.0/openssl-4.1.0.tar.gz"
+  mirror "http://fresh-center.net/linux/misc/openssl-4.1.0.tar.gz"
+  sha256 "50c17baf54cb008f6ce42d50deb4b28050a1aad711636cabd4b241c7e90cc2fd"
   license "Apache-2.0"
 
   livecheck do
@@ -37,13 +37,18 @@ class OpensslAT4 < Formula
     if OS.mac?
       arch_args += %W[darwin64-#{Hardware::CPU.arch}-cc enable-ec_nistp_64_gcc_128]
     elsif Hardware::CPU.intel?
-      arch_args << (Hardware::CPU.is_64_bit? ? "linux-x86_64" : "linux-elf")
+      arch_args << "linux-x86_64"
     elsif Hardware::CPU.arm?
       arch_args << (Hardware::CPU.is_64_bit? ? "linux-aarch64" : "linux-armv4")
     end
 
     pkgetc.mkpath
     system "perl", "./Configure", *configure_args, *arch_args
+    if OS.mac? && Hardware::CPU.intel?
+      inreplace "Makefile",
+                "$(LIB_CPPFLAGS) -c -o $@ crypto/sha/keccak1600x4-avx512vl.s",
+                "$(LIB_CPPFLAGS) -mavx512vl -mavx512dq -mavx512bw -c -o $@ crypto/sha/keccak1600x4-avx512vl.s"
+    end
     system "make"
     system "make", "install", "MANDIR=#{man}", "MANSUFFIX=ssl"
     system "make", "HARNESS_JOBS=#{ENV.make_jobs}", "test" if build.bottle?
@@ -70,11 +75,11 @@ class OpensslAT4 < Formula
 
   def caveats
     <<~EOS
-      To add additional certificates, place .pem files in
+      To add additional certificates, place .pem, .crt, .cer, or .crl files in
         #{pkgetc}/certs
 
       and run
-        #{opt_bin}/c_rehash
+        #{bin}/openssl rehash #{pkgetc}/certs
     EOS
   end
 

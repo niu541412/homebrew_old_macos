@@ -1,8 +1,8 @@
 class Openjdk < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  url "https://github.com/openjdk/jdk27u/archive/refs/tags/jdk-27-ga.tar.gz"
-  sha256 "7b0d39b840e008bd0a8e3d2c93d874d48536ec3e4c13045a7a83179042e2011e"
+  url "https://github.com/openjdk/jdk27u/archive/refs/tags/jdk-27.0.1.0.3-ga.tar.gz"
+  sha256 "d4f0d695767eee4842b1e6a22daf5af6a87bcaeea68f0597538a97bd8fb340a6"
   license "GPL-2.0-only" => { with: "Classpath-exception-2.0" }
   compatibility_version 2
 
@@ -31,6 +31,7 @@ class Openjdk < Formula
 
   on_macos do
     depends_on xcode: :build # for metal
+    # depends_on arch: :arm64
     depends_on "llvm" => :build if DevelopmentTools.clang_build_version <= 1100
   end
 
@@ -51,8 +52,8 @@ class Openjdk < Formula
   resource "boot-jdk" do
     on_macos do
       on_arm do
-        url "https://download.java.net/java/GA/jdk26.0.2.1/3b8e6c7ec6274148a7aa15e7e7dfb53c/1/GPL/openjdk-26.0.2.1_macos-aarch64_bin.tar.gz"
-        sha256 "3a61f9bbfbf2e09308aa4b1a5c044fcbc82f6ba49e074be49a7b7911e1f00efd"
+        url "https://download.java.net/java/GA/jdk27/55ce5470a6294008af0057ff4626d0e5/35/GPL/openjdk-27_macos-aarch64_bin.tar.gz"
+        sha256 "ff42134c1bc5ac81c5a91a95fd4df87479db5d0499ba875d6adb5bda5626c3e8"
       end
       on_intel do
         url "https://github.com/niu541412/homebrew_old_macos/releases/download/openjdk/openjdk--26.0.2.1.high_sierra.bottle.tar.gz"
@@ -61,17 +62,21 @@ class Openjdk < Formula
     end
     on_linux do
       on_arm do
-        url "https://download.java.net/java/GA/jdk26.0.2.1/3b8e6c7ec6274148a7aa15e7e7dfb53c/1/GPL/openjdk-26.0.2.1_linux-aarch64_bin.tar.gz"
-        sha256 "b96b265a4a1a36c02454148891aa58ca63303cbc2d1b7979c33b4fe99e09117b"
+        url "https://download.java.net/java/GA/jdk27/55ce5470a6294008af0057ff4626d0e5/35/GPL/openjdk-27_linux-aarch64_bin.tar.gz"
+        sha256 "da4e9dde1fff90204739e969187bab4751bd59a2a1c479672e1a1810f7dd23ea"
       end
       on_intel do
-        url "https://download.java.net/java/GA/jdk26.0.2.1/3b8e6c7ec6274148a7aa15e7e7dfb53c/1/GPL/openjdk-26.0.2.1_linux-x64_bin.tar.gz"
-        sha256 "a1489256029b389ce6ee52da0de1d01496c5df1776d6870241fe4823b998ea61"
+        url "https://download.java.net/java/GA/jdk27/55ce5470a6294008af0057ff4626d0e5/35/GPL/openjdk-27_linux-x64_bin.tar.gz"
+        sha256 "95fc37eb3a18a27a26d5904c2d89d52bace8dafa9a078ca27f4747fbc4bf070b"
       end
     end
   end
 
+  # uses local ports during build process
+  allow_network_access! :build
+
   patch :DATA
+
   def install
     inreplace "make/autoconf/flags.m4", "MACOSX_VERSION_MIN=11.00.00", "MACOSX_VERSION_MIN=#{MacOS.version}.00"
 

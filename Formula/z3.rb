@@ -1,10 +1,10 @@
 class Z3 < Formula
   desc "High-performance theorem prover"
   homepage "https://github.com/Z3Prover/z3"
-  url "https://github.com/Z3Prover/z3/archive/refs/tags/z3-5.1.0.tar.gz"
-  sha256 "c433e1add0431c5edf1644bd9951c40588024d2d288f0e4215e5fcb6e3b4277d"
+  url "https://github.com/Z3Prover/z3/archive/refs/tags/z3-5.3.3.tar.gz"
+  sha256 "f8373e6a753da6e336f0955fca65c7a56346f3de68a56fd353acb4abf33d4823"
   license "MIT"
-  compatibility_version 4
+  compatibility_version 5
   head "https://github.com/Z3Prover/z3.git", branch: "master"
 
   livecheck do
@@ -19,7 +19,7 @@ class Z3 < Formula
   depends_on "cmake" => :build
   # Has Python bindings but are supplementary to the main library
   # which does not need Python.
-  depends_on "python@3.14" => [:build, :test]
+  depends_on "python@3.15" => [:build, :test]
 
   # The following macOS conditional should be the inverse of LLVM's Z3 conditional
   on_ventura :or_older do
@@ -28,9 +28,6 @@ class Z3 < Formula
     end
   end
 
-  # With an older LLVM toolchain to avoid circular dependencies during the build process.
-  depends_on "fmt" => :build
-  
   fails_with :gcc do
     version "12"
     cause "Requires C++20 std::format, https://gcc.gnu.org/gcc-13/changes.html#libstdcxx"
@@ -69,6 +66,11 @@ class Z3 < Formula
       -DPYTHON_EXECUTABLE=#{python3}
       -DCMAKE_INSTALL_PYTHON_PKG_DIR=#{Language::Python.site_packages(python3)}
     ]
+
+    if OS.mac? && DevelopmentTools.clang_build_version <= 1400
+      args << "-DCMAKE_CXX_COMPILER_AR=#{Formula["llvm"].opt_bin}/llvm-ar"
+      args << "-DCMAKE_CXX_COMPILER_RANLIB=#{Formula["llvm"].opt_bin}/llvm-ranlib"
+    end
 
     system "cmake", "-S", ".", "-B", "build", *args, *std_cmake_args
     system "cmake", "--build", "build"

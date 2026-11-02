@@ -1,8 +1,8 @@
 class Uv < Formula
   desc "Extremely fast Python package installer and resolver, written in Rust"
   homepage "https://docs.astral.sh/uv/"
-  url "https://github.com/astral-sh/uv/archive/refs/tags/0.13.0.tar.gz"
-  sha256 "7f0163a2d651347cc8500e15d1a006d02ed7bdbd6fb31438f7fd3e9383a34129"
+  url "https://github.com/astral-sh/uv/archive/refs/tags/0.13.6.tar.gz"
+  sha256 "c2e01687fbbcb109277698ec97baca46e1547656ad580abf6d993f9c459af1c7"
   license any_of: ["Apache-2.0", "MIT"]
   compatibility_version 1
   head "https://github.com/astral-sh/uv.git", branch: "main"
@@ -29,8 +29,8 @@ class Uv < Formula
   end
 
   def install
-    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     ENV["UV_COMMIT_HASH"] = ENV["UV_COMMIT_SHORT_HASH"] = "Homebrew"
+    ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     ENV["UV_COMMIT_DATE"] = time.strftime("%F")
     # See: https://github.com/astral-sh/uv/issues/15401
     ENV["JEMALLOC_SYS_WITH_LG_PAGE"] = "16" if Hardware::CPU.arm? && OS.linux?

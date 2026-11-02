@@ -3,10 +3,9 @@ require File.expand_path("#{HOMEBREW_PREFIX}/Homebrew/Library/Taps/homebrew/home
 class PortableRuby < PortableFormula
   desc "Powerful, clean, object-oriented scripting language"
   homepage "https://www.ruby-lang.org/"
-  url "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.7.tar.gz"
-  sha256 "911ace20f90d068ca0e4dda6d0e4f0f81e52e52f2dd4f4004c721e253412e82d"
+  url "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.9.tar.gz"
+  sha256 "c35350682ff050b79702d57ade4516e7336063f510155d19fb2fb5b3f3909511"
   license "Ruby"
-  revision 1
 
   # This regex restricts matching to versions other than X.Y.0.
   livecheck do
@@ -51,6 +50,8 @@ class PortableRuby < PortableFormula
     end
   end
 
+  allow_network_access! :test
+
   def install
     # Remove almost all bundled gems and replace with our own set.
     rm_r ".bundle"
@@ -75,11 +76,8 @@ class PortableRuby < PortableFormula
     end
     File.write("gems/bundled_gems", bundled_gems.join)
 
-    libyaml = Formula["portable-libyaml"]
     libxcrypt = Formula["portable-libxcrypt"]
     openssl = Formula["portable-openssl"]
-    libffi = Formula["portable-libffi"]
-    zlib = Formula["portable-zlib"]
 
     args = portable_configure_args + %W[
       --prefix=#{prefix}
@@ -99,7 +97,7 @@ class PortableRuby < PortableFormula
     args << "ac_cv_header_stdckdint_h=no" if OS.mac? && Hardware::CPU.intel?
     # We don't specify OpenSSL as we want it to use the pkg-config, which `--with-openssl-dir` will disable
     args += %W[
-      --with-libyaml-dir=#{libyaml.opt_prefix}
+      --with-libyaml-dir=#{formula_opt_prefix("portable-libyaml")}
     ]
 
     if OS.linux?
@@ -107,8 +105,8 @@ class PortableRuby < PortableFormula
       ENV["XLDFLAGS"] = "-L#{libxcrypt.opt_lib}"
 
       args += %W[
-        --with-libffi-dir=#{libffi.opt_prefix}
-        --with-zlib-dir=#{zlib.opt_prefix}
+        --with-libffi-dir=#{formula_opt_prefix("portable-libffi")}
+        --with-zlib-dir=#{formula_opt_prefix("portable-zlib")}
       ]
 
       # Ensure compatibility with older Ubuntu when built with Ubuntu 22.04

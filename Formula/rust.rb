@@ -2,13 +2,12 @@ class Rust < Formula
   desc "Safe, concurrent, practical language"
   homepage "https://www.rust-lang.org/"
   license any_of: ["Apache-2.0", "MIT"]
-  revision 1
   compatibility_version 1
   head "https://github.com/rust-lang/rust.git", branch: "main"
 
   stable do
-    url "https://static.rust-lang.org/dist/rustc-1.99.0-src.tar.gz"
-    sha256 "2035e4077b834a42ff8afd07f277ae3f06340098b86b1d2843aa234b4cfcae67"
+    url "https://static.rust-lang.org/dist/rustc-1.99.1-src.tar.gz"
+    sha256 "db56bbc64db491ceda6b78a2811a6d121c639338906fd944f720289cbd02245c"
 
     # From https://github.com/rust-lang/rust/blob/#{version}/src/stage0
     # HEAD does not use these as it needs a nightly rust

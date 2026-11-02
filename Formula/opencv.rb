@@ -2,7 +2,7 @@ class Opencv < Formula
   desc "Open source computer vision library"
   homepage "https://opencv.org/"
   license "Apache-2.0"
-  revision 11
+  revision 12
   compatibility_version 2
 
   stable do
@@ -48,6 +48,7 @@ class Opencv < Formula
   depends_on "harfbuzz"
   depends_on "jpeg-turbo"
   depends_on "jsoncpp"
+  depends_on "libavif"
   depends_on "libpng"
   depends_on "libtiff"
   depends_on "numpy"
@@ -56,7 +57,7 @@ class Opencv < Formula
   depends_on "openjpeg"
   depends_on "openvino"
   depends_on "protobuf"
-  depends_on "python@3.14"
+  depends_on "python@3.15"
   depends_on "tbb"
   depends_on "tesseract"
   # depends_on "vtk"
@@ -154,6 +155,7 @@ class Opencv < Formula
       -DOPENCV_GENERATE_PKGCONFIG=ON
       -DPROTOBUF_UPDATE_FILES=ON
       -DWITH_1394=OFF
+      -DWITH_AVIF=ON
       -DWITH_CUDA=OFF
       -DWITH_EIGEN=ON
       -DWITH_FFMPEG=ON
@@ -222,6 +224,15 @@ class Opencv < Formula
         cv::Mat img = cv::imread("#{test_fixtures("test.jpg")}", cv::IMREAD_COLOR);
         if (img.empty()) {
           std::cerr << "Could not read test.jpg fixture" << std::endl;
+          return 1;
+        }
+        if (!cv::haveImageWriter("test.avif") || !cv::imwrite("test.avif", img)) {
+          std::cerr << "Could not write AVIF image" << std::endl;
+          return 1;
+        }
+        cv::Mat avif = cv::imread("test.avif", cv::IMREAD_COLOR);
+        if (avif.empty() || avif.size() != img.size() || avif.type() != img.type()) {
+          std::cerr << "Could not read AVIF image with the expected dimensions and type" << std::endl;
           return 1;
         }
         return 0;

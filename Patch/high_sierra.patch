@@ -9,15 +9,15 @@
 +      new_endpoint = endpoint.gsub("high_sierra", "big_sur")
 +      url = "#{Homebrew::EnvConfig.api_domain}/#{new_endpoint}"
 +      default_url = "#{HOMEBREW_API_DEFAULT_DOMAIN}/#{new_endpoint}"
+       primary_url = url
  
        if Homebrew.running_as_root_but_not_owned_by_root? &&
-          (!target.exist? || target.empty?)
 --- a/Library/Homebrew/brew.sh
 +++ b/Library/Homebrew/brew.sh
-@@ -339,7 +339,7 @@ HOMEBREW_MACOS_NEWEST_SUPPORTED="26"
+@@ -345,7 +345,7 @@ HOMEBREW_MACOS_NEWEST_SUPPORTED="27"
  # - `os-version min` in package/Distribution.xml
  # - https://github.com/Homebrew/install/blob/HEAD/install.sh
- HOMEBREW_MACOS_OLDEST_SUPPORTED="14"
+ HOMEBREW_MACOS_OLDEST_SUPPORTED="15"
 -HOMEBREW_MACOS_OLDEST_ALLOWED="11"
 +HOMEBREW_MACOS_OLDEST_ALLOWED="10.13"
  
@@ -25,7 +25,7 @@
  check-curl-version
 --- a/Library/Homebrew/cmd/update.sh
 +++ b/Library/Homebrew/cmd/update.sh
-@@ -39,6 +39,12 @@ macos_version_name() {
+@@ -40,6 +40,12 @@ macos_version_name() {
    then
      # odisabled: remove support for Big Sur and macOS x86_64 September (or later) 2027
      echo "big_sur"
@@ -38,14 +38,14 @@
    fi
  }
  
-@@ -458,7 +464,7 @@ fetch_api_file() {
+@@ -487,7 +493,7 @@ fetch_api_file() {
      fi
      last_json_url="${json_url}"
      [[ ${curl_exit_code} -eq 0 ]] && break
 -  done < <(api_urls "${filename}")
 +  done < <(api_urls "${filename/high_sierra/big_sur}")
  
-   if [[ -n ${is_formula_file} ]] && [[ -f "${api_cache}/formula_names.txt" ]]
+   if [[ ${curl_exit_code} -eq 0 ]]
    then
 --- a/Library/Homebrew/extend/os/mac/dev-cmd/bottle.rb
 +++ b/Library/Homebrew/extend/os/mac/dev-cmd/bottle.rb
@@ -64,21 +64,21 @@
          sig { params(gnu_tar_formula: Formula).returns(String) }
 --- a/Library/Homebrew/extend/os/mac/extend/ENV/super.rb
 +++ b/Library/Homebrew/extend/os/mac/extend/ENV/super.rb
-@@ -113,8 +113,11 @@ module OS
+@@ -103,8 +103,11 @@ module OS
          sdk = formula ? MacOS.sdk_for_formula(formula) : MacOS.sdk
          is_xcode_sdk = sdk&.source == :xcode
  
 -        Homebrew::Diagnostic.checks(:fatal_setup_build_environment_checks)
 -        self["HOMEBREW_SDKROOT"] = sdk.path.to_s if sdk
 +        if is_xcode_sdk
-+        #if is_xcode_sdk || false ############### niu
++        #if is_xcode_sdk || false
 +          Homebrew::Diagnostic.checks(:fatal_setup_build_environment_checks)
 +          self["HOMEBREW_SDKROOT"] = sdk.path.to_s if sdk
 +        end
  
          self["HOMEBREW_DEVELOPER_DIR"] = if is_xcode_sdk
            MacOS::Xcode.prefix.to_s
-@@ -148,7 +151,11 @@ module OS
+@@ -138,7 +141,11 @@ module OS
          self["HOMEBREW_PREFER_CLT_PROXIES"] = "1"
  
          # Deterministic timestamping.
@@ -93,19 +93,24 @@
        sig { void }
 --- a/Library/Homebrew/macos_version.rb
 +++ b/Library/Homebrew/macos_version.rb
-@@ -29,6 +29,11 @@ class MacOSVersion < Version
-     monterey:    "12",
-     # odisabled: remove support for Big Sur and macOS x86_64 September (or later) 2027
-     big_sur:     "11",
-+    catalina:    "10.15",
-+    mojave:      "10.14",
-+    high_sierra: "10.13",
-+    sierra:      "10.12",
-+    el_capitan:  "10.11",
-   }.freeze, T::Hash[Symbol, String])
+@@ -43,11 +43,11 @@ class MacOSVersion < Version
+   #       `DISABLED_MACOS_VERSIONS` in `MacOSRequirement`.
+   # NOTE: Active symbols must match `macos_version_name` in `cmd/update.sh`.
+   SYMBOLS = T.let(RELEASES.except(
+-    :catalina,
+-    :mojave,
+-    :high_sierra,
+-    :sierra,
+-    :el_capitan,
++    #:catalina,
++    #:mojave,
++    #:high_sierra,
++    #:sierra,
++    #:el_capitan,
+   ).freeze, T::Hash[Symbol, String])
  
    sig { params(macos_version: MacOSVersion).returns(Version) }
-@@ -38,8 +43,11 @@ class MacOSVersion < Version
+@@ -57,8 +57,11 @@ class MacOSVersion < Version
        Version.new(version_major.to_s)
      elsif version_major == 26
        Version.new((version_major - 1).to_s)
@@ -118,19 +123,6 @@
      end
    end
  
-@@ -91,7 +99,11 @@ class MacOSVersion < Version
-   def strip_patch
-     return self if null?
- 
--    self.class.new(major.to_s)
-+    if major.to_i >= 11
-+      self.class.new(major.to_s)
-+    else
-+      major_minor
-+    end
-   end
- 
-   sig { returns(Symbol) }
 --- a/Library/Homebrew/os/mac/sdk.rb
 +++ b/Library/Homebrew/os/mac/sdk.rb
 @@ -43,7 +43,8 @@ module OS
@@ -159,7 +151,7 @@
          sdk_settings_json = JSON.parse(sdk_settings_string)
 --- a/Library/Homebrew/os/mac/xcode.rb
 +++ b/Library/Homebrew/os/mac/xcode.rb
-@@ -24,6 +24,11 @@ module OS
+@@ -27,6 +27,11 @@ module OS
          when "13" then "15.2"
          when "12" then "14.2"
          when "11" then "13.2.1"
@@ -171,7 +163,7 @@
          else
            raise "macOS '#{macos}' is invalid" unless macos.prerelease?
  
-@@ -45,6 +50,11 @@ module OS
+@@ -48,6 +53,11 @@ module OS
          when "13" then "14.1"
          when "12" then "13.1"
          when "11" then "12.2"
@@ -183,7 +175,7 @@
          else
            "#{macos}.0"
          end
-@@ -328,7 +338,12 @@ module OS
+@@ -316,7 +326,12 @@ module OS
          when "14" then "1600.0.26.6"
          when "13" then "1500.1.0.2.5"
          when "12" then "1400.0.29.202"
@@ -197,7 +189,7 @@
          end
        end
  
-@@ -344,6 +359,11 @@ module OS
+@@ -332,6 +347,11 @@ module OS
          when "13" then "14.0.0"
          when "12" then "13.0.0"
          when "11" then "12.5.0"
@@ -211,7 +203,7 @@
          end
 --- a/Library/Homebrew/shims/super/cc
 +++ b/Library/Homebrew/shims/super/cc
-@@ -342,7 +342,7 @@ class Cmd
+@@ -345,7 +345,7 @@ class Cmd
      args += path_flags("-isystem", isystem_paths) + path_flags("-I", include_paths)
      # Add -nostdinc when building against versioned glibc to avoid mixing system and brewed glibc headers.
      args << "-nostdinc" if @deps.any? { |dep| dep.match?(/^glibc@.+$/) }
@@ -220,7 +212,7 @@
      args << "-mbranch-protection=standard" if branch_protection?
      args
    end
-@@ -481,7 +481,7 @@ class Cmd
+@@ -484,7 +484,7 @@ class Cmd
    end
  
    def oso_prefix?
@@ -240,14 +232,14 @@
          "#{MacOS::CLT::PKG_PATH}/SDKs/MacOSX.sdk"
        else
          "#{MacOS::CLT::PKG_PATH}/SDKs/MacOSX#{macos_version}.sdk"
-
---- a/Library/Homebrew/shims/mac/shared/include/llvm/__config_site
-+++ b/Library/Homebrew/shims/mac/shared/include/llvm/__config_site
-@@ -2,6 +2,6 @@
- #define _HOMEBREW_LIBCPP___CONFIG_SITE
+--- a/Library/Homebrew/utils/timer.rb
++++ b/Library/Homebrew/utils/timer.rb
+@@ -1,6 +1,8 @@
+ # typed: strong
+ # frozen_string_literal: true
  
- #include_next <__config_site>
--#define _LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS 1
-+#define _LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS 0
- 
- #endif // _HOMEBREW_LIBCPP___CONFIG_SITE
++require "timeout"
++
+ module Utils
+   module Timer
+     sig { params(time: T.nilable(Time)).returns(T.nilable(T.any(Float, Integer))) }

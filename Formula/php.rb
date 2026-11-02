@@ -2,9 +2,9 @@ class Php < Formula
   desc "General-purpose scripting language"
   homepage "https://www.php.net/"
   # Should only be updated if the new version is announced on the homepage, https://www.php.net/
-  url "https://www.php.net/distributions/php-8.5.11.tar.xz"
-  mirror "https://fossies.org/linux/www/php-8.5.11.tar.xz"
-  sha256 "d9be75c08e8c316f4c8f4194d8fbe1750a15f6a6d9d4e3fe72082abeeb800360"
+  url "https://www.php.net/distributions/php-8.5.12.tar.xz"
+  mirror "https://fossies.org/linux/www/php-8.5.12.tar.xz"
+  sha256 "08bc2eba2a588654ade1357174aa646b761556c862dda0678345ee29ed481209"
   license all_of: [
     "PHP-3.01",
 
@@ -57,7 +57,7 @@ class Php < Formula
   depends_on "freetds"
   depends_on "gd"
   depends_on "gmp"
-  depends_on "icu4c@78"
+  depends_on "icu4c@79"
   depends_on "libpq"
   depends_on "libsodium"
   depends_on "libzip"
@@ -86,7 +86,8 @@ class Php < Formula
     depends_on "zlib-ng-compat"
   end
 
-  allow_network_access! :test
+  # Allow network access during `:postinstall` and `:test` phases
+  deny_network_access! :build
 
   def install
     if OS.mac? && DevelopmentTools.clang_build_version <= 1100

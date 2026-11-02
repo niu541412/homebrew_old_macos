@@ -1,10 +1,11 @@
 class Librsvg < Formula
   desc "Library to render SVG files using Cairo"
   homepage "https://wiki.gnome.org/Projects/LibRsvg"
-  url "https://download.gnome.org/sources/librsvg/2.63/librsvg-2.63.2.tar.xz"
-  sha256 "852b18e1a00b8605528825a27dc7748bff2a5dd254028f59dc22a34ea57e81b6"
+  url "https://download.gnome.org/sources/librsvg/2.63/librsvg-2.63.4.tar.xz"
+  sha256 "31f07d9350dad3f8964fd613c31309ac160fdef13dfac59df6fd082de78d6e8f"
   license "LGPL-2.1-or-later"
   compatibility_version 1
+  head "https://gitlab.gnome.org/GNOME/librsvg.git", branch: "main"
 
   # librsvg doesn't use GNOME's "even-numbered minor is stable" version scheme.
   # This regex matches any version that doesn't have a 90+ patch version, as
@@ -38,6 +39,12 @@ class Librsvg < Formula
     depends_on "libpng"
     uses_from_macos "libffi", since: :catalina
     uses_from_macos "python" => :build, since: :catalina
+  end
+
+  deny_network_access!
+
+  def fetch
+    system "cargo", "fetch", *std_cargo_fetch_args
   end
 
   def install

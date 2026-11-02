@@ -1,8 +1,8 @@
 class Tesseract < Formula
   desc "OCR (Optical Character Recognition) engine"
   homepage "https://tesseract-ocr.github.io/"
-  url "https://github.com/tesseract-ocr/tesseract/archive/refs/tags/5.5.3.tar.gz"
-  sha256 "9218e62793116d42a9f6d14cd9348518b27f382096eea3d0f2d1a24616bb5884"
+  url "https://github.com/tesseract-ocr/tesseract/archive/refs/tags/5.5.4.tar.gz"
+  sha256 "a8dbf8b8c8ee427ff6ad1d99116502feaf59440af1adb893caf60a6576826cf4"
   license "Apache-2.0"
   compatibility_version 1
   head "https://github.com/tesseract-ocr/tesseract.git", branch: "main"
@@ -23,7 +23,7 @@ class Tesseract < Formula
   depends_on "fontconfig"
   depends_on "glib"
   depends_on "harfbuzz"
-  depends_on "icu4c@78"
+  depends_on "icu4c@79"
   depends_on "leptonica"
   depends_on "libarchive"
   depends_on "pango"
@@ -45,12 +45,16 @@ class Tesseract < Formula
     sha256 "9cf5d576fcc47564f11265841e5ca839001e7e6f38ff7f7aacf46d15a96b00ff"
   end
 
-  resource "snum" do
-    url "https://github.com/USCDataScience/counterfeit-electronics-tesseract/raw/319a6eeacff181dad5c02f3e7a3aff804eaadeca/Training%20Tesseract/snum.traineddata"
-    sha256 "36f772980ff17c66a767f584a0d80bf2302a1afa585c01a226c1863afcea1392"
+  resource "homebrew-test_resource", :test do
+    url "https://raw.githubusercontent.com/tesseract-ocr/test/6dd816cdaf3e76153271daf773e562e24c928bf5/testing/eurotext.tif"
+    sha256 "7b9bd14aba7d5e30df686fbb6f71782a97f48f81b32dc201a1b75afe6de747d6"
   end
 
+  # Test downloads a sample image to OCR
+  allow_network_access! :test
+
   patch :DATA
+
   def install
     ENV.llvm_clang if OS.mac? && (DevelopmentTools.clang_build_version <= 1100)
     # explicitly state leptonica header location, as the makefile defaults to /usr/local/include,
@@ -71,29 +75,24 @@ class Tesseract < Formula
     system "./configure", "--datarootdir=#{HOMEBREW_PREFIX}/share",
                           "--disable-silent-rules",
                           *std_configure_args
+
     system "make", "training"
 
     # make install in the local share folder to avoid permission errors
     system "make", "install", "training-install", "datarootdir=#{share}"
 
-    resource("snum").stage { mv "snum.traineddata", share/"tessdata" }
     resource("eng").stage { mv "eng.traineddata", share/"tessdata" }
     resource("osd").stage { mv "osd.traineddata", share/"tessdata" }
   end
 
   def caveats
     <<~EOS
-      This formula contains only the "eng", "osd", and "snum" language data files.
+      This formula contains only the "eng" and "osd" language data files.
       If you need any other supported languages, run `brew install tesseract-lang`.
     EOS
   end
 
   test do
-    resource "homebrew-test_resource" do
-      url "https://raw.githubusercontent.com/tesseract-ocr/test/6dd816cdaf3e76153271daf773e562e24c928bf5/testing/eurotext.tif"
-      sha256 "7b9bd14aba7d5e30df686fbb6f71782a97f48f81b32dc201a1b75afe6de747d6"
-    end
-
     resource("homebrew-test_resource").stage do
       system bin/"tesseract", "./eurotext.tif", "./output", "-l", "eng"
       assert_match "The (quick) [brown] {fox} jumps!\n", File.read("output.txt")
@@ -102,6 +101,26 @@ class Tesseract < Formula
 end
 
 __END__
+--- a/src/ccstruct/ratngs.h
++++ b/src/ccstruct/ratngs.h
+@@ -285,7 +285,7 @@ public:
+     this->init(word.length());
+     this->operator=(word);
+   }
+-  WERD_CHOICE(WERD_CHOICE &&word) noexcept = default;
++  WERD_CHOICE(WERD_CHOICE &&word) = default;
+   ~WERD_CHOICE();
+ 
+   const UNICHARSET *unicharset() const {
+@@ -583,7 +583,7 @@ public:
+       const WERD_CHOICE &second); // second on first
+ 
+   WERD_CHOICE &operator=(const WERD_CHOICE &source);
+-  WERD_CHOICE &operator=(WERD_CHOICE &&source) noexcept = default;
++  WERD_CHOICE &operator=(WERD_CHOICE &&source) = default;
+ 
+ private:
+   const UNICHARSET *unicharset_;
 --- a/src/training/unicharset_extractor.cpp
 +++ b/src/training/unicharset_extractor.cpp
 @@ -21,7 +21,6 @@

@@ -1,6 +1,6 @@
 --- a/Library/Homebrew/cmd/vendor-install.sh
 +++ b/Library/Homebrew/cmd/vendor-install.sh
-@@ -72,6 +72,7 @@ set_ruby_variables() {
+@@ -73,6 +73,7 @@ set_ruby_variables() {
      fi
      ruby_URLs+=(
        "https://ghcr.io/v2/homebrew/core/portable-ruby/blobs/sha256:${ruby_SHA}"
@@ -17,6 +17,6 @@
 +++ b/Library/Homebrew/vendor/portable-ruby-x86_64-darwin
 @@ -1,2 +1,2 @@
 -ruby_TAG=big_sur
--ruby_SHA=33e2f1e2877739c45e4b4b4f5e13d46826b5933fc2bf80966263eb43f1ad2af8
+-ruby_SHA=c90d3891dc3805de531cd262bc8f17382f499db0eb9185d76b8785ec93753fac
 +ruby_TAG=high_sierra
-+ruby_SHA=8d2334f77652ed2fb3fc713089c5891ceaf329cc80c64798775217338e5d240c
++ruby_SHA=f4d620857c77d2e03b8791fec36f67ad4dcac0be1a2d6fe31314bb94e30f4595

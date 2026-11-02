@@ -1,8 +1,8 @@
 class Deno < Formula
   desc "Secure runtime for JavaScript and TypeScript"
   homepage "https://deno.com/"
-  url "https://github.com/denoland/deno/releases/download/v2.9.7/deno_src.tar.gz"
-  sha256 "21069d2f4dd65b6832e3f5c373c24a43a8d35cb3d68d3841e15d0582bed39ea8"
+  url "https://github.com/denoland/deno/releases/download/v2.9.8/deno_src.tar.gz"
+  sha256 "b57d0281c1647effc735f242ba52bc409747fc6ed6ad4946e76f062c67e113eb"
   license "MIT"
   compatibility_version 1
   head "https://github.com/denoland/deno.git", branch: "main"
@@ -37,6 +37,7 @@ class Deno < Formula
   def llvm = Formula["llvm"]
 
   patch :DATA
+
   def install
     ENV.llvm_clang if DevelopmentTools.clang_build_version <= 1000
 
@@ -61,7 +62,6 @@ class Deno < Formula
 
     # Avoid vendored dependencies.
     ENV["CARGO_FEATURE_SYSTEM"] = "1" # libffi
-    # ENV.prepend_path "LIBRARY_PATH", formula_opt_lib("libffi")
     ENV["LCMS2_LIB_DIR"] = formula_opt_lib("little-cms2")
     ENV["LIBSQLITE3_SYS_USE_PKG_CONFIG"] = "1"
     # env args for building a release build with our python3 and ninja
@@ -113,8 +113,6 @@ class Deno < Formula
 end
 
 __END__
-diff --git a/cli/tools/desktop.rs b/cli/tools/desktop.rs
-index 1111111..2222222 100644
 --- a/cli/tools/desktop.rs
 +++ b/cli/tools/desktop.rs
 @@ -1461,12 +1461,15 @@ async fn run_desktop_app(

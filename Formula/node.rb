@@ -1,10 +1,22 @@
 class Node < Formula
   desc "Open-source, cross-platform JavaScript runtime environment"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v26.11.1/node-v26.11.1.tar.xz"
-  sha256 "2c79a3c1095c7da4c549c84e90b2d28df5479315ab6d0aff9bc71dcf4c9df1e0"
   license "MIT"
+  revision 2
+  compatibility_version 1
   head "https://github.com/nodejs/node.git", branch: "main"
+
+  stable do
+    url "https://nodejs.org/dist/v26.13.0/node-v26.13.0.tar.xz"
+    sha256 "263f639ecfa7a17b49438d76cdbf9aff73179e3c7cb789da69b900718427fa2e"
+
+    # https://github.com/v8/v8/commit/f607706154eabc4a949628a88b38dbe95cd2274c
+    patch do
+      url "https://raw.githubusercontent.com/Homebrew/homebrew-core/refs/heads/main/Patches/node/icu4c-79.patch"
+      directory "deps/v8"
+      type :unofficial # cherry-picked from V8 but not in node yet
+    end
+  end
 
   livecheck do
     url "https://nodejs.org/dist/"
@@ -15,14 +27,14 @@ class Node < Formula
   end
 
   depends_on "pkgconf" => :build
-  depends_on "python@3.14" => :build
+  depends_on "python@3.15" => :build
   depends_on "rust" => :build
   depends_on "abseil"
   depends_on "ada-url"
   depends_on "brotli"
   depends_on "c-ares"
   depends_on "hdrhistogram_c"
-  depends_on "icu4c@78"
+  depends_on "icu4c@79"
   depends_on "libffi" # System `libffi` is missing some definitions used by node
   depends_on "libnghttp2"
   depends_on "libuv"

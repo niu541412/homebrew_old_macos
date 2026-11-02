@@ -1,10 +1,10 @@
 class Pandoc < Formula
   desc "Swiss-army knife of markup format conversion"
   homepage "https://pandoc.org/"
-  url "https://github.com/jgm/pandoc/archive/refs/tags/3.12.1.tar.gz"
-  sha256 "cf9b3725b90e471aa70c99ac3b351adcb6e40cd904d36fcbb0f70d712e135686"
+  url "https://github.com/jgm/pandoc/archive/refs/tags/3.13.tar.gz"
+  sha256 "fbf6044766b0c9be5ccbf18ffe657124449e8563a177d85662ecb6f031f9c308"
   license "GPL-2.0-or-later"
-  compatibility_version 9
+  compatibility_version 10
   head "https://github.com/jgm/pandoc.git", branch: "main"
 
   bottle do
@@ -25,7 +25,7 @@ class Pandoc < Formula
 
   def install
     # Workaround to build aeson with GHC 9.14, https://github.com/haskell/aeson/issues/1155
-    args = ["--allow-newer=base,containers,template-haskell"]
+    args = ["--allow-newer=base,containers,template-haskell", "--constraint=pandoc +http"]
 
     system "cabal", "v2-update"
     system "cabal", "v2-install", *args, *std_cabal_v2_args, "pandoc-cli"

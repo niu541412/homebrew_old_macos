@@ -1,8 +1,8 @@
 class OpenjdkAT25 < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.org/"
-  url "https://github.com/openjdk/jdk25u/archive/refs/tags/jdk-25.0.4.1-ga.tar.gz"
-  sha256 "1e5908f90d732e0ed3f737aac7603863c2cc157e464e036ac0accadb87af4391"
+  url "https://github.com/openjdk/jdk25u/archive/refs/tags/jdk-25.0.5.0.3-ga.tar.gz"
+  sha256 "b4dfab0e1a41ed6cc8595555323102d4b3910a7e6e14bc9ec59d945028030072"
   license "GPL-2.0-only" => { with: "Classpath-exception-2.0" }
   compatibility_version 1
 
@@ -75,6 +75,7 @@ class OpenjdkAT25 < Formula
   end
 
   patch :DATA
+
   def install
     inreplace "make/autoconf/flags.m4", "MACOSX_VERSION_MIN=11.00.00", "MACOSX_VERSION_MIN=#{MacOS.version}.00"
 
